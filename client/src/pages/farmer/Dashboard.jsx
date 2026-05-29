@@ -26,26 +26,26 @@ const navItems = [
 ];
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, totalRevenue: 0 });
+  const [kpis, setKpis] = useState({ totalProducts: 0, totalOrders: 0, totalRevenue: 0 });
 
   useEffect(() => {
     api.get('/analytics/farmer')
       .then(r => {
         const d = r.data;
-        setStats({
-          totalProducts: d.totalProducts || 0,
-          totalOrders:   d.totalOrders   || 0,
-          totalRevenue:  d.totalRevenue  || 0,
+        // analytics returns data.kpis object
+        const k = d.kpis || d;
+        setKpis({
+          totalProducts: k.totalProducts ?? 0,
+          totalOrders:   k.totalOrders   ?? 0,
+          totalRevenue:  k.totalRevenue  ?? 0,
         });
       })
       .catch(() => {
         // fallback: count products directly
-        api.get('/products/farmer/mine')
-          .then(r => {
-            const prods = r.data.products || r.data || [];
-            setStats(s => ({ ...s, totalProducts: prods.length }));
-          })
-          .catch(() => {});
+        api.get('/products/farmer/mine').then(r => {
+          const prods = r.data.products || r.data || [];
+          setKpis(prev => ({ ...prev, totalProducts: Array.isArray(prods) ? prods.length : 0 }));
+        }).catch(() => {});
       });
   }, []);
 
@@ -54,9 +54,9 @@ export default function Dashboard() {
       <div style={s.title}>Farmer Dashboard</div>
       <div style={s.sub}>Welcome back! Here is a snapshot of your activity.</div>
       <div style={s.kpiRow}>
-        <div style={s.kpi}><div style={s.kpiLabel}>Products</div><div style={s.kpiValue}>{stats.totalProducts}</div></div>
-        <div style={s.kpi}><div style={s.kpiLabel}>Total Orders</div><div style={s.kpiValue}>{stats.totalOrders}</div></div>
-        <div style={s.kpi}><div style={s.kpiLabel}>Revenue</div><div style={{ ...s.kpiValue, color: 'var(--green-lt)' }}>BDT {stats.totalRevenue.toLocaleString()}</div></div>
+        <div style={s.kpi}><div style={s.kpiLabel}>Products</div><div style={s.kpiValue}>{kpis.totalProducts}</div></div>
+        <div style={s.kpi}><div style={s.kpiLabel}>Total Orders</div><div style={s.kpiValue}>{kpis.totalOrders}</div></div>
+        <div style={s.kpi}><div style={s.kpiLabel}>Revenue</div><div style={{ ...s.kpiValue, color: 'var(--green-lt)' }}>BDT {kpis.totalRevenue.toLocaleString()}</div></div>
       </div>
       <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--white)', marginBottom: 16 }}>Quick Actions</div>
       <div style={s.grid}>
