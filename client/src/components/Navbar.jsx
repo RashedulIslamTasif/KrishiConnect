@@ -45,7 +45,7 @@ export default function Navbar() {
           <>
             {/* Clickable name → profile */}
             <Link
-              to={user.role === 'customer' ? '/profile' : '/dashboard'}
+              to={user.role === 'customer' ? '/profile' : '/dashboard/profile'}
               style={{ fontSize:13, color:'var(--muted)', textDecoration:'none' }}
             >
               Hi, <strong style={{ color:'var(--white)' }}>{user.name.split(' ')[0]}</strong>

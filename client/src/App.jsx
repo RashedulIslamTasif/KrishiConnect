@@ -14,6 +14,7 @@ import AddProduct          from './pages/farmer/AddProduct.jsx';
 import EditProduct         from './pages/farmer/EditProduct.jsx';
 import FarmerOrders        from './pages/farmer/FarmerOrders.jsx';
 import AnalyticsDashboard  from './pages/farmer/AnalyticsDashboard.jsx';
+import FarmerAccountProfile from './pages/farmer/FarmerAccountProfile.jsx';
 import MyOrders            from './pages/MyOrders.jsx';
 import OrderTracking       from './pages/OrderTracking.jsx';
 import Chat                from './pages/Chat.jsx';
@@ -45,13 +46,14 @@ export default function App() {
 
         {/* Farmer protected */}
         <Route element={<FarmerRoute />}>
-          <Route path="/dashboard"             element={<Dashboard />} />
-          <Route path="/dashboard/products"    element={<MyProducts />} />
-          <Route path="/dashboard/add"         element={<AddProduct />} />
-          <Route path="/dashboard/edit/:id"    element={<EditProduct />} />
-          <Route path="/dashboard/orders"      element={<FarmerOrders />} />
-          <Route path="/dashboard/analytics"   element={<AnalyticsDashboard />} />
-          <Route path="/dashboard/chat"        element={<Chat />} />
+          <Route path="/dashboard"                element={<Dashboard />} />
+          <Route path="/dashboard/profile"        element={<FarmerAccountProfile />} />
+          <Route path="/dashboard/products"       element={<MyProducts />} />
+          <Route path="/dashboard/add"            element={<AddProduct />} />
+          <Route path="/dashboard/edit/:id"       element={<EditProduct />} />
+          <Route path="/dashboard/orders"         element={<FarmerOrders />} />
+          <Route path="/dashboard/analytics"      element={<AnalyticsDashboard />} />
+          <Route path="/dashboard/chat"           element={<Chat />} />
         </Route>
       </Routes>
     </div>
