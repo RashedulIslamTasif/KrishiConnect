@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import api from '../api/axios.js';
+import { useCart } from '../context/CartContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 // ── Address Modal ─────────────────────────────────────────────
@@ -73,6 +74,8 @@ function OrderModal({ product, qty, onConfirm, onClose, ordering }) {
 export default function ProductDetail() {
   const { id }       = useParams();
   const { user }     = useAuth();
+  const { addToCart, cart } = useCart();
+  const [addedToCart, setAddedToCart] = useState(false);
   const navigate     = useNavigate();
   const [product, setProduct]     = useState(null);
   const [prices, setPrices]       = useState([]);
@@ -266,12 +269,38 @@ export default function ProductDetail() {
             </div>
 
             <button
-              onClick={handleOrderClick}
-              disabled={ordering || product.stock === 0}
-              style={{ width: '100%', padding: 15, background: product.stock === 0 ? 'var(--border)' : 'var(--green-hi)', color: '#fff', border: 'none', borderRadius: 12, fontFamily: 'Sora,sans-serif', fontSize: 15, fontWeight: 600, cursor: product.stock === 0 ? 'not-allowed' : 'pointer' }}
+              onClick={() => {
+                if (!user) { navigate('/login'); return; }
+                addToCart(product, qty);
+                setAddedToCart(true);
+                setTimeout(() => setAddedToCart(false), 2000);
+              }}
+              disabled={product.stock === 0}
+              style={{ width: '100%', padding: 15, marginBottom: 10, background: addedToCart ? 'rgba(90,176,48,.2)' : 'transparent', color: addedToCart ? 'var(--green-lt)' : 'var(--white)', border: '1px solid var(--border)', borderRadius: 12, fontFamily: 'Sora,sans-serif', fontSize: 15, fontWeight: 600, cursor: product.stock === 0 ? 'not-allowed' : 'pointer', transition: 'all .2s' }}
             >
-              {product.stock === 0 ? 'Out of Stock' : 'Order Now'}
+              {addedToCart ? '✓ Added to Cart' : '🛒 Add to Cart'}
             </button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => {
+                  if (!user) return navigate('/login');
+                  addToCart({ ...product, farmer: product.farmer }, qty);
+                  setAddedToCart(true);
+                  setTimeout(() => setAddedToCart(false), 2000);
+                }}
+                disabled={product.stock === 0}
+                style={{ flex: 1, padding: 15, background: addedToCart ? 'rgba(90,176,48,.2)' : 'rgba(255,255,255,.06)', color: addedToCart ? 'var(--green-lt)' : 'var(--white)', border: '1px solid var(--border)', borderRadius: 12, fontFamily: 'Sora,sans-serif', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all .2s' }}
+              >
+                {addedToCart ? '✓ Added!' : '🛒 Add to Cart'}
+              </button>
+              <button
+                onClick={handleOrderClick}
+                disabled={ordering || product.stock === 0}
+                style={{ flex: 1, padding: 15, background: product.stock === 0 ? 'var(--border)' : 'var(--green-hi)', color: '#fff', border: 'none', borderRadius: 12, fontFamily: 'Sora,sans-serif', fontSize: 15, fontWeight: 600, cursor: product.stock === 0 ? 'not-allowed' : 'pointer' }}
+              >
+                {product.stock === 0 ? 'Out of Stock' : 'Order Now'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

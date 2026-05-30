@@ -1,9 +1,11 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useCart } from '../context/CartContext.jsx';
 import NotificationBell from './NotificationBell.jsx';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { cartCount }    = useCart();
   const { pathname }     = useLocation();
   const navigate         = useNavigate();
   const active = (p) => pathname === p || pathname.startsWith(p + '/');
@@ -15,15 +17,13 @@ export default function Navbar() {
   );
 
   return (
-    <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(10,15,8,.88)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 48px', height: 64 }}>
+    <nav style={{ position:'sticky', top:0, zIndex:100, background:'rgba(10,15,8,.88)', backdropFilter:'blur(16px)', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 48px', height:64 }}>
 
-      {/* Logo */}
       <Link to="/" style={{ display:'flex', alignItems:'center', gap:10, textDecoration:'none' }}>
         <div style={{ width:32, height:32, background:'var(--green-hi)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:15 }}>🌱</div>
         <span style={{ fontSize:17, fontWeight:700, color:'var(--white)', letterSpacing:'-0.02em' }}>KrishiConnect</span>
       </Link>
 
-      {/* Nav links */}
       <div style={{ display:'flex', gap:28 }}>
         <NavLink to="/marketplace">Marketplace</NavLink>
         <NavLink to="/map">Find Farmers</NavLink>
@@ -38,22 +38,27 @@ export default function Navbar() {
         </>}
       </div>
 
-      {/* Auth */}
       <div style={{ display:'flex', gap:12, alignItems:'center' }}>
         {user && <NotificationBell />}
+
+        {/* Cart icon — only for customers or logged-out users */}
+        {user?.role !== 'farmer' && (
+          <Link to="/cart" style={{ position:'relative', textDecoration:'none', display:'flex', alignItems:'center', justifyContent:'center', width:38, height:38, borderRadius:'50%', background: active('/cart') ? 'rgba(90,176,48,.15)' : 'transparent', border:'1px solid var(--border)' }}>
+            <span style={{ fontSize:17 }}>🛒</span>
+            {cartCount > 0 && (
+              <span style={{ position:'absolute', top:-4, right:-4, background:'var(--green-hi)', color:'#fff', fontSize:10, fontWeight:700, borderRadius:'50%', width:18, height:18, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                {cartCount > 9 ? '9+' : cartCount}
+              </span>
+            )}
+          </Link>
+        )}
+
         {user ? (
           <>
-            {/* Clickable name → profile */}
-            <Link
-              to={user.role === 'customer' ? '/profile' : '/dashboard/profile'}
-              style={{ fontSize:13, color:'var(--muted)', textDecoration:'none' }}
-            >
+            <Link to={user.role === 'customer' ? '/profile' : '/dashboard/profile'} style={{ fontSize:13, color:'var(--muted)', textDecoration:'none' }}>
               Hi, <strong style={{ color:'var(--white)' }}>{user.name.split(' ')[0]}</strong>
             </Link>
-            <button
-              onClick={() => { logout(); navigate('/'); }}
-              style={{ fontSize:13, padding:'8px 18px', background:'transparent', border:'1px solid var(--border)', borderRadius:99, color:'var(--muted)', cursor:'pointer', fontFamily:'Sora,sans-serif' }}
-            >
+            <button onClick={() => { logout(); navigate('/'); }} style={{ fontSize:13, padding:'8px 18px', background:'transparent', border:'1px solid var(--border)', borderRadius:99, color:'var(--muted)', cursor:'pointer', fontFamily:'Sora,sans-serif' }}>
               Logout
             </button>
           </>
