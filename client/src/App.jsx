@@ -7,6 +7,7 @@ import FarmerMap           from './pages/FarmerMap.jsx';
 import FarmerProfile       from './pages/FarmerProfile.jsx';
 import Login               from './pages/Login.jsx';
 import Register            from './pages/Register.jsx';
+import CustomerProfile     from './pages/CustomerProfile.jsx';
 import Dashboard           from './pages/farmer/Dashboard.jsx';
 import MyProducts          from './pages/farmer/MyProducts.jsx';
 import AddProduct          from './pages/farmer/AddProduct.jsx';
@@ -35,6 +36,7 @@ export default function App() {
 
         {/* Customer protected */}
         <Route element={<PrivateRoute />}>
+          <Route path="/profile"              element={<CustomerProfile />} />
           <Route path="/orders"               element={<MyOrders />} />
           <Route path="/orders/:id"           element={<OrderTracking />} />
           <Route path="/chat"                 element={<Chat />} />
@@ -43,13 +45,13 @@ export default function App() {
 
         {/* Farmer protected */}
         <Route element={<FarmerRoute />}>
-          <Route path="/dashboard"                element={<Dashboard />} />
-          <Route path="/dashboard/products"       element={<MyProducts />} />
-          <Route path="/dashboard/add"            element={<AddProduct />} />
-          <Route path="/dashboard/edit/:id"       element={<EditProduct />} />
-          <Route path="/dashboard/orders"         element={<FarmerOrders />} />
-          <Route path="/dashboard/analytics"      element={<AnalyticsDashboard />} />
-          <Route path="/dashboard/chat"           element={<Chat />} />
+          <Route path="/dashboard"             element={<Dashboard />} />
+          <Route path="/dashboard/products"    element={<MyProducts />} />
+          <Route path="/dashboard/add"         element={<AddProduct />} />
+          <Route path="/dashboard/edit/:id"    element={<EditProduct />} />
+          <Route path="/dashboard/orders"      element={<FarmerOrders />} />
+          <Route path="/dashboard/analytics"   element={<AnalyticsDashboard />} />
+          <Route path="/dashboard/chat"        element={<Chat />} />
         </Route>
       </Routes>
     </div>
