@@ -1,10 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api', // Proxied to http://localhost:5000/api via vite.config.js
+  baseURL: import.meta.env.VITE_API_URL || '/api',
 });
 
-// Attach JWT token to every request automatically
+// Attach JWT token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('krishi_token');
   if (token) {
@@ -13,7 +13,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 globally — log out user if token is invalid
+// Handle 401 globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {

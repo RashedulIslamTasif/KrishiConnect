@@ -1,0 +1,34 @@
+{
+  "name": "KrishiConnect — Farm Fresh, Direct to You",
+  "short_name": "KrishiConnect",
+  "description": "Buy fresh produce directly from farmers across Bangladesh",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f08",
+  "theme_color": "#5ab030",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "categories": ["food", "shopping", "lifestyle"],
+  "lang": "en-BD"
+}
