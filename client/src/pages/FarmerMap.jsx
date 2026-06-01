@@ -1,38 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios.js';
-
-const s = {
-  page: { minHeight: '100vh', padding: '32px 48px', maxWidth: 1200, margin: '0 auto' },
-  title: { fontSize: 32, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--white)', marginBottom: 8 },
-  sub: { fontSize: 14, color: 'var(--muted)', marginBottom: 28 },
-  search: { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 18px', color: 'var(--white)', fontSize: 14, outline: 'none', width: '100%', maxWidth: 380, marginBottom: 28, fontFamily: 'Sora,sans-serif', boxSizing: 'border-box' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 20 },
-  card: { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, textDecoration: 'none', color: 'inherit', display: 'block' },
-  avatar: { width: 56, height: 56, borderRadius: '50%', background: 'rgba(90,176,48,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, marginBottom: 16, fontWeight: 700, color: 'var(--green-lt)' },
-  name: { fontSize: 16, fontWeight: 600, color: 'var(--white)', marginBottom: 2 },
-  farm: { fontSize: 13, color: 'var(--green-lt)', marginBottom: 6 },
-  loc: { fontSize: 13, color: 'var(--muted)', marginBottom: 12 },
-  badge: { display: 'inline-block', background: 'rgba(90,176,48,.15)', color: 'var(--green-lt)', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99, border: '1px solid rgba(90,176,48,.25)' },
-  verified: { display: 'inline-block', background: 'rgba(29,158,117,.15)', color: '#1d9e75', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99, border: '1px solid rgba(29,158,117,.25)', marginLeft: 6 },
-  empty: { textAlign: 'center', color: 'var(--muted)', padding: '80px 0', fontSize: 15 },
-};
+import { useResponsive } from '../hooks/useResponsive.js';
 
 export default function FarmerMap() {
+  const { isMobile } = useResponsive();
   const [farmers, setFarmers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
 
   useEffect(() => {
-    api.get('/auth/farmers')
-      .then(r => {
-        const data = r.data;
-        if (Array.isArray(data)) setFarmers(data);
-        else if (Array.isArray(data.farmers)) setFarmers(data.farmers);
-        else setFarmers([]);
-      })
-      .catch(() => setFarmers([]))
-      .finally(() => setLoading(false));
+    api.get('/auth/farmers').then(r => {
+      const d = r.data;
+      setFarmers(Array.isArray(d) ? d : d.farmers || []);
+    }).catch(() => setFarmers([])).finally(() => setLoading(false));
   }, []);
 
   const filtered = farmers.filter(f =>
@@ -41,30 +22,33 @@ export default function FarmerMap() {
     f.location?.district?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const pad = isMobile ? '16px 12px' : '32px 48px';
+
   return (
-    <div style={s.page}>
-      <h1 style={s.title}>Find Farmers</h1>
-      <p style={s.sub}>Browse all farmers on KrishiConnect and explore their fresh products.</p>
-      <input
-        style={s.search}
+    <div style={{ minHeight:'100vh', padding: pad }}>
+      <h1 style={{ fontSize: isMobile ? 22 : 30, fontWeight:700, color:'var(--white)', marginBottom:4 }}>Find Farmers</h1>
+      <p style={{ fontSize:13, color:'var(--muted)', marginBottom:20 }}>Browse all farmers on KrishiConnect</p>
+
+      <input style={{ width:'100%', background:'var(--card)', border:'1px solid var(--border)', borderRadius:12, padding:'12px 16px', color:'var(--white)', fontSize:14, outline:'none', fontFamily:'Sora,sans-serif', boxSizing:'border-box', marginBottom:20 }}
         placeholder="Search by name, farm or district..."
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-      />
-      {loading ? (
-        <div style={s.empty}>Loading farmers...</div>
-      ) : filtered.length === 0 ? (
-        <div style={s.empty}>No farmers found matching your search.</div>
-      ) : (
-        <div style={s.grid}>
+        value={search} onChange={e => setSearch(e.target.value)} />
+
+      {loading ? <div style={{ textAlign:'center', color:'var(--muted)', padding:'60px 0' }}>Loading farmers...</div>
+      : filtered.length === 0 ? <div style={{ textAlign:'center', color:'var(--muted)', padding:'60px 0' }}>No farmers found.</div>
+      : (
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(260px, 1fr))', gap: isMobile ? 10 : 20 }}>
           {filtered.map(f => (
-            <Link key={f._id} to={`/farmer/${f._id}`} style={s.card}>
-              <div style={s.avatar}>{f.name?.[0]?.toUpperCase() || 'F'}</div>
-              <div style={s.name}>{f.name}</div>
-              {f.farmName && <div style={s.farm}>{f.farmName}</div>}
-              <div style={s.loc}>📍 {f.location?.district || f.location?.address || 'Bangladesh'}</div>
-              <span style={s.badge}>View Products</span>
-              {f.isVerified && <span style={s.verified}>✓ Verified</span>}
+            <Link key={f._id} to={`/farmer/${f._id}`} style={{ background:'var(--card)', border:'1px solid var(--border)', borderRadius:16, padding: isMobile ? 14 : 24, textDecoration:'none', color:'inherit', display:'block' }}>
+              <div style={{ width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius:'50%', background:'rgba(90,176,48,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize: isMobile ? 18 : 22, fontWeight:700, color:'var(--green-lt)', marginBottom:12 }}>
+                {f.name?.[0]?.toUpperCase() || 'F'}
+              </div>
+              <div style={{ fontSize: isMobile ? 13 : 15, fontWeight:600, color:'var(--white)', marginBottom:2 }}>{f.name}</div>
+              {f.farmName && <div style={{ fontSize: isMobile ? 11 : 13, color:'var(--green-lt)', marginBottom:4 }}>{f.farmName}</div>}
+              <div style={{ fontSize: isMobile ? 11 : 13, color:'var(--muted)', marginBottom:10 }}>📍 {f.location?.district || 'Bangladesh'}</div>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                <span style={{ background:'rgba(90,176,48,.12)', color:'var(--green-lt)', fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:99 }}>View</span>
+                {f.isVerified && <span style={{ background:'rgba(29,158,117,.12)', color:'#1d9e75', fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:99 }}>✓ Verified</span>}
+              </div>
             </Link>
           ))}
         </div>

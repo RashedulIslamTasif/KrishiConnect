@@ -11,48 +11,57 @@ export default function Navbar() {
   const navigate         = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const active = (p) => pathname === p || pathname.startsWith(p + '/');
-
-  const NavLink = ({ to, children, onClick }) => (
-    <Link to={to} onClick={onClick} style={{ color: active(to) ? 'var(--green-lt)' : 'rgba(240,244,236,.7)', fontSize: 15, fontWeight: 500, textDecoration: 'none', padding: '10px 0', display: 'block' }}>
-      {children}
-    </Link>
-  );
-
-  const closeMenu = () => setMenuOpen(false);
+  const close  = () => setMenuOpen(false);
 
   return (
     <>
-      <nav style={{ position:'sticky', top:0, zIndex:100, background:'rgba(10,15,8,.95)', backdropFilter:'blur(16px)', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 20px', height:60 }}>
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 100,
+        background: 'rgba(10,15,8,.97)',
+        backdropFilter: 'blur(16px)',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        /* Horizontal padding accounts for notch on sides */
+        padding: '0 max(16px, env(safe-area-inset-left, 16px))',
+        paddingRight: 'max(16px, env(safe-area-inset-right, 16px))',
+        height: 56,
+      }}>
 
         {/* Logo */}
-        <Link to="/" style={{ display:'flex', alignItems:'center', gap:8, textDecoration:'none' }}>
-          <div style={{ width:30, height:30, background:'var(--green-hi)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>🌱</div>
-          <span style={{ fontSize:16, fontWeight:700, color:'var(--white)', letterSpacing:'-0.02em' }}>KrishiConnect</span>
+        <Link to="/" style={{ display:'flex', alignItems:'center', gap:8, textDecoration:'none', flexShrink:0 }}>
+          <div style={{ width:28, height:28, background:'var(--green-hi)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>🌱</div>
+          <span style={{ fontSize:15, fontWeight:700, color:'var(--white)', letterSpacing:'-0.02em' }}>KrishiConnect</span>
         </Link>
 
-        {/* Desktop nav links */}
-        <div style={{ display:'flex', gap:24, alignItems:'center' }} className="desktop-nav">
-          <Link to="/marketplace" style={{ color: active('/marketplace') ? 'var(--green-lt)' : 'rgba(240,244,236,.55)', fontSize:14, textDecoration:'none' }}>Marketplace</Link>
-          <Link to="/map" style={{ color: active('/map') ? 'var(--green-lt)' : 'rgba(240,244,236,.55)', fontSize:14, textDecoration:'none' }}>Find Farmers</Link>
-          {user?.role === 'farmer' && <>
-            <Link to="/dashboard" style={{ color: active('/dashboard') ? 'var(--green-lt)' : 'rgba(240,244,236,.55)', fontSize:14, textDecoration:'none' }}>Dashboard</Link>
-            <Link to="/dashboard/analytics" style={{ color: active('/dashboard/analytics') ? 'var(--green-lt)' : 'rgba(240,244,236,.55)', fontSize:14, textDecoration:'none' }}>Analytics</Link>
-          </>}
-          {user?.role === 'customer' && <>
-            <Link to="/orders" style={{ color: active('/orders') ? 'var(--green-lt)' : 'rgba(240,244,236,.55)', fontSize:14, textDecoration:'none' }}>My Orders</Link>
-          </>}
+        {/* Desktop nav */}
+        <div style={{ display:'flex', gap:24, alignItems:'center' }} id="desktop-nav">
+          {[
+            { to:'/marketplace', label:'Marketplace' },
+            { to:'/map',         label:'Find Farmers' },
+            ...(user?.role==='farmer' ? [
+              { to:'/dashboard',            label:'Dashboard' },
+              { to:'/dashboard/analytics',  label:'Analytics' },
+              { to:'/dashboard/chat',       label:'Messages' },
+            ] : []),
+            ...(user?.role==='customer' ? [
+              { to:'/orders', label:'My Orders' },
+              { to:'/chat',   label:'Messages'  },
+            ] : []),
+          ].map(n => (
+            <Link key={n.to} to={n.to} style={{ color: active(n.to) ? 'var(--green-lt)' : 'rgba(240,244,236,.55)', fontSize:14, textDecoration:'none', whiteSpace:'nowrap' }}>{n.label}</Link>
+          ))}
         </div>
 
         {/* Right side */}
-        <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
           {user && <NotificationBell />}
 
-          {/* Cart */}
+          {/* Cart icon */}
           {user?.role !== 'farmer' && (
-            <Link to="/cart" style={{ position:'relative', textDecoration:'none', display:'flex', alignItems:'center', justifyContent:'center', width:36, height:36, borderRadius:'50%', background: active('/cart') ? 'rgba(90,176,48,.15)' : 'transparent', border:'1px solid var(--border)' }}>
-              <span style={{ fontSize:16 }}>🛒</span>
+            <Link to="/cart" style={{ position:'relative', textDecoration:'none', display:'flex', alignItems:'center', justifyContent:'center', width:34, height:34, borderRadius:'50%', background: active('/cart') ? 'rgba(90,176,48,.15)' : 'transparent', border:'1px solid var(--border)', flexShrink:0 }}>
+              <span style={{ fontSize:15 }}>🛒</span>
               {cartCount > 0 && (
-                <span style={{ position:'absolute', top:-3, right:-3, background:'var(--green-hi)', color:'#fff', fontSize:9, fontWeight:700, borderRadius:'50%', width:16, height:16, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <span style={{ position:'absolute', top:-3, right:-3, background:'var(--green-hi)', color:'#fff', fontSize:9, fontWeight:700, borderRadius:'50%', width:15, height:15, display:'flex', alignItems:'center', justifyContent:'center' }}>
                   {cartCount > 9 ? '9+' : cartCount}
                 </span>
               )}
@@ -60,78 +69,81 @@ export default function Navbar() {
           )}
 
           {/* Desktop auth */}
-          {user ? (
-            <div style={{ display:'flex', gap:8, alignItems:'center' }} className="desktop-nav">
-              <Link to={user.role === 'customer' ? '/profile' : '/dashboard/profile'} style={{ fontSize:13, color:'var(--muted)', textDecoration:'none' }}>
-                Hi, <strong style={{ color:'var(--white)' }}>{user.name.split(' ')[0]}</strong>
-              </Link>
-              <button onClick={() => { logout(); navigate('/'); }} style={{ fontSize:12, padding:'7px 14px', background:'transparent', border:'1px solid var(--border)', borderRadius:99, color:'var(--muted)', cursor:'pointer', fontFamily:'Sora,sans-serif' }}>
-                Logout
-              </button>
-            </div>
-          ) : (
-            <div style={{ display:'flex', gap:8 }} className="desktop-nav">
-              <Link to="/login" style={{ fontSize:13, color:'var(--muted)', textDecoration:'none' }}>Login</Link>
-              <Link to="/register" style={{ fontSize:12, padding:'7px 16px', textDecoration:'none', background:'var(--green-hi)', color:'#fff', borderRadius:99, fontWeight:600 }}>Join Free</Link>
-            </div>
-          )}
+          <div id="desktop-auth" style={{ display:'flex', gap:8, alignItems:'center' }}>
+            {user ? (
+              <>
+                <Link to={user.role==='customer' ? '/profile' : '/dashboard/profile'} style={{ fontSize:13, color:'var(--muted)', textDecoration:'none', whiteSpace:'nowrap' }}>
+                  Hi, <strong style={{ color:'var(--white)' }}>{user.name.split(' ')[0]}</strong>
+                </Link>
+                <button onClick={() => { logout(); navigate('/'); }} style={{ fontSize:12, padding:'7px 14px', background:'transparent', border:'1px solid var(--border)', borderRadius:99, color:'var(--muted)', cursor:'pointer', fontFamily:'Sora,sans-serif', whiteSpace:'nowrap' }}>
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login"    style={{ fontSize:13, color:'var(--muted)', textDecoration:'none', whiteSpace:'nowrap' }}>Login</Link>
+                <Link to="/register" style={{ fontSize:12, padding:'7px 14px', textDecoration:'none', background:'var(--green-hi)', color:'#fff', borderRadius:99, fontWeight:600, whiteSpace:'nowrap' }}>Join Free</Link>
+              </>
+            )}
+          </div>
 
           {/* Hamburger — mobile only */}
-          <button onClick={() => setMenuOpen(o => !o)} style={{ display:'none', background:'transparent', border:'1px solid var(--border)', borderRadius:8, padding:'6px 10px', color:'var(--white)', cursor:'pointer', fontSize:18 }} className="hamburger">
+          <button id="hamburger" onClick={() => setMenuOpen(o => !o)} style={{ background:'transparent', border:'1px solid var(--border)', borderRadius:8, padding:'5px 9px', color:'var(--white)', cursor:'pointer', fontSize:16, display:'none', flexShrink:0 }}>
             {menuOpen ? '✕' : '☰'}
           </button>
         </div>
       </nav>
 
-      {/* Mobile menu overlay */}
+      {/* Mobile full-screen menu */}
       {menuOpen && (
-        <div style={{ position:'fixed', top:60, left:0, right:0, bottom:0, background:'rgba(10,15,8,.97)', zIndex:99, padding:24, overflowY:'auto' }}>
-          <NavLink to="/marketplace" onClick={closeMenu}>🛒 Marketplace</NavLink>
-          <NavLink to="/map" onClick={closeMenu}>🗺 Find Farmers</NavLink>
+        <div style={{ position:'fixed', top:56, left:0, right:0, bottom:0, background:'rgba(10,15,8,.98)', zIndex:99, padding:'20px 20px', overflowY:'auto',
+          paddingBottom:'max(20px, env(safe-area-inset-bottom, 20px))',
+          paddingLeft:'max(20px, env(safe-area-inset-left, 20px))',
+          paddingRight:'max(20px, env(safe-area-inset-right, 20px))',
+        }}>
+          {[
+            { to:'/marketplace',  icon:'🛒', label:'Marketplace' },
+            { to:'/map',          icon:'🗺', label:'Find Farmers' },
+          ].map(n => <Link key={n.to} to={n.to} onClick={close} style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 0', borderBottom:'1px solid rgba(255,255,255,.06)', color:'var(--white)', textDecoration:'none', fontSize:16 }}><span>{n.icon}</span>{n.label}</Link>)}
 
-          {user?.role === 'farmer' && <>
-            <NavLink to="/dashboard" onClick={closeMenu}>📊 Dashboard</NavLink>
-            <NavLink to="/dashboard/products" onClick={closeMenu}>🌿 My Products</NavLink>
-            <NavLink to="/dashboard/add" onClick={closeMenu}>➕ Add Product</NavLink>
-            <NavLink to="/dashboard/orders" onClick={closeMenu}>📦 Orders</NavLink>
-            <NavLink to="/dashboard/analytics" onClick={closeMenu}>📈 Analytics</NavLink>
-            <NavLink to="/dashboard/chat" onClick={closeMenu}>💬 Messages</NavLink>
-            <NavLink to="/dashboard/profile" onClick={closeMenu}>👤 My Profile</NavLink>
-          </>}
+          {user?.role==='farmer' && [
+            { to:'/dashboard',                icon:'📊', label:'Dashboard' },
+            { to:'/dashboard/products',       icon:'🌿', label:'My Products' },
+            { to:'/dashboard/add',            icon:'➕', label:'Add Product' },
+            { to:'/dashboard/orders',         icon:'📦', label:'Orders' },
+            { to:'/dashboard/analytics',      icon:'📈', label:'Analytics' },
+            { to:'/dashboard/chat',           icon:'💬', label:'Messages' },
+            { to:'/dashboard/profile',        icon:'👤', label:'My Profile' },
+          ].map(n => <Link key={n.to} to={n.to} onClick={close} style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 0', borderBottom:'1px solid rgba(255,255,255,.06)', color:'var(--white)', textDecoration:'none', fontSize:16 }}><span>{n.icon}</span>{n.label}</Link>)}
 
-          {user?.role === 'customer' && <>
-            <NavLink to="/orders" onClick={closeMenu}>📦 My Orders</NavLink>
-            <NavLink to="/cart" onClick={closeMenu}>🛒 Cart {cartCount > 0 ? `(${cartCount})` : ''}</NavLink>
-            <NavLink to="/chat" onClick={closeMenu}>💬 Messages</NavLink>
-            <NavLink to="/profile" onClick={closeMenu}>👤 My Profile</NavLink>
-          </>}
+          {user?.role==='customer' && [
+            { to:'/orders',  icon:'📦', label:'My Orders' },
+            { to:'/cart',    icon:'🛒', label:`Cart${cartCount>0?` (${cartCount})` : ''}` },
+            { to:'/chat',    icon:'💬', label:'Messages' },
+            { to:'/profile', icon:'👤', label:'My Profile' },
+          ].map(n => <Link key={n.to} to={n.to} onClick={close} style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 0', borderBottom:'1px solid rgba(255,255,255,.06)', color:'var(--white)', textDecoration:'none', fontSize:16 }}><span>{n.icon}</span>{n.label}</Link>)}
 
-          <div style={{ borderTop:'1px solid var(--border)', marginTop:20, paddingTop:20 }}>
+          <div style={{ marginTop:24 }}>
             {user ? (
-              <>
-                <div style={{ fontSize:14, color:'var(--muted)', marginBottom:16 }}>
-                  Logged in as <strong style={{ color:'var(--white)' }}>{user.name}</strong>
-                </div>
-                <button onClick={() => { logout(); navigate('/'); closeMenu(); }}
-                  style={{ width:'100%', background:'rgba(224,85,85,.12)', color:'#e05555', border:'1px solid rgba(224,85,85,.25)', borderRadius:12, padding:'12px', fontFamily:'Sora,sans-serif', fontWeight:600, fontSize:15, cursor:'pointer' }}>
-                  Logout
-                </button>
-              </>
+              <button onClick={() => { logout(); navigate('/'); close(); }}
+                style={{ width:'100%', background:'rgba(224,85,85,.12)', color:'#e05555', border:'1px solid rgba(224,85,85,.25)', borderRadius:12, padding:'14px', fontFamily:'Sora,sans-serif', fontWeight:600, fontSize:15, cursor:'pointer' }}>
+                Logout
+              </button>
             ) : (
-              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                <Link to="/login" onClick={closeMenu} style={{ display:'block', textAlign:'center', padding:'12px', border:'1px solid var(--border)', borderRadius:12, color:'var(--white)', textDecoration:'none', fontWeight:600, fontSize:15 }}>Login</Link>
-                <Link to="/register" onClick={closeMenu} style={{ display:'block', textAlign:'center', padding:'12px', background:'var(--green-hi)', borderRadius:12, color:'#fff', textDecoration:'none', fontWeight:600, fontSize:15 }}>Join Free</Link>
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                <Link to="/login" onClick={close} style={{ display:'block', textAlign:'center', padding:'13px', border:'1px solid var(--border)', borderRadius:12, color:'var(--white)', textDecoration:'none', fontWeight:600, fontSize:15 }}>Login</Link>
+                <Link to="/register" onClick={close} style={{ display:'block', textAlign:'center', padding:'13px', background:'var(--green-hi)', borderRadius:12, color:'#fff', textDecoration:'none', fontWeight:600, fontSize:15 }}>Join Free</Link>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Responsive styles */}
       <style>{`
         @media (max-width: 768px) {
-          .desktop-nav { display: none !important; }
-          .hamburger { display: flex !important; }
+          #desktop-nav  { display: none !important; }
+          #desktop-auth { display: none !important; }
+          #hamburger    { display: flex !important; }
         }
       `}</style>
     </>

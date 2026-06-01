@@ -17,9 +17,20 @@
   --white:     #f0f4ec;
   --muted:     #7a9070;
   --border:    rgba(80,130,50,0.18);
+
+  /* Safe area for notch/status bar */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  /* Push content below the status bar / notch */
+  padding-top: env(safe-area-inset-top, 0px);
+}
 
 body {
   font-family: 'Sora', sans-serif;
@@ -27,14 +38,21 @@ body {
   color: var(--white);
   min-height: 100vh;
   overflow-x: hidden;
+  /* Bottom safe area for home indicator */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* ── Scrollbar ───────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
+/* Scrollbars */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--surface); }
 ::-webkit-scrollbar-thumb { background: var(--green); border-radius: 99px; }
 
-/* ── Utility classes ─────────────────────────────────── */
+/* iOS input zoom prevention */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Utility classes */
 .btn-solid {
   background: var(--green-hi);
   color: #fff;
@@ -43,10 +61,7 @@ body {
   font-weight: 600;
   border-radius: 99px;
   cursor: pointer;
-  transition: all 0.2s;
 }
-.btn-solid:hover { background: var(--green-lt); color: var(--bg); }
-
 .btn-ghost {
   background: rgba(255,255,255,0.07);
   color: var(--white);
@@ -55,177 +70,15 @@ body {
   font-weight: 500;
   border-radius: 99px;
   cursor: pointer;
-  transition: all 0.2s;
 }
-.btn-ghost:hover { background: rgba(255,255,255,0.13); }
+.card-dark { background: var(--card); border: 1px solid var(--border); border-radius: 20px; }
 
-.card-dark {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-}
-
-.status-active   { background: rgba(90,176,48,0.15);  color: var(--green-lt); }
-.status-preorder { background: rgba(212,144,10,0.15); color: var(--amber-lt); }
-.status-low      { background: rgba(224,85,85,0.15);  color: #e05555; }
-
-/* ── RESPONSIVE: fix all pages ───────────────────────── */
-
-/* All pages with 48px padding → 16px on mobile */
-[style*="padding: '36px 48px'"],
-[style*="padding: '40px 48px'"],
-[style*="padding: '48px 56px'"] {
-  padding-left: 16px !important;
-  padding-right: 16px !important;
+/* Pulse skeleton animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }
 
-/* Global page padding override for mobile */
-@media (max-width: 768px) {
-
-  /* Navbar */
-  nav {
-    padding: 0 16px !important;
-    height: 56px !important;
-    flex-wrap: nowrap !important;
-  }
-
-  /* Hide nav links on mobile — show only logo + cart + auth */
-  nav > div:nth-child(2) {
-    display: none !important;
-  }
-
-  /* Reduce auth buttons */
-  nav > div:last-child {
-    gap: 8px !important;
-  }
-
-  /* All inline-styled pages */
-  div[style*="padding: 36px 48px"],
-  div[style*="padding: 40px 48px"],
-  div[style*="padding: 32px 48px"],
-  div[style*="padding: 48px 56px"] {
-    padding: 20px 16px !important;
-  }
-
-  /* Product detail 2-col grid → 1 col */
-  div[style*="gridTemplateColumns: '1fr 420px'"] {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Sticky purchase card — remove sticky on mobile */
-  div[style*="position: 'sticky'"] {
-    position: relative !important;
-    top: 0 !important;
-  }
-
-  /* Farmer/customer profile 2-col grids → 1 col */
-  div[style*="gridTemplateColumns: '1fr 1fr'"] {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Dashboard quick action grid */
-  div[style*="gridTemplateColumns: 'repeat(auto-fill,minmax(220px"] {
-    grid-template-columns: 1fr 1fr !important;
-  }
-
-  /* KPI row — 2 per row on mobile */
-  div[style*="gridTemplateColumns: 'repeat(auto-fill,minmax(200px"] {
-    grid-template-columns: 1fr 1fr !important;
-  }
-
-  /* Product grid */
-  div[style*="gridTemplateColumns: 'repeat(auto-fill,minmax(240px"] {
-    grid-template-columns: 1fr 1fr !important;
-  }
-
-  /* Farmer grid */
-  div[style*="gridTemplateColumns: 'repeat(auto-fill,minmax(280px"] {
-    grid-template-columns: 1fr 1fr !important;
-  }
-
-  /* Chat layout — full screen on mobile */
-  div[style*="gridTemplateColumns: '300px 1fr'"] {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Tables scroll horizontally */
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  /* Banner flex → column */
-  div[style*="display: 'flex'"][style*="gap: 28"] {
-    flex-direction: column !important;
-  }
-
-  /* Order row wrap */
-  div[style*="justifyContent: 'space-between'"][style*="flexWrap: 'wrap'"] {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-  }
-
-  /* Font size adjustments */
-  div[style*="fontSize: 32"],
-  div[style*="fontSize: 28"],
-  h1[style*="fontSize: 32"] {
-    font-size: 22px !important;
-  }
-
-  div[style*="fontSize: 26"] {
-    font-size: 20px !important;
-  }
-
-  /* Product detail image height */
-  div[style*="height: 440"] {
-    height: 260px !important;
-  }
-
-  /* Full width buttons on mobile */
-  div[style*="width: '100%'"] button {
-    width: 100% !important;
-  }
-
-  /* Order modal */
-  div[style*="maxWidth: 460"],
-  div[style*="maxWidth: 440"],
-  div[style*="maxWidth: 420"] {
-    max-width: 100% !important;
-    margin: 16px !important;
-    padding: 24px !important;
-  }
-
-  /* Input fields full width */
-  input, select, textarea {
-    font-size: 16px !important; /* prevents iOS zoom on focus */
-  }
-
-  /* Cart page */
-  div[style*="gap: 16"][style*="alignItems: 'center'"] {
-    flex-wrap: wrap !important;
-  }
-
-  /* Analytics charts */
-  div[style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: 20"] {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* ── Extra small phones (< 380px) ───────────────────── */
-@media (max-width: 380px) {
-  div[style*="gridTemplateColumns: 'repeat(auto-fill,minmax(220px"] {
-    grid-template-columns: 1fr !important;
-  }
-
-  div[style*="gridTemplateColumns: '1fr 1fr'"] {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* ── Mobile bottom safe area (iPhone notch) ─────────── */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  body {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

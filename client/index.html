@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- viewport-fit=cover is critical for notch/safe area support -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>KrishiConnect — Farm Fresh, Direct to You</title>
 
@@ -15,29 +16,27 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
 
     <!-- SEO -->
-    <meta name="description" content="Buy fresh vegetables, fruits, fish and more directly from farmers across Bangladesh. Fair prices, home delivery." />
+    <meta name="description" content="Buy fresh vegetables, fruits, fish and more directly from farmers across Bangladesh." />
 
-    <!-- Icons -->
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-    <!-- Leaflet CSS -->
+    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-
-    <!-- Register Service Worker -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW registered:', reg.scope))
-            .catch(err => console.log('SW failed:', err));
+            .then(r => console.log('SW registered'))
+            .catch(e => console.log('SW failed:', e));
         });
       }
     </script>
