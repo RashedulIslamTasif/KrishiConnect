@@ -132,13 +132,13 @@ const seed = async () => {
       name: 'Fresh Tomato', category: 'vegetables', price: 45, unit: 'kg', stock: 100,
       marketPrice: 70, description: 'Organically grown, no pesticides used.',
       farmer: farmers[0]._id,
-      images: ['https://images.unsplash.com/photo-1546094096-0df4bcaad337?w=400&q=70'],
+      images: ['https://images.unsplash.com/photo-1582284540020-8acbe03f4924?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZnJlc2glMjB0b21hdG98ZW58MHx8MHx8fDA%3D'],
     },
     {
       name: 'Red Potato', category: 'vegetables', price: 28, unit: 'kg', stock: 200,
       marketPrice: 40, description: 'Fresh from Manikganj fields.',
       farmer: farmers[0]._id,
-      images: ['https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&q=70'],
+      images: ['https://images.unsplash.com/photo-1741517628573-622881235f18?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cmVkJTIwcG90YXRvfGVufDB8fDB8fHww'],
     },
     {
       name: 'Spinach (Palak)', category: 'vegetables', price: 15, unit: 'bundle', stock: 50,
@@ -156,13 +156,13 @@ const seed = async () => {
       name: 'Green Brinjal', category: 'vegetables', price: 30, unit: 'kg', stock: 60,
       marketPrice: 50, description: 'Tender brinjal from Comilla.',
       farmer: farmers[5]._id,
-      images: ['https://images.unsplash.com/photo-1639363567591-f0e7571f6e9e?w=400&q=70'],
+      images: ['https://images.unsplash.com/photo-1639363567591-f0e7571f6e9e?w=400&q=70https://images.unsplash.com/photo-1650261455068-5d67d00feac9?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fEdyZWVuJTIwQnJpbmphbHxlbnwwfHwwfHx8MA%3D%3D'],
     },
     {
       name: 'Bitter Gourd (Korola)', category: 'vegetables', price: 40, unit: 'kg', stock: 45,
       marketPrice: 60, description: 'Fresh bitter gourd, great for health.',
       farmer: farmers[11]._id,
-      images: ['https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=400&q=70'],
+      images: ['https://media.istockphoto.com/id/1272383767/photo/heap-of-fresh-green-bitter-gourd-vegetables-in-a-wicker-basket-for-selling-on-the-market.webp?a=1&b=1&s=612x612&w=0&k=20&c=wPFApTJtr-zoMXNiD_H9mj4DBRP3jrom4C9tFxYd_ks='],
     },
     {
       name: 'Sweet Pumpkin', category: 'vegetables', price: 22, unit: 'kg', stock: 90,
@@ -174,7 +174,7 @@ const seed = async () => {
       name: 'Green Chili', category: 'vegetables', price: 80, unit: 'kg', stock: 30,
       marketPrice: 120, description: 'Hot and fresh green chili.',
       farmer: farmers[9]._id,
-      images: ['https://images.unsplash.com/photo-1588252303782-cb80119abd6d?w=400&q=70'],
+      images: ['https://images.unsplash.com/photo-1524593410820-38510f580a77?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Z3JlZW4lMjBjaGlsb3xsZW58MHx8MHx8fDA%3D%3D'],
     },
     {
       name: 'Garlic', category: 'vegetables', price: 150, unit: 'kg', stock: 40,
@@ -205,7 +205,7 @@ const seed = async () => {
       name: 'Green Banana', category: 'fruits', price: 30, unit: 'dozen', stock: 40,
       marketPrice: 50, description: 'Fresh green bananas.',
       farmer: farmers[1]._id,
-      images: ['https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=400&q=70'],
+      images: ['https://images.unsplash.com/photo-1620036924477-c3d6e9ce36fc?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Z3JlZW4lMjBiYW5hbmF8ZW58MHx8MHx8fDA%3D'],
     },
     {
       name: 'Guava (Peyara)', category: 'fruits', price: 60, unit: 'kg', stock: 35,
@@ -311,7 +311,7 @@ const seed = async () => {
       name: 'Deshi Ghee', category: 'dairy', price: 900, unit: 'kg', stock: 8,
       marketPrice: 1300, description: 'Pure clarified butter made from cow milk.',
       farmer: farmers[7]._id,
-      images: ['https://images.unsplash.com/photo-1559598467-f8b76c8155d0?w=400&q=70'],
+      images: ['https://media.istockphoto.com/id/857450176/photo/ghee-or-clarified-butter-close-up-in-wooden-bowl-and-silver-spoon-selective-focus.webp?a=1&b=1&s=612x612&w=0&k=20&c=n60RJg4OCMTlp8WtjSNFecj0grJswbBYZYLRRFoQgn4='],
     },
   ]);
   console.log(`Created ${products.length} products`);
