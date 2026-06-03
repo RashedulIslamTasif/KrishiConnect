@@ -147,7 +147,7 @@ export default function Marketplace() {
             <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(7, 1fr)', gap: isMobile ? 10 : 14 }}>
               {CATS.map(cat => (
                 <div key={cat.key} onClick={() => handleCategoryClick(cat.key)}
-                  style={{ background: activeCategory === cat.key ? cat.bg : 'var(--card)', border: `2px solid ${activeCategory === cat.key ? cat.color : 'var(--border)'}`, borderRadius: isMobile ? 14 : 16, padding: isMobile ? '12px 8px' : '18px 12px', textAlign:'center', cursor:'pointer', transition:'all .2s', overflow:'hidden', position:'relative', minHeight: isMobile ? 70 : 90 }}>
+                  style={{ background: activeCategory === cat.key ? cat.bg : 'var(--card)', border: `2px solid ${activeCategory === cat.key ? cat.color : 'var(--border)'}`, borderRadius: isMobile ? 14 : 16, padding: isMobile ? '14px 8px' : '20px 12px', textAlign:'center', cursor:'pointer', transition:'all .2s', overflow:'hidden', position:'relative', minHeight: isMobile ? 64 : 80 }}>
                   <div style={{ position:'absolute', inset:0, backgroundImage:`url(${cat.img})`, backgroundSize:'cover', backgroundPosition:'center', opacity: activeCategory === cat.key ? 0.25 : 0.12, borderRadius: isMobile ? 12 : 14 }} />
                   <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}>
                     <div style={{ fontSize: isMobile ? 11 : 13, fontWeight:600, color: activeCategory === cat.key ? cat.color : 'var(--white)', lineHeight:1.3 }}>{cat.label}</div>
@@ -199,7 +199,7 @@ export default function Marketplace() {
           </div>
         )}
 
-        {/* All sections (home view) */}
+        {/* All sections home view */}
         {!activeCategory && !searchResults && (
           <div>
             {loading ? (
