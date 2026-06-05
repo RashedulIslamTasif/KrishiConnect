@@ -1,0 +1,1540 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+The content has been processed where content has been compressed (code blocks are separated by ⋮---- delimiter).
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Content has been compressed - code blocks are separated by ⋮---- delimiter
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+client/client.gitignore
+client/index.html
+client/package.json
+client/postcss.config.js
+client/public/icons/icon-192.png
+client/public/icons/icon-512.png
+client/public/manifest.json
+client/public/sw.js
+client/src/api/axios.js
+client/src/App.jsx
+client/src/components/CouponInput.jsx
+client/src/components/Navbar.jsx
+client/src/components/NotificationBell.jsx
+client/src/components/ProductCard.jsx
+client/src/components/Recommendations.jsx
+client/src/context/AuthContext.jsx
+client/src/context/CartContext.jsx
+client/src/hooks/useResponsive.js
+client/src/hooks/useSocket.js
+client/src/index.css
+client/src/main.jsx
+client/src/pages/Cart.jsx
+client/src/pages/Chat.jsx
+client/src/pages/CustomerProfile.jsx
+client/src/pages/farmer/AddProduct.jsx
+client/src/pages/farmer/AnalyticsDashboard.jsx
+client/src/pages/farmer/Dashboard.jsx
+client/src/pages/farmer/EditProduct.jsx
+client/src/pages/farmer/FarmerAccountProfile.jsx
+client/src/pages/farmer/FarmerOrders.jsx
+client/src/pages/farmer/MyProducts.jsx
+client/src/pages/FarmerMap.jsx
+client/src/pages/FarmerProfile.jsx
+client/src/pages/Home.jsx
+client/src/pages/Login.jsx
+client/src/pages/Marketplace.jsx
+client/src/pages/MyOrders.jsx
+client/src/pages/OrderTracking.jsx
+client/src/pages/ProductDetail.jsx
+client/src/pages/Register.jsx
+client/src/routes/PrivateRoute.jsx
+client/tailwind.config.js
+client/vercel.json
+client/vite.config.js
+NEW_FEATURES_SETUP.md
+package.json
+server/config/db.js
+server/controllers/analyticsController.js
+server/controllers/authController.js
+server/controllers/chatController.js
+server/controllers/couponController.js
+server/controllers/notificationController.js
+server/controllers/orderController.js
+server/controllers/priceController.js
+server/controllers/productController.js
+server/controllers/reviewController.js
+server/middleware/authorizeRole.js
+server/middleware/protect.js
+server/models/Conversation.js
+server/models/Coupon.js
+server/models/Message.js
+server/models/Notification.js
+server/models/Order.js
+server/models/PriceHistory.js
+server/models/Product.js
+server/models/Review.js
+server/models/User.js
+server/package.json
+server/render.yaml
+server/routes/analyticsRoutes.js
+server/routes/authRoutes.js
+server/routes/chatRoutes.js
+server/routes/couponRoutes.js
+server/routes/notificationRoutes.js
+server/routes/orderRoutes.js
+server/routes/priceRoutes.js
+server/routes/productRoutes.js
+server/routes/reviewRoutes.js
+server/seed.js
+server/server.gitignore
+server/server.js
+server/utils/cloudinary.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="client/client.gitignore">
+node_modules/
+dist/
+.env
+.DS_Store
+*.log
+</file>
+
+<file path="client/package.json">
+{
+  "name": "krishiconnect-client",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "framer-motion": "^11.2.10",
+    "leaflet": "^1.9.4",
+    "qrcode.react": "^3.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-leaflet": "^4.2.1",
+    "react-router-dom": "^6.24.0",
+    "recharts": "^2.12.7",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.4",
+    "vite": "^5.3.1"
+  }
+}
+</file>
+
+<file path="client/postcss.config.js">
+
+</file>
+
+<file path="client/public/manifest.json">
+{
+  "name": "KrishiConnect — Farm Fresh, Direct to You",
+  "short_name": "KrishiConnect",
+  "description": "Buy fresh produce directly from farmers across Bangladesh",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f08",
+  "theme_color": "#5ab030",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "categories": ["food", "shopping", "lifestyle"],
+  "lang": "en-BD"
+}
+</file>
+
+<file path="client/public/sw.js">
+// Install: cache static assets
+⋮----
+// Activate: clean old caches
+⋮----
+// Fetch: network first, fallback to cache
+⋮----
+// Skip API calls and non-GET requests
+⋮----
+// Cache successful responses
+</file>
+
+<file path="client/src/context/AuthContext.jsx">
+export const AuthProvider = (
+⋮----
+const [loading, setLoading] = useState(true); // true while checking localStorage
+⋮----
+// On app load, restore user from localStorage
+⋮----
+// ── Login ──────────────────────────────────────────────────
+const login = async (email, password) =>
+⋮----
+// ── Register ───────────────────────────────────────────────
+const register = async (formData) =>
+⋮----
+// ── Logout ─────────────────────────────────────────────────
+const logout = () =>
+⋮----
+// ── Refresh user from server ───────────────────────────────
+const refreshUser = async () =>
+⋮----
+// Custom hook for easy access
+export const useAuth = () =>
+</file>
+
+<file path="client/src/hooks/useResponsive.js">
+export function useResponsive()
+⋮----
+const handler = ()
+</file>
+
+<file path="client/src/hooks/useSocket.js">
+export const useSocket = () =>
+⋮----
+// Don't disconnect on component unmount — keep alive for notifications
+</file>
+
+<file path="client/src/routes/PrivateRoute.jsx">
+// Requires user to be logged in
+export const PrivateRoute = () =>
+⋮----
+// Requires user to be a farmer
+export const FarmerRoute = () =>
+</file>
+
+<file path="client/tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+</file>
+
+<file path="client/vercel.json">
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+</file>
+
+<file path="NEW_FEATURES_SETUP.md">
+# KrishiConnect — New Features Setup Guide
+
+## New packages to install
+
+### SERVER (run inside /server)
+npm install socket.io
+
+### CLIENT (run inside /client)
+npm install socket.io-client qrcode.react
+
+---
+
+## New files added
+
+### Backend (server/)
+| File | Purpose |
+|------|---------|
+| models/Message.js        | Chat messages |
+| models/Conversation.js   | Chat threads |
+| models/Notification.js   | All notifications |
+| models/Coupon.js         | Discount codes |
+| controllers/chatController.js         | Chat API logic |
+| controllers/notificationController.js | Notification API |
+| controllers/couponController.js       | Coupon validate/apply |
+| controllers/analyticsController.js    | Analytics + Recommendations |
+| routes/chatRoutes.js          | /api/chat/* |
+| routes/notificationRoutes.js  | /api/notifications/* |
+| routes/couponRoutes.js        | /api/coupons/* |
+| routes/analyticsRoutes.js     | /api/analytics/* |
+| server.js (REPLACED)          | Now includes Socket.io |
+
+### Frontend (client/src/)
+| File | Purpose |
+|------|---------|
+| hooks/useSocket.js                       | Socket.io hook |
+| pages/Chat.jsx                           | Full real-time chat UI |
+| pages/OrderTracking.jsx                  | Visual tracking timeline |
+| pages/farmer/AnalyticsDashboard.jsx      | Sales charts + KPIs |
+| components/NotificationBell.jsx          | Drop-in bell with badge |
+| components/CouponInput.jsx               | Coupon field for checkout |
+| components/Recommendations.jsx           | Smart product recommendations |
+| App.jsx (REPLACED)                       | All new routes added |
+| components/Navbar.jsx (REPLACED)         | Bell + new links added |
+
+---
+
+## API Endpoints added
+
+### Chat
+- GET  /api/chat/conversations          — list all my conversations
+- POST /api/chat/start                  — start/get a conversation
+- GET  /api/chat/unread                 — unread message count
+- GET  /api/chat/:id/messages           — get messages in a conversation
+- POST /api/chat/:id/messages           — send a message
+
+### Notifications
+- GET  /api/notifications               — get all my notifications
+- GET  /api/notifications/unread-count  — unread count
+- PUT  /api/notifications/read-all      — mark all as read
+- PUT  /api/notifications/:id/read      — mark one as read
+
+### Coupons
+- POST /api/coupons/validate            — check if coupon is valid
+- POST /api/coupons/apply               — mark coupon as used
+- POST /api/coupons                     — create a coupon (farmer/admin)
+- GET  /api/coupons/mine               — list my coupons
+- DELETE /api/coupons/:id              — delete a coupon
+
+### Analytics
+- GET  /api/analytics/farmer                  — full farmer dashboard data
+- GET  /api/analytics/recommendations/:userId — smart recommendations
+
+---
+
+## Socket.io events
+
+| Event | Direction | Description |
+|-------|-----------|-------------|
+| join               | Client → Server | User joins their personal room |
+| join_conversation  | Client → Server | Join a chat room |
+| typing             | Client → Server | User is typing |
+| stop_typing        | Client → Server | User stopped typing |
+| new_message        | Server → Client | New chat message received |
+| notification       | Server → Client | New notification pushed |
+
+---
+
+## How to use CouponInput in checkout
+
+```jsx
+import CouponInput from '../components/CouponInput';
+
+// Inside your checkout component:
+const [discount, setDiscount] = useState(0);
+
+<CouponInput
+  orderAmount={cartTotal}
+  onApply={({ discount, finalAmount, code }) => {
+    setDiscount(discount);
+    setCouponCode(code);
+  }}
+  onRemove={() => setDiscount(0)}
+/>
+
+<div>Final: ৳{cartTotal - discount}</div>
+```
+
+## How to use Recommendations
+
+```jsx
+import Recommendations from '../components/Recommendations';
+import { useAuth } from '../context/AuthContext';
+
+const { user } = useAuth();
+
+// Drop anywhere on home or marketplace:
+<Recommendations userId={user?._id} />
+```
+
+## Sample coupon codes to seed
+
+Add these manually or in seed.js:
+- KRISHI20 → 20% off (min order ৳200)
+- WELCOME50 → ৳50 flat off
+- FRESH10 → 10% off
+
+---
+
+## Order Status Flow (updated)
+pending → confirmed → harvested → out_for_delivery → delivered → cancelled
+
+Each status change:
+1. Updates order.statusHistory array
+2. Sends notification to customer via Socket.io
+3. Notification appears in their bell instantly
+</file>
+
+<file path="package.json">
+{
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
+}
+</file>
+
+<file path="server/config/db.js">
+const connectDB = async () =>
+⋮----
+process.exit(1); // Exit process with failure
+</file>
+
+<file path="server/controllers/analyticsController.js">
+// GET /api/analytics/farmer — full analytics for a farmer's dashboard
+⋮----
+// ── Revenue by month (last 6 months) ────────────────────────
+⋮----
+// ── Top selling products ─────────────────────────────────────
+⋮----
+// ── Orders by status ─────────────────────────────────────────
+⋮----
+// ── KPIs ─────────────────────────────────────────────────────
+⋮----
+// ── Unique customers ─────────────────────────────────────────
+⋮----
+// ── Weekly orders (last 8 weeks) ─────────────────────────────
+⋮----
+// GET /api/analytics/recommendations/:userId — smart recommendations
+⋮----
+// 1. Get categories the user has ordered before
+⋮----
+// 2. Get categories of those products
+⋮----
+// 3. Find products in same categories, not already ordered, with high rating
+⋮----
+// 4. If not enough, fill with top-rated products
+</file>
+
+<file path="server/controllers/chatController.js">
+// GET /api/chat/conversations — get all my conversations
+⋮----
+// POST /api/chat/start — start or get existing conversation
+⋮----
+// GET /api/chat/:conversationId/messages
+⋮----
+// Verify user is a participant
+⋮----
+// Mark messages as read
+⋮----
+// POST /api/chat/:conversationId/messages
+⋮----
+// Update conversation lastMessage
+⋮----
+// Notify the other participant
+⋮----
+// Emit socket event if available
+⋮----
+// GET /api/chat/unread — unread message count
+</file>
+
+<file path="server/controllers/couponController.js">
+// POST /api/coupons/validate — customer validates a coupon before checkout
+⋮----
+// POST /api/coupons/apply — called when order is placed, marks coupon as used
+⋮----
+// POST /api/coupons — admin/farmer creates a coupon
+⋮----
+// GET /api/coupons — farmer/admin sees their coupons
+⋮----
+// DELETE /api/coupons/:id
+</file>
+
+<file path="server/controllers/notificationController.js">
+// GET /api/notifications — get my notifications
+⋮----
+// GET /api/notifications/unread-count
+⋮----
+// PUT /api/notifications/:id/read
+⋮----
+// PUT /api/notifications/read-all
+⋮----
+// Helper: create notification from anywhere in the app
+const createNotification = async (
+</file>
+
+<file path="server/controllers/orderController.js">
+// ── POST /api/orders ─────────────────────────────────────────
+// Customer places an order
+⋮----
+// Calculate total and build order items
+⋮----
+// Deduct stock (only for immediate orders, not pre-orders)
+⋮----
+// ── GET /api/orders/my ───────────────────────────────────────
+// Customer sees their own orders
+⋮----
+// ── GET /api/orders/farmer ───────────────────────────────────
+// Farmer sees orders they received
+⋮----
+// ── GET /api/orders/:id ──────────────────────────────────────
+⋮----
+// Only the customer or farmer of this order can view it
+⋮----
+// ── PUT /api/orders/:id/status ───────────────────────────────
+// Farmer updates order status
+</file>
+
+<file path="server/controllers/priceController.js">
+// ── GET /api/prices/:productName ─────────────────────────────
+// Returns last 8 price records for a product — used in the Recharts graph
+⋮----
+// Reverse so oldest is first (for the chart x-axis)
+⋮----
+// ── POST /api/prices ─────────────────────────────────────────
+// Farmer records their price vs market price today
+⋮----
+// ── GET /api/prices/all ──────────────────────────────────────
+// Get the latest price entry per product (for overview table)
+</file>
+
+<file path="server/middleware/authorizeRole.js">
+// Usage: router.get('/route', protect, authorizeRole('farmer'), handler)
+// Usage: router.get('/route', protect, authorizeRole('admin', 'farmer'), handler)
+⋮----
+const authorizeRole = (...roles) =>
+</file>
+
+<file path="server/middleware/protect.js">
+const protect = async (req, res, next) =>
+⋮----
+// Expect token in Authorization header: "Bearer <token>"
+⋮----
+// Verify token
+⋮----
+// Attach user to request (excluding password)
+</file>
+
+<file path="server/models/Conversation.js">
+product:      { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }, // context product
+⋮----
+// Ensure only one conversation between two users per product
+</file>
+
+<file path="server/models/Coupon.js">
+value:      { type: Number, required: true },           // 20 => 20% off OR ৳20 off
+minOrder:   { type: Number, default: 0 },               // minimum order amount
+⋮----
+createdBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // admin/farmer
+</file>
+
+<file path="server/models/Message.js">
+
+</file>
+
+<file path="server/models/Notification.js">
+link:    { type: String, default: '' },   // e.g. /orders/abc123
+⋮----
+meta:    { type: mongoose.Schema.Types.Mixed }, // extra data
+</file>
+
+<file path="server/models/Order.js">
+// Order status flow:
+// pending → confirmed → harvested → out_for_delivery → delivered → cancelled
+⋮----
+// Delivery info
+⋮----
+// Payment (simplified — no real payment gateway for college project)
+⋮----
+// QR code data (base64 string generated on frontend)
+⋮----
+// Status history for timeline view
+</file>
+
+<file path="server/models/PriceHistory.js">
+// Product name used as key (e.g. "tomato", "potato")
+⋮----
+// Optional: link to specific farmer for granular tracking
+</file>
+
+<file path="server/models/Product.js">
+images: [{ type: String }], // Array of Cloudinary URLs
+⋮----
+// The farmer who owns this product
+⋮----
+// Pre-order: if harvest date is in the future, it's a pre-orderable item
+⋮----
+// Market price for comparison (populated from PriceHistory)
+⋮----
+// Rating cache
+⋮----
+// Virtual: is this a pre-order item?
+⋮----
+// Virtual: savings percentage vs market price
+</file>
+
+<file path="server/models/Review.js">
+// One review per order per customer
+⋮----
+// After saving a review, update the farmer's avgRating
+</file>
+
+<file path="server/models/User.js">
+select: false, // Never return password in queries by default
+⋮----
+// Location — used for map view
+⋮----
+lat:      { type: Number, default: 23.8103 }, // Default: Dhaka
+⋮----
+// Farmer-specific fields
+⋮----
+farmSize:    { type: String, default: '' }, // e.g. "2 acres"
+isVerified:  { type: Boolean, default: false }, // Admin toggles this
+⋮----
+// Rating (calculated from reviews, stored here for quick access)
+⋮----
+// ── Hash password before saving ──────────────────────────────
+⋮----
+// ── Compare entered password with hashed password ────────────
+</file>
+
+<file path="server/package.json">
+{
+  "name": "krishiconnect-server",
+  "version": "1.0.0",
+  "description": "KrishiConnect backend API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-async-handler": "^1.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.2.0",
+    "mongoose": "^8.4.1",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
+</file>
+
+<file path="server/render.yaml">
+services:
+  - type: web
+    name: krishiconnect-api
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+</file>
+
+<file path="server/routes/analyticsRoutes.js">
+
+</file>
+
+<file path="server/routes/chatRoutes.js">
+
+</file>
+
+<file path="server/routes/couponRoutes.js">
+
+</file>
+
+<file path="server/routes/notificationRoutes.js">
+
+</file>
+
+<file path="server/routes/orderRoutes.js">
+
+</file>
+
+<file path="server/routes/priceRoutes.js">
+
+</file>
+
+<file path="server/routes/productRoutes.js">
+// Public
+⋮----
+// Farmer only
+</file>
+
+<file path="server/server.gitignore">
+node_modules/
+.env
+*.log
+</file>
+
+<file path="server/utils/cloudinary.js">
+// cloudinary v1 config syntax (compatible with multer-storage-cloudinary@4)
+</file>
+
+<file path=".gitignore">
+node_modules/
+.env
+dist/
+.DS_Store
+*.log
+</file>
+
+<file path="client/src/api/axios.js">
+// Attach JWT token to every request
+⋮----
+// Handle 401 globally
+</file>
+
+<file path="client/src/components/CouponInput.jsx">
+/**
+ * CouponInput — drop this into your checkout page
+ *
+ * Props:
+ *   orderAmount   (number)   — current cart total
+ *   onApply       (fn)       — called with { discount, finalAmount, code } when valid
+ *   onRemove      (fn)       — called when coupon is removed
+ */
+export default function CouponInput(
+⋮----
+const [result,   setResult]   = useState(null);   // { discount, finalAmount, message, code }
+⋮----
+const handleValidate = async () =>
+⋮----
+const handleRemove = () =>
+</file>
+
+<file path="client/src/components/NotificationBell.jsx">
+export default function NotificationBell()
+⋮----
+// Real-time: listen for new notifications via socket
+⋮----
+const handler = (notif) =>
+⋮----
+// Close dropdown on outside click
+⋮----
+const fetchCount = async () =>
+⋮----
+const fetchNotifications = async () =>
+⋮----
+const handleClick = async (notif) =>
+⋮----
+const markAll = async () =>
+⋮----
+const formatTime = (date) =>
+⋮----
+{/* Bell button */}
+⋮----
+{/* Dropdown */}
+⋮----
+{/* Header */}
+⋮----
+{/* List */}
+</file>
+
+<file path="client/src/components/Recommendations.jsx">
+/**
+ * Recommendations — drop into Home or Marketplace
+ * Props: userId (string)
+ */
+export default function Recommendations(
+⋮----
+{/* Header */}
+⋮----
+{/* Grid */}
+</file>
+
+<file path="client/src/context/CartContext.jsx">
+export const CartProvider = (
+⋮----
+// Load correct cart when user changes (login/logout)
+⋮----
+// Save cart to localStorage whenever it changes
+⋮----
+const addToCart = (product, qty = 1) =>
+⋮----
+const removeFromCart = (productId) =>
+⋮----
+const updateQty = (productId, qty) =>
+⋮----
+const clearCart = ()
+⋮----
+export const useCart = () =>
+</file>
+
+<file path="client/src/main.jsx">
+
+</file>
+
+<file path="client/src/pages/Cart.jsx">
+function CheckoutModal(
+⋮----
+export default function Cart()
+⋮----
+const placeOrder = async (
+⋮----
+{/* Header */}
+⋮----
+{/* Items */}
+⋮----
+{/* Summary */}
+</file>
+
+<file path="client/src/pages/CustomerProfile.jsx">
+badge:    (status) =>
+⋮----
+export default function CustomerProfile()
+⋮----
+const handleSave = async () =>
+⋮----
+const handlePasswordChange = async () =>
+⋮----
+{/* Top card */}
+⋮----
+{/* Stats */}
+⋮----
+{/* Edit Profile */}
+⋮----
+{/* Recent Orders */}
+⋮----
+{/* Change Password */}
+</file>
+
+<file path="client/src/pages/farmer/AnalyticsDashboard.jsx">
+/* shared styles */
+⋮----
+const customTooltip = (
+⋮----
+function KPICard(
+⋮----
+function ChartCard(
+⋮----
+export default function AnalyticsDashboard()
+⋮----
+{/* Header */}
+⋮----
+{/* KPI Grid — 2 cols on mobile, 3 on desktop */}
+⋮----
+{/* Revenue chart */}
+⋮----
+{/* Orders by status pie */}
+⋮----
+{/* Weekly trend */}
+⋮----
+{/* Top products */}
+⋮----
+{/* Desktop layout override */}
+</file>
+
+<file path="client/src/pages/farmer/FarmerAccountProfile.jsx">
+export default function FarmerAccountProfile()
+⋮----
+// Load analytics stats
+⋮----
+// Load recent orders
+⋮----
+const handleSave = async () =>
+⋮----
+const handlePasswordChange = async () =>
+⋮----
+const hc = e => setForm(f => (
+⋮----
+{/* Top card */}
+⋮----
+{/* Stats */}
+⋮----
+{/* Quick actions */}
+⋮----
+{/* Edit profile */}
+⋮----
+{/* Recent orders received */}
+⋮----
+{/* Change password */}
+</file>
+
+<file path="client/src/pages/FarmerProfile.jsx">
+export default function FarmerProfile()
+⋮----
+const handleMessage = async () =>
+</file>
+
+<file path="client/src/pages/Login.jsx">
+export default function Login()
+⋮----
+const handleSubmit = async () =>
+⋮----
+const inputStyle = (field) => (
+⋮----
+{/* Left image panel (desktop) */}
+⋮----
+{/* Right form */}
+⋮----
+{/* Logo */}
+</file>
+
+<file path="client/src/pages/OrderTracking.jsx">
+export default function OrderTracking()
+⋮----
+{/* Header */}
+⋮----
+{/* Timeline */}
+⋮----
+{/* Vertical line */}
+⋮----
+{/* Progress line */}
+⋮----
+{/* Circle */}
+⋮----
+{/* Text */}
+⋮----
+{/* Order items */}
+⋮----
+{/* Right side */}
+⋮----
+{/* QR Code */}
+⋮----
+{/* Farmer info */}
+⋮----
+{/* Delivery info */}
+</file>
+
+<file path="client/src/pages/Register.jsx">
+export default function Register()
+⋮----
+const handleChange = e => setForm(f => (
+⋮----
+const handleSubmit = async () =>
+⋮----
+const inputStyle = (field) => (
+⋮----
+{/* Role selector */}
+</file>
+
+<file path="client/vite.config.js">
+
+</file>
+
+<file path="server/controllers/authController.js">
+const generateToken = (id) => jwt.sign(
+</file>
+
+<file path="server/controllers/reviewController.js">
+// POST /api/reviews
+⋮----
+// GET /api/reviews/my
+⋮----
+// GET /api/reviews/product/:productId  ← reviews for a specific product
+⋮----
+// GET /api/reviews/farmer/:farmerId
+</file>
+
+<file path="server/routes/authRoutes.js">
+
+</file>
+
+<file path="server/routes/reviewRoutes.js">
+
+</file>
+
+<file path="server/seed.js">
+/**
+ * seed.js — Run with: node seed.js (inside /server folder)
+ */
+⋮----
+const seed = async () =>
+⋮----
+// ── 13 Farmers ──────────────────────────────────────────────
+⋮----
+// ── 12 Customers ────────────────────────────────────────────
+⋮----
+// ── 30 Products ─────────────────────────────────────────────
+⋮----
+// Vegetables
+⋮----
+// Fruits
+⋮----
+// Fish
+⋮----
+// Poultry
+⋮----
+// Grains
+⋮----
+// Spices & Dairy
+⋮----
+// ── Price History ────────────────────────────────────────────
+⋮----
+// ── Orders ───────────────────────────────────────────────────
+⋮----
+// ── Reviews ──────────────────────────────────────────────────
+</file>
+
+<file path="server/server.js">
+/^https:\/\/.*\.vercel\.app$/,       // all Vercel deployments
+/^https:\/\/.*\.onrender\.com$/,     // Render frontend if needed
+process.env.FRONTEND_URL,            // custom domain if set
+⋮----
+origin: (origin, callback) =>
+</file>
+
+<file path="client/index.html">
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover is critical for notch/safe area support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>KrishiConnect — Farm Fresh, Direct to You</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#5ab030" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="KrishiConnect" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+    <!-- SEO -->
+    <meta name="description" content="Buy fresh vegetables, fruits, fish and more directly from farmers across Bangladesh." />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(r => console.log('SW registered'))
+            .catch(e => console.log('SW failed:', e));
+        });
+      }
+    </script>
+  </body>
+</html>
+</file>
+
+<file path="client/src/components/ProductCard.jsx">
+export default function ProductCard(
+⋮----
+{/* Image */}
+⋮----
+{/* Info */}
+</file>
+
+<file path="client/src/pages/farmer/AddProduct.jsx">
+/* ── Step indicator ── */
+function StepDot(
+⋮----
+/* ── Photo picker bottom sheet ── */
+function PhotoSheet(
+⋮----
+/* ── Section card wrapper ── */
+function Card(
+⋮----
+/* ── Field label ── */
+function Label(
+⋮----
+const inputStyle = (focus, field) => (
+⋮----
+export default function AddProduct()
+⋮----
+const [step,    setStep]    = useState(1); // 1=photo+name, 2=pricing, 3=review
+⋮----
+const handleChange = e => setForm(f => (
+⋮----
+const pickFile = (e) =>
+⋮----
+const handleSubmit = async () =>
+⋮----
+/* ── Success screen ── */
+⋮----
+{/* Hidden file inputs */}
+⋮----
+{/* ── Top header bar ── */}
+⋮----
+{/* Step dots */}
+⋮----
+{/* ══════════ STEP 1 ══════════ */}
+⋮----
+{/* Photo card */}
+⋮----
+{/* Edit overlay */}
+⋮----
+{/* Mini action pills */}
+⋮----
+{/* Product info card */}
+⋮----
+{/* Category card */}
+⋮----
+{/* ══════════ STEP 2 ══════════ */}
+⋮----
+{/* Live savings preview */}
+⋮----
+{/* Quick stock presets */}
+⋮----
+{/* ══════════ STEP 3 — REVIEW ══════════ */}
+⋮----
+{/* Preview card */}
+⋮----
+{/* Edit shortcuts */}
+</file>
+
+<file path="client/src/pages/farmer/MyProducts.jsx">
+export default function MyProducts()
+⋮----
+const fetchProducts = () =>
+⋮----
+const handleDelete = async id => {
+    if (!window.confirm('Delete this product?')) return;
+</file>
+
+<file path="client/src/pages/FarmerMap.jsx">
+export default function FarmerMap()
+</file>
+
+<file path="server/controllers/productController.js">
+// Price range filter
+⋮----
+// Location filter (post-query, since location is on the populated farmer)
+⋮----
+// Accept images from Cloudinary upload OR from URL strings in body
+⋮----
+// Accept images from file upload OR URL in body
+</file>
+
+<file path="client/src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+⋮----
+:root {
+⋮----
+/* Light theme inspired by the Dribbble design */
+⋮----
+/* Safe area for notch/status bar */
+⋮----
+* { box-sizing: border-box; margin: 0; padding: 0; }
+⋮----
+html {
+⋮----
+body {
+⋮----
+/* Scrollbars */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--card2); }
+::-webkit-scrollbar-thumb { background: var(--green-mid); border-radius: 99px; }
+⋮----
+input, select, textarea {
+⋮----
+/* ── Utility classes ── */
+.btn-solid {
+.btn-ghost {
+.card-light {
+⋮----
+/* Skeleton pulse */
+⋮----
+/* ── Entrance animations ── */
+⋮----
+.anim-fade-up  { animation: fadeUp .45s cubic-bezier(.22,1,.36,1) both; }
+.anim-fade-in  { animation: fadeIn .35s ease both; }
+.anim-scale-in { animation: scaleIn .35s cubic-bezier(.22,1,.36,1) both; }
+⋮----
+/* Stagger helpers */
+.delay-1  { animation-delay: .05s; }
+.delay-2  { animation-delay: .10s; }
+.delay-3  { animation-delay: .15s; }
+.delay-4  { animation-delay: .20s; }
+.delay-5  { animation-delay: .25s; }
+.delay-6  { animation-delay: .30s; }
+.delay-7  { animation-delay: .35s; }
+.delay-8  { animation-delay: .40s; }
+⋮----
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+⋮----
+/* ── Card hover lift ── */
+.card-hover {
+.card-hover:hover {
+⋮----
+/* ── Shimmer skeleton ── */
+.skeleton {
+⋮----
+/* ── Global responsive fixes ── */
+⋮----
+.analytics-kpi { grid-template-columns: repeat(3, 1fr) !important; }
+.form-row-2     { grid-template-columns: repeat(2, 1fr) !important; }
+⋮----
+.analytics-page { padding: 40px 64px !important; max-width: 1100px; margin: 0 auto; }
+.profile-page   { max-width: 860px; margin: 0 auto; }
+⋮----
+/* ── Ensure all page backgrounds are light ── */
+#root > div,
+⋮----
+/* ── Input/select global focus ring ── */
+input:focus, select:focus, textarea:focus {
+⋮----
+/* ── Responsive grid helpers ── */
+⋮----
+.form-row-2 { grid-template-columns: 1fr !important; }
+.hide-mobile { display: none !important; }
+⋮----
+.show-mobile-only { display: none !important; }
+⋮----
+/* ── Button base hover ── */
+button:not(:disabled):active {
+⋮----
+/* ── Link cards ── */
+a.card-link {
+⋮----
+/* ── Page max-width container ── */
+.page-container {
+⋮----
+.page-container { padding: 0 16px; }
+</file>
+
+<file path="client/src/pages/farmer/Dashboard.jsx">
+export default function Dashboard()
+⋮----
+{/* Hero header */}
+⋮----
+{/* decorative circles */}
+⋮----
+{/* KPI strip */}
+⋮----
+{/* Quick actions */}
+⋮----
+{/* Farm tip card */}
+</file>
+
+<file path="client/src/pages/farmer/EditProduct.jsx">
+export default function EditProduct()
+⋮----
+const handleChange = e => setForm(f => (
+⋮----
+const handleImagePick = (e) =>
+⋮----
+const handleSubmit = async () =>
+</file>
+
+<file path="client/src/pages/farmer/FarmerOrders.jsx">
+export default function FarmerOrders()
+⋮----
+const updateStatus = async (id, status) =>
+</file>
+
+<file path="client/src/pages/Home.jsx">
+/* ── Animated counter ── */
+function Counter(
+⋮----
+/* ── HomeProductCard ── */
+function HomeProductCard(
+⋮----
+/* ── Section row ── */
+function Section(
+⋮----
+/* ── MOBILE HOME ── */
+function MobileHome()
+⋮----
+// FIX: search navigates with the query param so marketplace shows results
+const handleSearch = e => {
+    e.preventDefault();
+⋮----
+{/* ── Hero ── */}
+⋮----
+{/* ── Search bar (floated over hero bottom) ── */}
+⋮----
+{/* FIX: map icon stays, search submits the form */}
+⋮----
+{/* ── Weather-style info strip ── */}
+⋮----
+{/* ── Stats ── */}
+⋮----
+{/* ── Category pills (horizontal scroll) ── */}
+⋮----
+// FIX: navigate to marketplace with category param so it pre-filters
+⋮----
+{/* ── My Fields card (premium feel) ── */}
+⋮----
+{/* ── Products ── */}
+⋮----
+{/* FIX: Recommended For You "See all" goes to marketplace with recommended param */}
+⋮----
+// FIX: each category "See all" navigates with the correct category param
+⋮----
+{/* ── Farmer CTA ── */}
+⋮----
+/* ── DESKTOP HOME ── */
+function DesktopHome()
+⋮----
+// FIX: desktop search handler properly navigates with the search query
+const handleDesktopSearch = (e) =>
+⋮----
+{/* ── Hero ── */}
+⋮----
+{/* Floating badges */}
+⋮----
+{/* ── Search bar section ── */}
+{/* FIX: desktop search is now a proper form that navigates with the query */}
+⋮----
+{/* FIX: Search button submits the form instead of being a plain link */}
+⋮----
+{/* ── Features ── */}
+⋮----
+{/* ── Categories ── */}
+⋮----
+// FIX: category cards are Links with the correct cat param — no icons added, photo-only style preserved
+⋮----
+{/* ── Featured Products ── */}
+⋮----
+{/* FIX: View All goes to marketplace with recommended param so it pre-filters */}
+⋮----
+{/* ── Farmer CTA ── */}
+⋮----
+/* ── Desktop product card ── */
+function DesktopProductCard(
+⋮----
+export default function Home()
+</file>
+
+<file path="client/src/pages/MyOrders.jsx">
+function Badge(
+⋮----
+function ReviewModal(
+⋮----
+const handleSubmit = async () =>
+⋮----
+export default function MyOrders()
+⋮----
+{/* Items */}
+</file>
+
+<file path="client/src/App.jsx">
+export default function App()
+</file>
+
+<file path="client/src/pages/Chat.jsx">
+export default function Chat()
+⋮----
+// On mobile: show list or chat, not both
+const [mobileView,    setMobileView]    = useState('list'); // 'list' | 'chat'
+⋮----
+const handleMsg = (
+const handleTyping_    = ()
+const handleStopTyping = ()
+⋮----
+const fetchConversations = async () =>
+⋮----
+const fetchMessages = async (id) =>
+⋮----
+const getOther = (c)
+⋮----
+const handleSend = async () =>
+⋮----
+const handleTypingInput = (val) =>
+⋮----
+const formatTime = (d) => new Date(d).toLocaleTimeString('en-BD',
+⋮----
+// ── MOBILE LAYOUT ─────────────────────────────────────
+⋮----
+// Show conversation list
+⋮----
+// Show active chat
+⋮----
+{/* Header */}
+⋮----
+{/* Messages */}
+⋮----
+{/* Input */}
+⋮----
+// ── DESKTOP LAYOUT ────────────────────────────────────
+⋮----
+{/* Sidebar */}
+⋮----
+{/* Chat */}
+</file>
+
+<file path="client/src/pages/Marketplace.jsx">
+/* ── Shared card styles ── */
+function MiniCard(
+⋮----
+function ProductRow(
+⋮----
+export default function Marketplace()
+⋮----
+// FIX: read URL search params to pre-activate category / search / recommended
+⋮----
+// Filter state
+⋮----
+// FIX: on mount, read URL params and activate the right view
+⋮----
+// eslint-disable-next-line react-hooks/exhaustive-deps
+⋮----
+const loadAll = async () =>
+⋮----
+const handleCategoryClick = async (cat) =>
+⋮----
+// Separated so it can be called programmatically with a value
+const runSearch = async (term) =>
+⋮----
+const handleSearch = async (e) =>
+⋮----
+// Apply filters to current view
+const applyFilters = async () =>
+⋮----
+// re-load recommended with filters — nothing to do since recommended derives from allProducts
+⋮----
+const clearFilters = () =>
+⋮----
+// Recommended: flat mix of all products, randomised
+⋮----
+{/* Search + Filter bar */}
+⋮----
+{/* Filter button */}
+⋮----
+{/* Filter panel */}
+⋮----
+{/* Location filter */}
+⋮----
+{/* Price range */}
+⋮----
+{/* Active filter pills */}
+⋮----
+{/* Category Cards — no icons, photo backgrounds only */}
+⋮----
+{/* Photo background — no icons */}
+⋮----
+{/* Gradient overlay */}
+⋮----
+{/* Label only — no emoji icon */}
+⋮----
+{/* ── Recommended For You view ── */}
+{/* FIX: when navigated from home page "View All Recommended", show this section */}
+⋮----
+{/* Search Results */}
+⋮----
+{/* Category filtered view */}
+⋮----
+{/* All sections (default) */}
+⋮----
+/* ── Full card (search/filter views) ── */
+function FullCard(
+</file>
+
+<file path="client/src/pages/ProductDetail.jsx">
+function OrderModal(
+⋮----
+export default function ProductDetail()
+⋮----
+const handleOrderClick = () =>
+⋮----
+const handleConfirmOrder = async (
+⋮----
+{/* Back button */}
+⋮----
+{/* Mobile: single column. Desktop: 2 columns */}
+⋮----
+{/* LEFT — Image + info */}
+⋮----
+{/* Purchase card — on mobile it goes here BELOW the image */}
+⋮----
+{/* Price */}
+⋮----
+{/* Info grid */}
+⋮----
+{/* Farmer */}
+⋮----
+{/* Qty */}
+⋮----
+{/* Buttons */}
+⋮----
+{/* Price chart */}
+⋮----
+{/* Reviews */}
+⋮----
+{/* RIGHT — Desktop purchase card only */}
+</file>
+
+<file path="client/src/components/Navbar.jsx">
+export default function Navbar()
+⋮----
+const onScroll = ()
+⋮----
+const active = (p)
+const close  = ()
+⋮----
+{/* Logo */}
+⋮----
+{/* Desktop nav */}
+⋮----
+{/* Right side */}
+⋮----
+{/* Hamburger */}
+⋮----
+{/* Mobile menu */}
+</file>
+
+</files>
