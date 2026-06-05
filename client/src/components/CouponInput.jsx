@@ -46,7 +46,7 @@ export default function CouponInput({ orderAmount, onApply, onRemove }) {
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--white)' }}>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: '#1a2415' }}>
         🏷️ Have a coupon code?
       </div>
 
@@ -58,8 +58,8 @@ export default function CouponInput({ orderAmount, onApply, onRemove }) {
             onKeyDown={e => e.key === 'Enter' && handleValidate()}
             placeholder="e.g. KRISHI20"
             style={{
-              flex: 1, background: 'var(--card2)', border: `1px solid ${error ? '#e05555' : 'var(--border)'}`,
-              borderRadius: 10, padding: '11px 16px', color: 'var(--white)',
+              flex: 1, background: '#f0f4ec', border: `1px solid ${error ? '#e05555' : 'rgba(60,100,40,.12)'}`,
+              borderRadius: 10, padding: '11px 16px', color: '#1a2415',
               fontFamily: 'DM Mono, monospace', fontSize: 13, outline: 'none',
               letterSpacing: '0.1em',
             }}
@@ -68,9 +68,9 @@ export default function CouponInput({ orderAmount, onApply, onRemove }) {
             onClick={handleValidate}
             disabled={loading || !code.trim()}
             style={{
-              background: loading ? 'var(--card2)' : 'var(--green-hi)',
+              background: loading ? '#f0f4ec' : '#4e9e2a',
               border: 'none', borderRadius: 10, padding: '11px 20px',
-              color: '#fff', fontFamily: 'Sora, sans-serif',
+              color: '#fff', fontFamily: 'Plus Jakarta Sans,sans-serif',
               fontWeight: 600, fontSize: 13, cursor: loading ? 'wait' : 'pointer',
               opacity: !code.trim() ? 0.5 : 1,
             }}
@@ -81,12 +81,12 @@ export default function CouponInput({ orderAmount, onApply, onRemove }) {
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(90,176,48,.1)', border: '1px solid rgba(90,176,48,.28)', borderRadius: 10, padding: '12px 16px' }}>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--green-lt)', letterSpacing: '0.08em' }}>{result?.coupon?.code}</div>
-            <div style={{ fontSize: 12, color: 'var(--green-hi)', marginTop: 2 }}>{result?.message}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#4e9e2a', letterSpacing: '0.08em' }}>{result?.coupon?.code}</div>
+            <div style={{ fontSize: 12, color: '#4e9e2a', marginTop: 2 }}>{result?.message}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--green-lt)' }}>-৳{result?.discount}</div>
-            <button onClick={handleRemove} style={{ fontSize: 11, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Sora,sans-serif', marginTop: 2 }}>Remove</button>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#4e9e2a' }}>-৳{result?.discount}</div>
+            <button onClick={handleRemove} style={{ fontSize: 11, color: '#7a9070', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans,sans-serif', marginTop: 2 }}>Remove</button>
           </div>
         </div>
       )}

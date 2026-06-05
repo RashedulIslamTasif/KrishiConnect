@@ -117,27 +117,27 @@ export default function Chat() {
     // Show conversation list
     if (mobileView === 'list') {
       return (
-        <div style={{ height: h, display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-          <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 99, padding: '6px 12px', color: 'var(--muted)', fontFamily: 'Sora,sans-serif', fontSize: 12, cursor: 'pointer' }}>← Back</button>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--white)' }}>Messages</div>
+        <div style={{ height: h, display: 'flex', flexDirection: 'column', background: '#f5f7f2' }}>
+          <div style={{ padding: '16px', borderBottom: '1px solid rgba(60,100,40,.1)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: '1px solid rgba(60,100,40,.1)', borderRadius: 99, padding: '6px 12px', color: '#7a9070', fontFamily: 'Plus Jakarta Sans,sans-serif', fontSize: 12, cursor: 'pointer' }}>← Back</button>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1a2415' }}>Messages</div>
           </div>
           <div style={{ flex: 1, overflowY: 'auto' }}>
             {conversations.length === 0 ? (
-              <div style={{ padding: 32, textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>
+              <div style={{ padding: 32, textAlign: 'center', color: '#7a9070', fontSize: 14 }}>
                 No conversations yet.<br />Message a farmer from a product page.
               </div>
             ) : conversations.map(c => {
               const o = getOther(c);
               return (
                 <div key={c._id} onClick={() => setActiveConvo(c)}
-                  style={{ padding: '16px', display: 'flex', gap: 12, alignItems: 'center', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: activeConvo?._id === c._id ? 'rgba(90,176,48,.08)' : 'transparent' }}>
-                  <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'rgba(90,176,48,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--green-lt)', fontSize: 18, flexShrink: 0 }}>{o?.name?.[0] || '?'}</div>
+                  style={{ padding: '16px', display: 'flex', gap: 12, alignItems: 'center', borderBottom: '1px solid rgba(60,100,40,.1)', cursor: 'pointer', background: activeConvo?._id === c._id ? 'rgba(90,176,48,.08)' : 'transparent' }}>
+                  <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'rgba(90,176,48,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#4e9e2a', fontSize: 18, flexShrink: 0 }}>{o?.name?.[0] || '?'}</div>
                   <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--white)', marginBottom: 2 }}>{o?.name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.lastMessage || 'Start a conversation'}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: '#1a2415', marginBottom: 2 }}>{o?.name}</div>
+                    <div style={{ fontSize: 12, color: '#7a9070', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.lastMessage || 'Start a conversation'}</div>
                   </div>
-                  <span style={{ fontSize: 18, color: 'var(--muted)' }}>›</span>
+                  <span style={{ fontSize: 18, color: '#7a9070' }}>›</span>
                 </div>
               );
             })}
@@ -148,14 +148,14 @@ export default function Chat() {
 
     // Show active chat
     return (
-      <div style={{ height: h, display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+      <div style={{ height: h, display: 'flex', flexDirection: 'column', background: '#f5f7f2' }}>
         {/* Header */}
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', flexShrink: 0 }}>
-          <button onClick={() => setMobileView('list')} style={{ background: 'transparent', border: 'none', color: 'var(--green-lt)', fontFamily: 'Sora,sans-serif', fontSize: 22, cursor: 'pointer', padding: '0 4px' }}>‹</button>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(90,176,48,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--green-lt)', fontSize: 14, flexShrink: 0 }}>{other?.name?.[0]}</div>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(60,100,40,.1)', display: 'flex', alignItems: 'center', gap: 10, background: '#fff', flexShrink: 0 }}>
+          <button onClick={() => setMobileView('list')} style={{ background: 'transparent', border: 'none', color: '#4e9e2a', fontFamily: 'Plus Jakarta Sans,sans-serif', fontSize: 22, cursor: 'pointer', padding: '0 4px' }}>‹</button>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(90,176,48,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#4e9e2a', fontSize: 14, flexShrink: 0 }}>{other?.name?.[0]}</div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--white)' }}>{other?.name}</div>
-            <div style={{ fontSize: 11, color: 'var(--green-lt)' }}>{other?.role === 'farmer' ? '🌾 Farmer' : '🛒 Customer'}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#1a2415' }}>{other?.name}</div>
+            <div style={{ fontSize: 11, color: '#4e9e2a' }}>{other?.role === 'farmer' ? '🌾 Farmer' : '🛒 Customer'}</div>
           </div>
         </div>
 
@@ -165,22 +165,22 @@ export default function Chat() {
             const isMe = (msg.sender?._id || msg.sender) === user._id;
             return (
               <div key={msg._id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                <div style={{ background: isMe ? 'var(--green-hi)' : 'var(--card2)', color: '#fff', borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px', padding: '10px 14px', maxWidth: '75%', fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word' }}>{msg.text}</div>
-                <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 3 }}>{formatTime(msg.createdAt)}</div>
+                <div style={{ background: isMe ? '#4e9e2a' : '#f0f4ec', color: isMe ? '#fff' : '#1a2415', borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px', padding: '10px 14px', maxWidth: '75%', fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word' }}>{msg.text}</div>
+                <div style={{ fontSize: 10, color: '#7a9070', marginTop: 3 }}>{formatTime(msg.createdAt)}</div>
               </div>
             );
           })}
-          {isTyping && <div style={{ alignSelf: 'flex-start', fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>{other?.name} is typing...</div>}
+          {isTyping && <div style={{ alignSelf: 'flex-start', fontSize: 12, color: '#7a9070', fontStyle: 'italic' }}>{other?.name} is typing...</div>}
           <div ref={bottomRef} />
         </div>
 
         {/* Input */}
-        <div style={{ padding: '12px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, background: 'var(--surface)', flexShrink: 0, paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}>
+        <div style={{ padding: '12px', borderTop: '1px solid rgba(60,100,40,.1)', display: 'flex', gap: 8, background: '#fff', flexShrink: 0, paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}>
           <input value={text} onChange={e => handleTypingInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
             placeholder={`Message ${other?.name}...`}
-            style={{ flex: 1, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 24, padding: '11px 16px', color: 'var(--white)', fontFamily: 'Sora,sans-serif', fontSize: 14, outline: 'none' }} />
-          <button onClick={handleSend} style={{ background: 'var(--green-hi)', border: 'none', borderRadius: 24, padding: '11px 18px', color: '#fff', fontFamily: 'Sora,sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer', flexShrink: 0 }}>↑</button>
+            style={{ flex: 1, background: '#fff', border: '1px solid rgba(60,100,40,.1)', borderRadius: 24, padding: '11px 16px', color: '#1a2415', fontFamily: 'Plus Jakarta Sans,sans-serif', fontSize: 14, outline: 'none' }} />
+          <button onClick={handleSend} style={{ background: '#4e9e2a', border: 'none', borderRadius: 24, padding: '11px 18px', color: '#fff', fontFamily: 'Plus Jakarta Sans,sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer', flexShrink: 0 }}>↑</button>
         </div>
       </div>
     );
@@ -190,23 +190,23 @@ export default function Chat() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', height: h, overflow: 'hidden' }}>
       {/* Sidebar */}
-      <div style={{ background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '20px 16px', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ background: '#fff', borderRight: '1px solid rgba(60,100,40,.1)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(60,100,40,.1)' }}>
           <div style={{ fontSize: 15, fontWeight: 700 }}>Messages</div>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{conversations.length} conversations</div>
+          <div style={{ fontSize: 12, color: '#7a9070', marginTop: 2 }}>{conversations.length} conversations</div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {conversations.length === 0 && <div style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>No conversations yet.</div>}
+          {conversations.length === 0 && <div style={{ padding: 24, textAlign: 'center', color: '#7a9070', fontSize: 13 }}>No conversations yet.</div>}
           {conversations.map(c => {
             const o = getOther(c);
             const act = activeConvo?._id === c._id;
             return (
               <div key={c._id} onClick={() => setActiveConvo(c)}
-                style={{ padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', background: act ? 'rgba(90,176,48,.12)' : 'transparent', borderLeft: `3px solid ${act ? 'var(--green-hi)' : 'transparent'}` }}>
-                <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'rgba(90,176,48,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--green-lt)', flexShrink: 0 }}>{o?.name?.[0] || '?'}</div>
+                style={{ padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', background: act ? 'rgba(90,176,48,.12)' : 'transparent', borderLeft: `3px solid ${act ? '#4e9e2a' : 'transparent'}` }}>
+                <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'rgba(90,176,48,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#4e9e2a', flexShrink: 0 }}>{o?.name?.[0] || '?'}</div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>{o?.name}</div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.lastMessage || 'Start a conversation'}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1a2415' }}>{o?.name}</div>
+                  <div style={{ fontSize: 11, color: '#7a9070', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.lastMessage || 'Start a conversation'}</div>
                 </div>
               </div>
             );
@@ -217,14 +217,14 @@ export default function Chat() {
       {/* Chat */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {!activeConvo ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: 14 }}>💬 Select a conversation to start chatting</div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7a9070', fontSize: 14 }}>💬 Select a conversation to start chatting</div>
         ) : (
           <>
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)' }}>
-              <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(90,176,48,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--green-lt)', fontSize: 14 }}>{other?.name?.[0]}</div>
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(60,100,40,.1)', display: 'flex', alignItems: 'center', gap: 12, background: '#fff' }}>
+              <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(90,176,48,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#4e9e2a', fontSize: 14 }}>{other?.name?.[0]}</div>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600 }}>{other?.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--green-lt)' }}>{other?.role === 'farmer' ? '🌾 Farmer' : '🛒 Customer'}</div>
+                <div style={{ fontSize: 11, color: '#4e9e2a' }}>{other?.role === 'farmer' ? '🌾 Farmer' : '🛒 Customer'}</div>
               </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -232,20 +232,20 @@ export default function Chat() {
                 const isMe = (msg.sender?._id || msg.sender) === user._id;
                 return (
                   <div key={msg._id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ background: isMe ? 'var(--green-hi)' : 'var(--card2)', color: '#fff', borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px', padding: '10px 16px', maxWidth: '65%', fontSize: 14, lineHeight: 1.5 }}>{msg.text}</div>
-                    <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 3, textAlign: isMe ? 'right' : 'left' }}>{formatTime(msg.createdAt)}</div>
+                    <div style={{ background: isMe ? '#4e9e2a' : '#f0f4ec', color: isMe ? '#fff' : '#1a2415', borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px', padding: '10px 16px', maxWidth: '65%', fontSize: 14, lineHeight: 1.5 }}>{msg.text}</div>
+                    <div style={{ fontSize: 10, color: '#7a9070', marginTop: 3, textAlign: isMe ? 'right' : 'left' }}>{formatTime(msg.createdAt)}</div>
                   </div>
                 );
               })}
-              {isTyping && <div style={{ alignSelf: 'flex-start', fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>{other?.name} is typing...</div>}
+              {isTyping && <div style={{ alignSelf: 'flex-start', fontSize: 12, color: '#7a9070', fontStyle: 'italic' }}>{other?.name} is typing...</div>}
               <div ref={bottomRef} />
             </div>
-            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10, background: 'var(--surface)' }}>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(60,100,40,.1)', display: 'flex', gap: 10, background: '#fff' }}>
               <input value={text} onChange={e => handleTypingInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder={`Message ${other?.name}...`}
-                style={{ flex: 1, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 18px', color: 'var(--white)', fontFamily: 'Sora,sans-serif', fontSize: 14, outline: 'none' }} />
-              <button onClick={handleSend} style={{ background: 'var(--green-hi)', border: 'none', borderRadius: 12, padding: '12px 22px', color: '#fff', fontFamily: 'Sora,sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Send ↑</button>
+                style={{ flex: 1, background: '#fff', border: '1px solid rgba(60,100,40,.1)', borderRadius: 12, padding: '12px 18px', color: '#1a2415', fontFamily: 'Plus Jakarta Sans,sans-serif', fontSize: 14, outline: 'none' }} />
+              <button onClick={handleSend} style={{ background: '#4e9e2a', border: 'none', borderRadius: 12, padding: '12px 22px', color: '#fff', fontFamily: 'Plus Jakarta Sans,sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Send ↑</button>
             </div>
           </>
         )}

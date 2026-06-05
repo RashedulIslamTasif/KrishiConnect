@@ -1,53 +1,52 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios.js';
-import { useResponsive } from '../hooks/useResponsive.js';
 
-const STATUS_COLOR = {
-  pending:          { bg:'rgba(240,184,64,.12)', color:'#f0b840', border:'rgba(240,184,64,.3)' },
-  confirmed:        { bg:'rgba(90,176,48,.12)',  color:'#7ed44c', border:'rgba(90,176,48,.3)' },
-  harvested:        { bg:'rgba(29,158,117,.12)', color:'#1d9e75', border:'rgba(29,158,117,.3)' },
-  out_for_delivery: { bg:'rgba(90,176,48,.15)',  color:'#5ab030', border:'rgba(90,176,48,.4)' },
-  delivered:        { bg:'rgba(90,176,48,.25)',  color:'#5ab030', border:'rgba(90,176,48,.5)' },
-  cancelled:        { bg:'rgba(224,85,85,.12)',  color:'#e05555', border:'rgba(224,85,85,.3)' },
+const STATUS_STYLE = {
+  pending:          { bg:'#fef3d8', color:'#c47d0a', label:'Pending' },
+  confirmed:        { bg:'#e8f5e1', color:'#4e9e2a', label:'Confirmed' },
+  harvested:        { bg:'#e0f4ef', color:'#1d9e75', label:'Harvested' },
+  out_for_delivery: { bg:'#e8f5e1', color:'#3a7d1e', label:'On the way' },
+  delivered:        { bg:'#e8f5e1', color:'#3a7d1e', label:'Delivered ✓' },
+  cancelled:        { bg:'#fde8e8', color:'#c04040', label:'Cancelled' },
 };
 
-const Badge = ({ status }) => {
-  const c = STATUS_COLOR[status] || STATUS_COLOR.pending;
-  return <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99, background: c.bg, color: c.color, border: `1px solid ${c.border}`, textTransform: 'capitalize', whiteSpace: 'nowrap' }}>{status?.replace(/_/g,' ')}</span>;
-};
+function Badge({ status }) {
+  const c = STATUS_STYLE[status] || STATUS_STYLE.pending;
+  return <span style={{ fontSize:11, fontWeight:700, padding:'4px 10px', borderRadius:99, background:c.bg, color:c.color, whiteSpace:'nowrap' }}>{c.label}</span>;
+}
 
 function ReviewModal({ order, onClose, onSubmitted }) {
-  const [rating, setRating]   = useState(5);
+  const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
   const firstItem = order.items?.[0];
-
   const handleSubmit = async () => {
     if (!comment.trim()) { setError('Please write a comment.'); return; }
     setLoading(true); setError('');
     try {
-      await api.post('/reviews', { farmerId: order.farmer?._id || order.farmer, productId: firstItem?.product?._id || firstItem?.product, orderId: order._id, rating, comment });
+      await api.post('/reviews', { farmerId: order.farmer?._id||order.farmer, productId: firstItem?.product?._id||firstItem?.product, orderId: order._id, rating, comment });
       onSubmitted(order._id); onClose();
-    } catch (e) { setError(e.response?.data?.message || 'Failed to submit review.'); }
+    } catch (e) { setError(e.response?.data?.message || 'Failed to submit.'); }
     finally { setLoading(false); }
   };
-
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'flex-end', justifyContent:'center', zIndex:1000 }}>
-      <div style={{ background:'var(--card)', borderRadius:'20px 20px 0 0', padding:28, width:'100%', maxWidth:500 }}>
-        <div style={{ fontSize:18, fontWeight:700, color:'var(--white)', marginBottom:4 }}>Write a Review</div>
-        <div style={{ fontSize:13, color:'var(--muted)', marginBottom:20 }}>for {firstItem?.name}</div>
-        {error && <div style={{ background:'rgba(224,85,85,.12)', color:'#e05555', borderRadius:10, padding:'10px 14px', fontSize:13, marginBottom:14 }}>{error}</div>}
-        <div style={{ display:'flex', gap:6, marginBottom:20 }}>
-          {[1,2,3,4,5].map(n => <button key={n} onClick={() => setRating(n)} style={{ fontSize:28, background:'none', border:'none', cursor:'pointer', color: n <= rating ? '#f0b840' : 'var(--muted)' }}>★</button>)}
+    <div style={{ position:'fixed', inset:0, background:'rgba(15,30,10,.6)', backdropFilter:'blur(6px)', display:'flex', alignItems:'flex-end', justifyContent:'center', zIndex:1000 }}>
+      <div style={{ background:'#fff', borderRadius:'24px 24px 0 0', padding:'24px 20px 40px', width:'100%', maxWidth:480, animation:'slideUp .3s cubic-bezier(.22,1,.36,1) both' }}>
+        <style>{`@keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}`}</style>
+        <div style={{ width:40, height:4, background:'#e0e8da', borderRadius:99, margin:'0 auto 18px' }} />
+        <div style={{ fontSize:18, fontWeight:800, color:'#1a2415', marginBottom:4 }}>Write a Review</div>
+        <div style={{ fontSize:13, color:'#7a9070', marginBottom:18 }}>for {firstItem?.name}</div>
+        {error && <div style={{ background:'#fde8e8', color:'#c04040', borderRadius:12, padding:'10px 14px', fontSize:13, marginBottom:14 }}>{error}</div>}
+        <div style={{ display:'flex', gap:4, marginBottom:18 }}>
+          {[1,2,3,4,5].map(n => <button key={n} onClick={() => setRating(n)} style={{ fontSize:28, background:'none', border:'none', cursor:'pointer', color: n<=rating?'#f0b840':'#e0e8da', transition:'transform .15s' }}>★</button>)}
         </div>
         <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Share your experience..."
-          style={{ width:'100%', background:'rgba(255,255,255,.05)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 16px', color:'var(--white)', fontSize:14, outline:'none', fontFamily:'Sora,sans-serif', boxSizing:'border-box', minHeight:90, resize:'vertical', marginBottom:20 }} />
+          style={{ width:'100%', background:'#f5f7f2', border:'1.5px solid rgba(60,100,40,.15)', borderRadius:14, padding:'12px 16px', color:'#1a2415', fontSize:14, outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif', boxSizing:'border-box', minHeight:90, resize:'vertical', marginBottom:18 }} />
         <div style={{ display:'flex', gap:10 }}>
-          <button onClick={handleSubmit} disabled={loading} style={{ flex:1, background:'var(--green-hi)', color:'#fff', border:'none', borderRadius:99, padding:'13px', fontFamily:'Sora,sans-serif', fontWeight:600, fontSize:15, cursor:'pointer' }}>{loading ? 'Submitting...' : 'Submit'}</button>
-          <button onClick={onClose} style={{ flex:1, background:'transparent', color:'var(--muted)', border:'1px solid var(--border)', borderRadius:99, padding:'13px', fontFamily:'Sora,sans-serif', fontWeight:600, fontSize:15, cursor:'pointer' }}>Cancel</button>
+          <button onClick={handleSubmit} disabled={loading} style={{ flex:1, background:'linear-gradient(135deg,#4e9e2a,#3a7d1e)', color:'#fff', border:'none', borderRadius:99, padding:'13px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15, cursor:'pointer', boxShadow:'0 4px 12px rgba(78,158,42,.3)' }}>{loading?'Submitting...':'Submit Review'}</button>
+          <button onClick={onClose} style={{ flex:1, background:'#f5f7f2', color:'#7a9070', border:'1.5px solid rgba(60,100,40,.15)', borderRadius:99, padding:'13px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:15, cursor:'pointer' }}>Cancel</button>
         </div>
       </div>
     </div>
@@ -56,60 +55,80 @@ function ReviewModal({ order, onClose, onSubmitted }) {
 
 export default function MyOrders() {
   const navigate = useNavigate();
-  const { isMobile } = useResponsive();
-  const [orders, setOrders]           = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState('');
+  const [orders, setOrders]     = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [reviewed, setReviewed] = useState({});
   const [reviewOrder, setReviewOrder] = useState(null);
-  const [reviewedIds, setReviewedIds] = useState(new Set());
 
   useEffect(() => {
-    Promise.all([api.get('/orders/my'), api.get('/reviews/my')])
-      .then(([o, r]) => {
-        const d = o.data;
-        setOrders(Array.isArray(d) ? d : d.orders || []);
-        setReviewedIds(new Set(r.data.reviewedOrderIds || []));
-      }).catch(() => setError('Could not load orders.')).finally(() => setLoading(false));
+    api.get('/orders/mine').then(r => setOrders(r.data.orders||r.data||[])).catch(()=>{}).finally(()=>setLoading(false));
   }, []);
 
-  const pad = isMobile ? '16px 12px' : '40px 48px';
-
   return (
-    <div style={{ minHeight:'100vh', padding: pad, maxWidth: 900, margin: '0 auto' }}>
-      <button onClick={() => navigate(-1)} style={{ background:'transparent', border:'1px solid var(--border)', borderRadius:99, padding:'7px 16px', color:'var(--muted)', fontFamily:'Sora,sans-serif', fontSize:13, cursor:'pointer', marginBottom:20 }}>← Back</button>
-      <div style={{ fontSize: isMobile ? 22 : 28, fontWeight:700, color:'var(--white)', marginBottom:24 }}>My Orders</div>
+    <div style={{ minHeight:'100vh', background:'#f5f7f2', fontFamily:'Plus Jakarta Sans,sans-serif' }}>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}`}</style>
+      {reviewOrder && <ReviewModal order={reviewOrder} onClose={() => setReviewOrder(null)} onSubmitted={id => setReviewed(r=>({...r,[id]:true}))} />}
 
-      {reviewOrder && <ReviewModal order={reviewOrder} onClose={() => setReviewOrder(null)} onSubmitted={id => setReviewedIds(p => new Set([...p, id]))} />}
-      {error && <div style={{ color:'#e05555', marginBottom:20, fontSize:14 }}>{error}</div>}
-
-      {loading ? <div style={{ textAlign:'center', color:'var(--muted)', padding:'60px 0' }}>Loading orders...</div>
-      : orders.length === 0 ? <div style={{ textAlign:'center', color:'var(--muted)', padding:'60px 0' }}>No orders yet. <Link to="/marketplace" style={{ color:'var(--green-lt)' }}>Shop now</Link></div>
-      : orders.map(order => {
-        const done = reviewedIds.has(order._id);
-        return (
-          <div key={order._id} style={{ background:'var(--card)', border:'1px solid var(--border)', borderRadius:16, padding: isMobile ? 16 : 24, marginBottom:12 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, flexWrap:'wrap' }}>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:11, color:'var(--muted)', marginBottom:3 }}>Order #{order._id?.slice(-8).toUpperCase()}</div>
-                <div style={{ fontSize: isMobile ? 13 : 14, color:'var(--white)', marginBottom:4 }}>{order.items?.map(i => `${i.name || 'Product'} x${i.quantity}`).join(', ')}</div>
-                <div style={{ fontSize: isMobile ? 15 : 16, fontWeight:700, color:'var(--green-lt)', marginBottom: order.deliveryAddress ? 4 : 0 }}>BDT {order.totalAmount?.toLocaleString()}</div>
-                {order.deliveryAddress && <div style={{ fontSize:11, color:'var(--muted)' }}>📍 {order.deliveryAddress}</div>}
-              </div>
-              <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
-                <Badge status={order.status} />
-                <Link to={`/orders/${order._id}`} style={{ background:'rgba(90,176,48,.12)', color:'var(--green-lt)', border:'1px solid rgba(90,176,48,.25)', borderRadius:99, padding:'7px 14px', fontSize:12, fontWeight:600, textDecoration:'none' }}>Track</Link>
-                {order.status === 'delivered' && !done && (
-                  <button onClick={() => setReviewOrder(order)} style={{ background:'rgba(240,184,64,.1)', color:'#f0b840', border:'1px solid rgba(240,184,64,.3)', borderRadius:99, padding:'7px 14px', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Sora,sans-serif' }}>★ Review</button>
-                )}
-                {order.status === 'delivered' && done && <span style={{ fontSize:11, color:'var(--green-lt)' }}>✓ Reviewed</span>}
-              </div>
-            </div>
-            <div style={{ fontSize:11, color:'var(--muted)', marginTop:8 }}>
-              {new Date(order.createdAt).toLocaleDateString('en-BD', { day:'numeric', month:'short', year:'numeric' })}
-            </div>
+      <div style={{ maxWidth:680, margin:'0 auto', padding:'24px 16px 40px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:24, animation:'fadeUp .4s cubic-bezier(.22,1,.36,1) both' }}>
+          <button onClick={() => navigate(-1)} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.15)', borderRadius:12, width:38, height:38, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', fontSize:16, boxShadow:'0 1px 4px rgba(20,50,10,.06)', flexShrink:0 }}>←</button>
+          <div>
+            <div style={{ fontSize:20, fontWeight:800, color:'#1a2415', letterSpacing:'-0.02em' }}>My Orders</div>
+            <div style={{ fontSize:12, color:'#7a9070' }}>{orders.length} order{orders.length!==1?'s':''}</div>
           </div>
-        );
-      })}
+        </div>
+
+        {loading ? (
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            {[...Array(3)].map((_,i)=><div key={i} style={{ height:110, borderRadius:18, backgroundImage:'linear-gradient(90deg,#e8ede4 25%,#f0f4ec 50%,#e8ede4 75%)', backgroundSize:'400px 100%', animation:'shimmer 1.4s infinite' }}/>)}
+            <style>{`@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}`}</style>
+          </div>
+        ) : orders.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'80px 0' }}>
+            <div style={{ fontSize:52, marginBottom:16 }}>📦</div>
+            <div style={{ fontSize:18, fontWeight:800, color:'#1a2415', marginBottom:8 }}>No orders yet</div>
+            <div style={{ fontSize:13, color:'#7a9070', marginBottom:24 }}>Start shopping fresh farm produce</div>
+            <Link to="/marketplace" style={{ background:'linear-gradient(135deg,#4e9e2a,#3a7d1e)', color:'#fff', textDecoration:'none', borderRadius:99, padding:'13px 28px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:14, boxShadow:'0 4px 12px rgba(78,158,42,.3)' }}>Browse Market</Link>
+          </div>
+        ) : (
+          orders.map((order, idx) => {
+            const st = STATUS_STYLE[order.status] || STATUS_STYLE.pending;
+            const canReview = order.status==='delivered' && !reviewed[order._id] && !order.reviewed;
+            return (
+              <div key={order._id} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:20, padding:16, marginBottom:12, boxShadow:'0 2px 8px rgba(20,50,10,.05)', animation:`fadeUp .4s ${idx*.05}s cubic-bezier(.22,1,.36,1) both` }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                  <div>
+                    <div style={{ fontSize:11, color:'#7a9070', fontWeight:600, marginBottom:2 }}>Order #{order._id.slice(-6).toUpperCase()}</div>
+                    <div style={{ fontSize:11, color:'#afc09e' }}>{new Date(order.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+                  </div>
+                  <Badge status={order.status} />
+                </div>
+                {/* Items */}
+                <div style={{ display:'flex', gap:8, marginBottom:12, overflowX:'auto', scrollbarWidth:'none', paddingBottom:4 }}>
+                  {(order.items||[]).map((item,i) => (
+                    <div key={i} style={{ display:'flex', alignItems:'center', gap:8, background:'#f5f7f2', borderRadius:12, padding:'8px 10px', flexShrink:0 }}>
+                      <div style={{ width:32, height:32, borderRadius:8, background:'#e8ede4', overflow:'hidden', flexShrink:0 }}>
+                        {item.product?.images?.[0] && <img src={item.product.images[0]} alt={item.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />}
+                      </div>
+                      <div>
+                        <div style={{ fontSize:12, fontWeight:700, color:'#1a2415', whiteSpace:'nowrap' }}>{item.name}</div>
+                        <div style={{ fontSize:10, color:'#7a9070' }}>x{item.qty} · ৳{item.price}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <div style={{ fontSize:15, fontWeight:800, color:'#4e9e2a' }}>৳{(order.totalAmount||0).toLocaleString()}</div>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <Link to={`/orders/${order._id}`} style={{ background:'#e8f5e1', color:'#4e9e2a', textDecoration:'none', borderRadius:99, padding:'7px 14px', fontSize:12, fontWeight:700, fontFamily:'Plus Jakarta Sans,sans-serif' }}>Track →</Link>
+                    {canReview && <button onClick={() => setReviewOrder(order)} style={{ background:'#fef3d8', color:'#c47d0a', border:'none', borderRadius:99, padding:'7px 14px', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'Plus Jakarta Sans,sans-serif' }}>⭐ Review</button>}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }

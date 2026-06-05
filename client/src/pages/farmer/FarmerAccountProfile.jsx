@@ -4,34 +4,34 @@ import api from '../../api/axios.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 const s = {
-  page:      { minHeight: '100vh', padding: '36px 48px', maxWidth: 900, margin: '0 auto' },
-  backBtn:   { background: 'transparent', border: '1px solid var(--border)', borderRadius: 99, padding: '7px 16px', color: 'var(--muted)', fontFamily: 'Sora,sans-serif', fontSize: 13, cursor: 'pointer', marginBottom: 24, display: 'inline-block' },
-  topCard:   { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 20, padding: 32, marginBottom: 24, display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' },
-  avatar:    { width: 80, height: 80, borderRadius: '50%', background: 'rgba(90,176,48,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700, color: 'var(--green-lt)', flexShrink: 0 },
-  name:      { fontSize: 24, fontWeight: 700, color: 'var(--white)', marginBottom: 2 },
-  farmName:  { fontSize: 14, color: 'var(--green-lt)', marginBottom: 4 },
-  email:     { fontSize: 13, color: 'var(--muted)', marginBottom: 8 },
+  page:      { minHeight: '100vh', padding: '24px 16px', maxWidth: 900, margin: '0 auto' },
+  backBtn:   { background: 'transparent', border: '1px solid rgba(60,100,40,.1)', borderRadius: 99, padding: '7px 16px', color: '#7a9070', fontFamily: 'Plus Jakarta Sans,sans-serif', fontSize: 13, cursor: 'pointer', marginBottom: 24, display: 'inline-block' },
+  topCard:   { background: '#fff', border: '1px solid rgba(60,100,40,.1)', borderRadius: 20, padding: '16px', marginBottom: 24, display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' },
+  avatar:    { width: 80, height: 80, borderRadius: '50%', background: '#e8f5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 800, color: '#4e9e2a', flexShrink: 0 },
+  name:      { fontSize: 24, fontWeight: 800, color: '#1a2415', marginBottom: 2 },
+  farmName:  { fontSize: 14, color: '#4e9e2a', marginBottom: 4 },
+  email:     { fontSize: 13, color: '#7a9070', marginBottom: 8 },
   badgeRow:  { display: 'flex', gap: 8, flexWrap: 'wrap' },
-  roleBadge: { display: 'inline-block', background: 'rgba(90,176,48,.12)', color: 'var(--green-lt)', fontSize: 11, fontWeight: 600, padding: '3px 12px', borderRadius: 99, border: '1px solid rgba(90,176,48,.25)' },
+  roleBadge: { display: 'inline-block', background: '#e8f5e1', color: '#4e9e2a', fontSize: 11, fontWeight: 600, padding: '3px 12px', borderRadius: 99, border: '1px solid rgba(78,158,42,.2)' },
   verified:  { display: 'inline-block', background: 'rgba(29,158,117,.12)', color: '#1d9e75', fontSize: 11, fontWeight: 600, padding: '3px 12px', borderRadius: 99, border: '1px solid rgba(29,158,117,.25)' },
   unverified:{ display: 'inline-block', background: 'rgba(240,184,64,.1)', color: '#f0b840', fontSize: 11, fontWeight: 600, padding: '3px 12px', borderRadius: 99, border: '1px solid rgba(240,184,64,.25)' },
-  grid4:     { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 16, marginBottom: 24 },
-  statCard:  { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 },
-  statLabel: { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--muted)', marginBottom: 8 },
-  statVal:   { fontSize: 26, fontWeight: 700, color: 'var(--white)' },
-  section:   { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 20, padding: 28, marginBottom: 24 },
-  secTitle:  { fontSize: 16, fontWeight: 600, color: 'var(--white)', marginBottom: 20 },
-  label:     { display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.06em' },
-  input:     { width: '100%', background: 'rgba(255,255,255,.05)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 16px', color: 'var(--white)', fontSize: 14, outline: 'none', fontFamily: 'Sora,sans-serif', boxSizing: 'border-box', marginBottom: 18 },
+  grid4:     { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 16, marginBottom: 24 },
+  statCard:  { background: '#fff', border: '1px solid rgba(60,100,40,.1)', borderRadius: 16, padding: 16 },
+  statLabel: { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.1em', color: '#7a9070', marginBottom: 8 },
+  statVal:   { fontSize: 26, fontWeight: 800, color: '#1a2415' },
+  section:   { background: '#fff', border: '1px solid rgba(60,100,40,.1)', borderRadius: 20, padding: '16px', marginBottom: 24 },
+  secTitle:  { fontSize: 16, fontWeight: 600, color: '#1a2415', marginBottom: 20 },
+  label:     { display: 'block', fontSize: 12, fontWeight: 600, color: '#7a9070', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.06em' },
+  input:     { width: '100%', background: '#f5f7f2', border: '1px solid rgba(60,100,40,.1)', borderRadius: 10, padding: '12px 16px', color: '#1a2415', fontSize: 14, outline: 'none', fontFamily: 'Plus Jakarta Sans,sans-serif', boxSizing: 'border-box', marginBottom: 18 },
   row2:      { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
-  saveBtn:   { background: 'var(--green-hi)', color: '#fff', border: 'none', borderRadius: 99, padding: '11px 28px', fontFamily: 'Sora,sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer' },
-  success:   { background: 'rgba(90,176,48,.12)', border: '1px solid rgba(90,176,48,.3)', color: 'var(--green-lt)', borderRadius: 10, padding: '10px 16px', fontSize: 13, marginBottom: 16 },
+  saveBtn:   { background: '#4e9e2a', color: '#fff', border: 'none', borderRadius: 99, padding: '11px 28px', fontFamily: 'Plus Jakarta Sans,sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer' },
+  success:   { background: '#e8f5e1', border: '1px solid rgba(90,176,48,.3)', color: '#4e9e2a', borderRadius: 10, padding: '10px 16px', fontSize: 13, marginBottom: 16 },
   error:     { background: 'rgba(224,85,85,.12)', border: '1px solid rgba(224,85,85,.3)', color: '#e05555', borderRadius: 10, padding: '10px 16px', fontSize: 13, marginBottom: 16 },
-  orderRow:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: 8 },
+  orderRow:  { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(60,100,40,.12)', flexWrap: 'wrap', gap: 8 },
   quickGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 12, marginBottom: 24 },
-  quickCard: { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 18, textDecoration: 'none', color: 'inherit', display: 'block', textAlign: 'center' },
+  quickCard: { background: '#fff', border: '1px solid rgba(60,100,40,.1)', borderRadius: 14, padding: 18, textDecoration: 'none', color: 'inherit', display: 'block', textAlign: 'center' },
   quickIcon: { fontSize: 24, marginBottom: 8 },
-  quickLbl:  { fontSize: 13, fontWeight: 600, color: 'var(--white)' },
+  quickLbl:  { fontSize: 13, fontWeight: 600, color: '#1a2415' },
 };
 
 const statusColor = { delivered: ['rgba(90,176,48,.2)','#5ab030'], pending: ['rgba(240,184,64,.15)','#f0b840'], cancelled: ['rgba(224,85,85,.12)','#e05555'], confirmed: ['rgba(90,176,48,.1)','#7ed44c'], out_for_delivery: ['rgba(29,158,117,.12)','#1d9e75'] };
@@ -125,12 +125,12 @@ export default function FarmerAccountProfile() {
               ? <span style={s.verified}>✓ Verified</span>
               : <span style={s.unverified}>⏳ Pending Verification</span>
             }
-            {user?.location?.district && <span style={{ fontSize: 12, color: 'var(--muted)' }}>📍 {user.location.district}</span>}
+            {user?.location?.district && <span style={{ fontSize: 12, color: '#7a9070' }}>📍 {user.location.district}</span>}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
-          <Link to="/dashboard" style={{ background: 'var(--green-hi)', color: '#fff', borderRadius: 99, padding: '9px 20px', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>Dashboard</Link>
-          <Link to="/dashboard/analytics" style={{ background: 'transparent', color: 'var(--green-lt)', border: '1px solid rgba(90,176,48,.3)', borderRadius: 99, padding: '9px 20px', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>Analytics</Link>
+          <Link to="/dashboard" style={{ background: '#4e9e2a', color: '#fff', borderRadius: 99, padding: '9px 20px', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>Dashboard</Link>
+          <Link to="/dashboard/analytics" style={{ background: 'transparent', color: '#4e9e2a', border: '1px solid rgba(90,176,48,.3)', borderRadius: 99, padding: '9px 20px', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>Analytics</Link>
         </div>
       </div>
 
@@ -138,7 +138,7 @@ export default function FarmerAccountProfile() {
       <div style={s.grid4}>
         <div style={s.statCard}><div style={s.statLabel}>Products</div><div style={s.statVal}>{stats.products}</div></div>
         <div style={s.statCard}><div style={s.statLabel}>Total Orders</div><div style={s.statVal}>{stats.orders}</div></div>
-        <div style={s.statCard}><div style={s.statLabel}>Revenue</div><div style={{ ...s.statVal, fontSize: 20, color: 'var(--green-lt)' }}>BDT {stats.revenue.toLocaleString()}</div></div>
+        <div style={s.statCard}><div style={s.statLabel}>Revenue</div><div style={{ ...s.statVal, fontSize: 20, color: '#4e9e2a' }}>BDT {stats.revenue.toLocaleString()}</div></div>
         <div style={s.statCard}><div style={s.statLabel}>Avg Rating</div><div style={{ ...s.statVal, color: '#f0b840' }}>{stats.rating > 0 ? `${stats.rating.toFixed(1)} ★` : '—'}</div></div>
       </div>
 
@@ -199,24 +199,24 @@ export default function FarmerAccountProfile() {
       <div style={s.section}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={s.secTitle}>Recent Orders Received</div>
-          <Link to="/dashboard/orders" style={{ fontSize: 13, color: 'var(--green-lt)', textDecoration: 'none' }}>View All →</Link>
+          <Link to="/dashboard/orders" style={{ fontSize: 13, color: '#4e9e2a', textDecoration: 'none' }}>View All →</Link>
         </div>
         {recentOrders.length === 0 ? (
-          <div style={{ color: 'var(--muted)', fontSize: 14 }}>No orders received yet.</div>
+          <div style={{ color: '#7a9070', fontSize: 14 }}>No orders received yet.</div>
         ) : recentOrders.map(o => {
           const [bg, color] = statusColor[o.status] || statusColor.pending;
           return (
             <div key={o._id} style={s.orderRow}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)', marginBottom: 2 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1a2415', marginBottom: 2 }}>
                   {o.customer?.name || 'Customer'} — {o.items?.map(i => i.name).join(', ')}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                <div style={{ fontSize: 12, color: '#7a9070' }}>
                   {new Date(o.createdAt).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--green-lt)' }}>BDT {o.totalAmount?.toLocaleString()}</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#4e9e2a' }}>BDT {o.totalAmount?.toLocaleString()}</span>
                 <span style={{ background: bg, color, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99, textTransform: 'capitalize' }}>{o.status?.replace(/_/g,' ')}</span>
               </div>
             </div>

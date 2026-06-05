@@ -23,7 +23,7 @@ import { PrivateRoute, FarmerRoute } from './routes/PrivateRoute.jsx';
 
 export default function App() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh', background: '#f5f7f2' }}>
       <Navbar />
       <Routes>
         <Route path="/"             element={<Home />} />

@@ -25,10 +25,10 @@ export default function Recommendations({ userId }) {
 
   if (loading) return (
     <div style={{ padding: '48px 56px' }}>
-      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--green-lt)', marginBottom: 8 }}>Recommended</div>
+      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase', color: '#4e9e2a', marginBottom: 8 }}>Recommended</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
         {[...Array(4)].map((_, i) => (
-          <div key={i} style={{ height: 310, background: 'var(--card)', borderRadius: 20, border: '1px solid var(--border)', opacity: 0.4, animation: 'pulse 1.5s infinite' }} />
+          <div key={i} style={{ height: 310, background: '#fff', borderRadius: 20, border: '1px solid rgba(60,100,40,.12)', opacity: 0.4, animation: 'pulse 1.5s infinite' }} />
         ))}
       </div>
     </div>
@@ -41,17 +41,17 @@ export default function Recommendations({ userId }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--green-lt)', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase', color: '#4e9e2a', marginBottom: 8 }}>
             🎯 Just for You
           </div>
           <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em' }}>Recommended Products</h2>
           {basedOn.length > 0 && (
-            <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
-              Based on your interest in: {basedOn.map(c => <span key={c} style={{ marginRight: 6, color: 'var(--green-lt)' }}>{c}</span>)}
+            <div style={{ fontSize: 12, color: '#7a9070', marginTop: 4 }}>
+              Based on your interest in: {basedOn.map(c => <span key={c} style={{ marginRight: 6, color: '#4e9e2a' }}>{c}</span>)}
             </div>
           )}
         </div>
-        <Link to="/marketplace" style={{ fontSize: 13, color: 'var(--muted)', textDecoration: 'none', border: '1px solid var(--border)', padding: '8px 18px', borderRadius: 99, transition: 'all .2s' }}>
+        <Link to="/marketplace" style={{ fontSize: 13, color: '#7a9070', textDecoration: 'none', border: '1px solid rgba(60,100,40,.12)', padding: '8px 18px', borderRadius: 99, transition: 'all .2s' }}>
           View all →
         </Link>
       </div>

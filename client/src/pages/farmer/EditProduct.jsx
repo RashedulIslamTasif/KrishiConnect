@@ -6,21 +6,21 @@ const CATS  = ['vegetables','fruits','fish','poultry','grains','dairy','spices']
 const UNITS = ['kg','g','piece','dozen','litre','bundle'];
 
 const s = {
-  page:     { minHeight:'100vh', padding:'36px 48px', maxWidth:640, margin:'0 auto' },
-  backBtn:  { background:'transparent', border:'1px solid var(--border)', borderRadius:99, padding:'7px 16px', color:'var(--muted)', fontFamily:'Sora,sans-serif', fontSize:13, cursor:'pointer', marginBottom:24, display:'inline-block' },
-  title:    { fontSize:26, fontWeight:700, letterSpacing:'-0.03em', color:'var(--white)', marginBottom:28 },
-  label:    { display:'block', fontSize:12, fontWeight:600, color:'var(--muted)', marginBottom:6, textTransform:'uppercase', letterSpacing:'.06em' },
-  input:    { width:'100%', background:'rgba(255,255,255,.05)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 16px', color:'var(--white)', fontSize:14, outline:'none', fontFamily:'Sora,sans-serif', boxSizing:'border-box', marginBottom:20 },
-  select:   { width:'100%', background:'var(--card)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 16px', color:'var(--white)', fontSize:14, outline:'none', fontFamily:'Sora,sans-serif', boxSizing:'border-box', marginBottom:20 },
-  textarea: { width:'100%', background:'rgba(255,255,255,.05)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 16px', color:'var(--white)', fontSize:14, outline:'none', fontFamily:'Sora,sans-serif', boxSizing:'border-box', marginBottom:20, minHeight:90, resize:'vertical' },
-  row:      { display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 },
-  hint:     { fontSize:12, color:'var(--muted)', marginTop:-16, marginBottom:20 },
-  preview:  { width:'100%', height:200, objectFit:'cover', borderRadius:12, marginBottom:12, border:'1px solid var(--border)' },
-  uploadBox:{ border:'2px dashed var(--border)', borderRadius:12, padding:24, textAlign:'center', cursor:'pointer', marginBottom:20 },
-  btn:      { background:'var(--green-hi)', color:'#fff', border:'none', borderRadius:99, padding:'14px 36px', fontFamily:'Sora,sans-serif', fontWeight:600, fontSize:15, cursor:'pointer' },
-  btnSec:   { background:'transparent', color:'var(--muted)', border:'1px solid var(--border)', borderRadius:99, padding:'14px 24px', fontFamily:'Sora,sans-serif', fontWeight:600, fontSize:15, cursor:'pointer', marginLeft:12 },
+  page:     { minHeight:'100vh', background:'#f5f7f2', padding:'24px 16px', maxWidth:640, margin:'0 auto' },
+  backBtn:  { background:'transparent', border:'1.5px solid rgba(60,100,40,.15)', borderRadius:99, padding:'7px 16px', color:'#7a9070', fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:13, cursor:'pointer', marginBottom:24, display:'inline-block' },
+  title:    { fontSize:26, fontWeight:700, letterSpacing:'-0.03em', color:'#1a2415', marginBottom:28 },
+  label:    { display:'block', fontSize:12, fontWeight:600, color:'#7a9070', marginBottom:6, textTransform:'uppercase', letterSpacing:'.06em' },
+  input:    { width:'100%', background:'#f5f7f2', border:'1.5px solid rgba(60,100,40,.15)', borderRadius:10, padding:'12px 16px', color:'#1a2415', fontSize:14, outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif', boxSizing:'border-box', marginBottom:20 },
+  select:   { width:'100%', background:'#f5f7f2', border:'1.5px solid rgba(60,100,40,.15)', borderRadius:10, padding:'12px 16px', color:'#1a2415', fontSize:14, outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif', boxSizing:'border-box', marginBottom:20 },
+  textarea: { width:'100%', background:'#f5f7f2', border:'1.5px solid rgba(60,100,40,.15)', borderRadius:10, padding:'12px 16px', color:'#1a2415', fontSize:14, outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif', boxSizing:'border-box', marginBottom:20, minHeight:90, resize:'vertical' },
+  row:      { display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:16 },
+  hint:     { fontSize:12, color:'#7a9070', marginTop:-16, marginBottom:20 },
+  preview:  { width:'100%', height:200, objectFit:'cover', borderRadius:12, marginBottom:12, border:'1.5px solid rgba(60,100,40,.15)' },
+  uploadBox:{ border:'2px dashed rgba(60,100,40,.12)', borderRadius:12, padding:24, textAlign:'center', cursor:'pointer', marginBottom:20 },
+  btn:      { background:'#4e9e2a', color:'#fff', border:'none', borderRadius:99, padding:'14px 36px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:600, fontSize:15, cursor:'pointer' },
+  btnSec:   { background:'transparent', color:'#7a9070', border:'1.5px solid rgba(60,100,40,.15)', borderRadius:99, padding:'14px 24px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:600, fontSize:15, cursor:'pointer', marginLeft:12 },
   err:      { background:'rgba(224,85,85,.12)', border:'1px solid rgba(224,85,85,.3)', color:'#e05555', borderRadius:10, padding:'12px 16px', fontSize:13, marginBottom:20 },
-  success:  { background:'rgba(90,176,48,.12)', border:'1px solid rgba(90,176,48,.3)', color:'var(--green-lt)', borderRadius:10, padding:'12px 16px', fontSize:13, marginBottom:20 },
+  success:  { background:'rgba(90,176,48,.12)', border:'1px solid rgba(90,176,48,.3)', color:'#4e9e2a', borderRadius:10, padding:'12px 16px', fontSize:13, marginBottom:20 },
 };
 
 export default function EditProduct() {
@@ -73,7 +73,7 @@ export default function EditProduct() {
 
   const currentPreview = imagePreview || existingImage;
 
-  if (fetching) return <div style={{ ...s.page, color:'var(--muted)' }}>Loading...</div>;
+  if (fetching) return <div style={{ ...s.page, color:'#7a9070' }}>Loading...</div>;
 
   return (
     <div style={s.page}>
@@ -86,18 +86,18 @@ export default function EditProduct() {
       {currentPreview ? (
         <div style={{ marginBottom:20 }}>
           <img src={currentPreview} alt="Preview" style={s.preview} onError={e => e.target.style.display='none'} />
-          <label style={{ background:'rgba(90,176,48,.1)', color:'var(--green-lt)', border:'1px solid rgba(90,176,48,.25)', borderRadius:8, padding:'6px 16px', fontSize:12, cursor:'pointer', fontFamily:'Sora,sans-serif', display:'inline-block', marginRight:8 }}>
+          <label style={{ background:'rgba(90,176,48,.1)', color:'#4e9e2a', border:'1px solid rgba(90,176,48,.25)', borderRadius:8, padding:'6px 16px', fontSize:12, cursor:'pointer', fontFamily:'Plus Jakarta Sans,sans-serif', display:'inline-block', marginRight:8 }}>
             Change Photo
             <input type="file" accept="image/*" onChange={handleImagePick} style={{ display:'none' }} />
           </label>
-          {imagePreview && <button onClick={() => { setImageFile(null); setImagePreview(''); }} style={{ background:'rgba(224,85,85,.12)', color:'#e05555', border:'1px solid rgba(224,85,85,.25)', borderRadius:8, padding:'6px 16px', fontSize:12, cursor:'pointer', fontFamily:'Sora,sans-serif' }}>Remove New Photo</button>}
+          {imagePreview && <button onClick={() => { setImageFile(null); setImagePreview(''); }} style={{ background:'rgba(224,85,85,.12)', color:'#e05555', border:'1px solid rgba(224,85,85,.25)', borderRadius:8, padding:'6px 16px', fontSize:12, cursor:'pointer', fontFamily:'Plus Jakarta Sans,sans-serif' }}>Remove New Photo</button>}
         </div>
       ) : (
         <label style={s.uploadBox}>
           <input type="file" accept="image/*" onChange={handleImagePick} style={{ display:'none' }} />
           <div style={{ fontSize:36, marginBottom:8 }}>📷</div>
-          <div style={{ fontSize:14, color:'var(--white)', fontWeight:600, marginBottom:4 }}>Tap to choose a photo</div>
-          <div style={{ fontSize:12, color:'var(--muted)' }}>JPG, PNG or WEBP from your gallery</div>
+          <div style={{ fontSize:14, color:'#1a2415', fontWeight:600, marginBottom:4 }}>Tap to choose a photo</div>
+          <div style={{ fontSize:12, color:'#7a9070' }}>JPG, PNG or WEBP from your gallery</div>
         </label>
       )}
 
@@ -112,7 +112,7 @@ export default function EditProduct() {
         {CATS.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>)}
       </select>
 
-      <div style={s.row}>
+      <div className='form-row-2' style={{ ...s.row, display:'grid' }}>
         <div>
           <label style={s.label}>Your Selling Price (BDT)</label>
           <input style={s.input} name="price" type="number" min="0" value={form.price} onChange={handleChange} />

@@ -2,17 +2,42 @@ const asyncHandler = require('express-async-handler');
 const Product = require('../models/Product');
 
 const getProducts = asyncHandler(async (req, res) => {
-  const { category, farmer, search, limit = 20, page = 1 } = req.query;
+  const { category, farmer, search, location, minPrice, maxPrice, limit = 20, page = 1 } = req.query;
   const query = {};
   if (category) query.category = category;
   if (farmer)   query.farmer   = farmer;
   if (search)   query.name     = { $regex: search, $options: 'i' };
 
+  // Price range filter
+  if (minPrice || maxPrice) {
+    query.price = {};
+    if (minPrice) query.price.$gte = Number(minPrice);
+    if (maxPrice) query.price.$lte = Number(maxPrice);
+  }
+
   const skip = (Number(page) - 1) * Number(limit);
-  const [products, total] = await Promise.all([
-    Product.find(query).populate('farmer', 'name farmName location isVerified avatar').sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+  let productsQuery = Product.find(query)
+    .populate('farmer', 'name farmName location isVerified avatar')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(Number(limit));
+
+  let [products, total] = await Promise.all([
+    productsQuery,
     Product.countDocuments(query),
   ]);
+
+  // Location filter (post-query, since location is on the populated farmer)
+  if (location) {
+    const loc = location.toLowerCase();
+    products = products.filter(p =>
+      p.farmer?.location?.district?.toLowerCase().includes(loc) ||
+      p.farmer?.location?.division?.toLowerCase().includes(loc) ||
+      p.farmer?.location?.address?.toLowerCase().includes(loc)
+    );
+    total = products.length;
+  }
+
   res.json({ success: true, products, total, page: Number(page), pages: Math.ceil(total / Number(limit)) });
 });
 

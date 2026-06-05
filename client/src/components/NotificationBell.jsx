@@ -89,13 +89,13 @@ export default function NotificationBell() {
       <button
         onClick={() => setOpen(o => !o)}
         style={{
-          position: 'relative', background: 'var(--card)', border: '1px solid var(--border)',
+          position: 'relative', background: '#fff', border: '1px solid rgba(60,100,40,.12)',
           borderRadius: 10, width: 38, height: 38, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
           transition: 'border-color .2s',
         }}
-        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--green-hi)'}
-        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+        onMouseEnter={e => e.currentTarget.style.borderColor = '#4e9e2a'}
+        onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(60,100,40,.12)'}
       >
         🔔
         {count > 0 && (
@@ -105,7 +105,7 @@ export default function NotificationBell() {
             fontSize: 10, fontWeight: 700,
             width: 18, height: 18, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '2px solid var(--bg)',
+            border: '2px solid #f5f7f2',
           }}>
             {count > 9 ? '9+' : count}
           </span>
@@ -116,15 +116,15 @@ export default function NotificationBell() {
       {open && (
         <div style={{
           position: 'absolute', top: 48, right: 0, zIndex: 999,
-          background: 'var(--card)', border: '1px solid var(--border)',
+          background: '#fff', border: '1px solid rgba(60,100,40,.12)',
           borderRadius: 16, width: 340, boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
           overflow: 'hidden',
         }}>
           {/* Header */}
-          <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(60,100,40,.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ fontSize: 14, fontWeight: 700 }}>Notifications</div>
             {count > 0 && (
-              <button onClick={markAll} style={{ fontSize: 11, color: 'var(--green-lt)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Sora,sans-serif' }}>
+              <button onClick={markAll} style={{ fontSize: 11, color: '#4e9e2a', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans,sans-serif' }}>
                 Mark all read
               </button>
             )}
@@ -133,7 +133,7 @@ export default function NotificationBell() {
           {/* List */}
           <div style={{ maxHeight: 380, overflowY: 'auto' }}>
             {notifs.length === 0 && (
-              <div style={{ padding: '32px 24px', textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>
+              <div style={{ padding: '32px 24px', textAlign: 'center', color: '#7a9070', fontSize: 13 }}>
                 🎉 You're all caught up!
               </div>
             )}
@@ -153,11 +153,11 @@ export default function NotificationBell() {
                 <div style={{ fontSize: 22, flexShrink: 0, marginTop: 2 }}>{ICONS[n.type] || '🔔'}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: n.isRead ? 400 : 600, marginBottom: 3, lineHeight: 1.4 }}>{n.title}</div>
-                  <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>{n.message}</div>
-                  <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 5 }}>{formatTime(n.createdAt)}</div>
+                  <div style={{ fontSize: 12, color: '#7a9070', lineHeight: 1.5 }}>{n.message}</div>
+                  <div style={{ fontSize: 10, color: '#7a9070', marginTop: 5 }}>{formatTime(n.createdAt)}</div>
                 </div>
                 {!n.isRead && (
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green-hi)', flexShrink: 0, marginTop: 6 }} />
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4e9e2a', flexShrink: 0, marginTop: 6 }} />
                 )}
               </div>
             ))}

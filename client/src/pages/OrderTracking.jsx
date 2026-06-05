@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useResponsive } from '../hooks/useResponsive.js';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '../api/axios.js';
 
@@ -14,6 +15,7 @@ const STEPS = [
 const STATUS_ORDER = ['pending','confirmed','harvested','out_for_delivery','delivered'];
 
 export default function OrderTracking() {
+  const { isMobile }         = useResponsive();
   const { id }               = useParams();
   const [order, setOrder]    = useState(null);
   const [loading, setLoading]= useState(true);
@@ -25,8 +27,8 @@ export default function OrderTracking() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div style={{ textAlign:'center', padding:'80px', color:'var(--muted)', fontSize:14 }}>Loading order…</div>;
-  if (!order)  return <div style={{ textAlign:'center', padding:'80px', color:'var(--muted)', fontSize:14 }}>Order not found</div>;
+  if (loading) return <div style={{ textAlign:'center', padding:'80px', color:'#7a9070', fontSize:14 }}>Loading order…</div>;
+  if (!order)  return <div style={{ textAlign:'center', padding:'80px', color:'#7a9070', fontSize:14 }}>Order not found</div>;
 
   const currentIdx  = STATUS_ORDER.indexOf(order.status);
   const isCancelled = order.status === 'cancelled';
@@ -39,21 +41,21 @@ export default function OrderTracking() {
   });
 
   return (
-    <div style={{ minHeight:'100vh', padding:'48px 56px', maxWidth:860, margin:'0 auto' }}>
+    <div style={{ minHeight:'100vh', background:'#f5f7f2', fontFamily:'Plus Jakarta Sans,sans-serif', padding:'24px 16px', maxWidth:860, margin:'0 auto' }}>
 
       {/* Header */}
       <div style={{ marginBottom:36 }}>
-        <Link to="/orders" style={{ fontSize:13, color:'var(--muted)', textDecoration:'none' }}>← My Orders</Link>
+        <Link to="/orders" style={{ fontSize:13, color:'#7a9070', textDecoration:'none' }}>← My Orders</Link>
         <h1 style={{ fontSize:28, fontWeight:700, letterSpacing:'-0.03em', marginTop:12 }}>Order Tracking</h1>
-        <div style={{ fontSize:13, color:'var(--muted)', marginTop:4 }}>
-          Order ID: <span style={{ fontFamily:'DM Mono,monospace', color:'var(--green-lt)' }}>#{order._id?.slice(-8).toUpperCase()}</span>
+        <div style={{ fontSize:13, color:'#7a9070', marginTop:4 }}>
+          Order ID: <span style={{ fontFamily:'DM Mono,monospace', color:'#4e9e2a' }}>#{order._id?.slice(-8).toUpperCase()}</span>
         </div>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 280px', gap:24 }}>
+      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 280px', gap: isMobile ? 16 : 24 }}>
         <div>
           {/* Timeline */}
-          <div style={{ background:'var(--card)', border:'1px solid var(--border)', borderRadius:20, padding:28, marginBottom:20 }}>
+          <div style={{ background:'#fff', border:'1px solid rgba(60,100,40,.12)', borderRadius:20, padding:28, marginBottom:20 }}>
             <div style={{ fontSize:15, fontWeight:600, marginBottom:28 }}>Delivery Progress</div>
 
             {isCancelled ? (
@@ -66,14 +68,14 @@ export default function OrderTracking() {
                 {/* Vertical line */}
                 <div style={{
                   position:'absolute', left:20, top:24, bottom:24,
-                  width:2, background:'var(--border)',
+                  width:2, background:'rgba(60,100,40,.1)',
                 }} />
                 {/* Progress line */}
                 <div style={{
                   position:'absolute', left:20, top:24,
                   width:2,
                   height:`${(currentIdx / (STEPS.length - 1)) * 100}%`,
-                  background:'var(--green-hi)',
+                  background:'#4e9e2a',
                   transition:'height 1s ease',
                 }} />
 
@@ -87,8 +89,8 @@ export default function OrderTracking() {
                       {/* Circle */}
                       <div style={{
                         width:42, height:42, borderRadius:'50%', flexShrink:0,
-                        background: done ? 'var(--green-hi)' : 'var(--card2)',
-                        border: current ? '3px solid var(--green-lt)' : done ? '3px solid var(--green-hi)' : '2px solid var(--border)',
+                        background: done ? '#4e9e2a' : '#f0f4ec',
+                        border: current ? '3px solid #4e9e2a' : done ? '3px solid #4e9e2a' : '2px solid rgba(60,100,40,.12)',
                         display:'flex', alignItems:'center', justifyContent:'center',
                         fontSize: done ? 18 : 16,
                         boxShadow: current ? '0 0 0 6px rgba(90,176,48,.2)' : 'none',
@@ -100,13 +102,13 @@ export default function OrderTracking() {
 
                       {/* Text */}
                       <div style={{ flex:1, paddingTop:8 }}>
-                        <div style={{ fontSize:14, fontWeight: done ? 600 : 400, color: done ? 'var(--white)' : 'var(--muted)' }}>
+                        <div style={{ fontSize:14, fontWeight: done ? 600 : 400, color: done ? '#1a2415' : '#7a9070' }}>
                           {step.label}
-                          {current && <span style={{ marginLeft:8, fontSize:10, fontWeight:700, background:'rgba(90,176,48,.18)', color:'var(--green-lt)', padding:'2px 8px', borderRadius:99 }}>CURRENT</span>}
+                          {current && <span style={{ marginLeft:8, fontSize:10, fontWeight:700, background:'rgba(90,176,48,.18)', color:'#4e9e2a', padding:'2px 8px', borderRadius:99 }}>CURRENT</span>}
                         </div>
-                        <div style={{ fontSize:12, color:'var(--muted)', marginTop:2 }}>{step.desc}</div>
+                        <div style={{ fontSize:12, color:'#7a9070', marginTop:2 }}>{step.desc}</div>
                         {history && (
-                          <div style={{ fontSize:11, color:'var(--green-lt)', marginTop:4 }}>
+                          <div style={{ fontSize:11, color:'#4e9e2a', marginTop:4 }}>
                             {new Date(history.updatedAt).toLocaleString('en-BD')}
                             {history.note && ` · ${history.note}`}
                           </div>
@@ -120,23 +122,23 @@ export default function OrderTracking() {
           </div>
 
           {/* Order items */}
-          <div style={{ background:'var(--card)', border:'1px solid var(--border)', borderRadius:20, padding:28 }}>
+          <div style={{ background:'#fff', border:'1px solid rgba(60,100,40,.12)', borderRadius:20, padding:28 }}>
             <div style={{ fontSize:15, fontWeight:600, marginBottom:20 }}>Order Items</div>
             {order.items?.map((item, i) => (
-              <div key={i} style={{ display:'flex', alignItems:'center', gap:14, padding:'12px 0', borderBottom: i < order.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                <div style={{ width:46, height:46, borderRadius:10, overflow:'hidden', background:'var(--card2)', flexShrink:0 }}>
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:14, padding:'12px 0', borderBottom: i < order.items.length - 1 ? '1px solid rgba(60,100,40,.12)' : 'none' }}>
+                <div style={{ width:46, height:46, borderRadius:10, overflow:'hidden', background:'#f0f4ec', flexShrink:0 }}>
                   {item.image ? <img src={item.image} alt={item.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center' }}>🥦</div>}
                 </div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:14, fontWeight:500 }}>{item.name}</div>
-                  <div style={{ fontSize:12, color:'var(--muted)' }}>{item.quantity} {item.unit} × ৳{item.price}</div>
+                  <div style={{ fontSize:12, color:'#7a9070' }}>{item.quantity} {item.unit} × ৳{item.price}</div>
                 </div>
-                <div style={{ fontSize:15, fontWeight:600, color:'var(--green-lt)' }}>৳{item.price * item.quantity}</div>
+                <div style={{ fontSize:15, fontWeight:600, color:'#4e9e2a' }}>৳{item.price * item.quantity}</div>
               </div>
             ))}
-            <div style={{ display:'flex', justifyContent:'space-between', marginTop:16, paddingTop:16, borderTop:'1px solid var(--border)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginTop:16, paddingTop:16, borderTop:'1px solid rgba(60,100,40,.12)' }}>
               <div style={{ fontSize:14, fontWeight:600 }}>Total</div>
-              <div style={{ fontSize:20, fontWeight:700, color:'var(--green-lt)' }}>৳{order.totalAmount?.toLocaleString()}</div>
+              <div style={{ fontSize:20, fontWeight:700, color:'#4e9e2a' }}>৳{order.totalAmount?.toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -144,38 +146,38 @@ export default function OrderTracking() {
         {/* Right side */}
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
           {/* QR Code */}
-          <div style={{ background:'var(--card)', border:'1px solid var(--border)', borderRadius:20, padding:24, textAlign:'center' }}>
+          <div style={{ background:'#fff', border:'1px solid rgba(60,100,40,.12)', borderRadius:20, padding:24, textAlign:'center' }}>
             <div style={{ fontSize:13, fontWeight:600, marginBottom:16 }}>Order QR Code</div>
             <div style={{ background:'#fff', borderRadius:12, padding:16, display:'inline-block' }}>
               <QRCodeSVG value={qrValue} size={140} bgColor="#ffffff" fgColor="#0a0f08" />
             </div>
-            <div style={{ fontSize:11, color:'var(--muted)', marginTop:12 }}>Show this to verify delivery</div>
+            <div style={{ fontSize:11, color:'#7a9070', marginTop:12 }}>Show this to verify delivery</div>
           </div>
 
           {/* Farmer info */}
-          <div style={{ background:'var(--card)', border:'1px solid var(--border)', borderRadius:20, padding:24 }}>
+          <div style={{ background:'#fff', border:'1px solid rgba(60,100,40,.12)', borderRadius:20, padding:24 }}>
             <div style={{ fontSize:13, fontWeight:600, marginBottom:14 }}>Farmer</div>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
               <div style={{ width:38, height:38, borderRadius:'50%', background:'rgba(90,176,48,.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>👨‍🌾</div>
               <div>
                 <div style={{ fontSize:13, fontWeight:600 }}>{order.farmer?.name}</div>
-                <div style={{ fontSize:11, color:'var(--muted)' }}>📍 {order.farmer?.location?.district || 'Bangladesh'}</div>
+                <div style={{ fontSize:11, color:'#7a9070' }}>📍 {order.farmer?.location?.district || 'Bangladesh'}</div>
               </div>
             </div>
             {order.farmer?.phone && (
-              <a href={`tel:${order.farmer.phone}`} style={{ display:'block', textAlign:'center', padding:'10px', background:'rgba(90,176,48,.1)', border:'1px solid rgba(90,176,48,.2)', borderRadius:10, fontSize:13, color:'var(--green-lt)', textDecoration:'none' }}>
+              <a href={`tel:${order.farmer.phone}`} style={{ display:'block', textAlign:'center', padding:'10px', background:'rgba(90,176,48,.1)', border:'1px solid rgba(90,176,48,.2)', borderRadius:10, fontSize:13, color:'#4e9e2a', textDecoration:'none' }}>
                 📞 Call Farmer
               </a>
             )}
           </div>
 
           {/* Delivery info */}
-          <div style={{ background:'var(--card)', border:'1px solid var(--border)', borderRadius:20, padding:24 }}>
+          <div style={{ background:'#fff', border:'1px solid rgba(60,100,40,.12)', borderRadius:20, padding:24 }}>
             <div style={{ fontSize:13, fontWeight:600, marginBottom:14 }}>Delivery Info</div>
-            <div style={{ fontSize:12, color:'var(--muted)', lineHeight:1.7 }}>
+            <div style={{ fontSize:12, color:'#7a9070', lineHeight:1.7 }}>
               <div>📍 {order.deliveryAddress || 'Not specified'}</div>
               <div style={{ marginTop:6 }}>💳 {order.paymentMethod?.replace(/_/g,' ')}</div>
-              {order.isPreOrder && <div style={{ marginTop:6, color:'var(--amber-lt)' }}>📅 Pre-Order</div>}
+              {order.isPreOrder && <div style={{ marginTop:6, color:'#f0b840' }}>📅 Pre-Order</div>}
             </div>
           </div>
         </div>
