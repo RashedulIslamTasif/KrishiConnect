@@ -1,9 +1,8 @@
 const asyncHandler = require('express-async-handler');
-const Order = require('../models/Order');
+const Order   = require('../models/Order');
 const Product = require('../models/Product');
 
-// ── POST /api/orders ─────────────────────────────────────────
-// Customer places an order
+// ── POST /api/orders ──────────────────────────────────────────
 const createOrder = asyncHandler(async (req, res) => {
   const { items, farmerId, deliveryAddress, paymentMethod, isPreOrder } = req.body;
 
@@ -11,7 +10,6 @@ const createOrder = asyncHandler(async (req, res) => {
     res.status(400); throw new Error('No items in order');
   }
 
-  // Calculate total and build order items
   let totalAmount = 0;
   const orderItems = [];
 
@@ -30,7 +28,6 @@ const createOrder = asyncHandler(async (req, res) => {
 
     totalAmount += product.price * item.quantity;
 
-    // Deduct stock (only for immediate orders, not pre-orders)
     if (!isPreOrder) {
       product.stock -= item.quantity;
       await product.save();
@@ -38,14 +35,14 @@ const createOrder = asyncHandler(async (req, res) => {
   }
 
   const order = await Order.create({
-    customer:        req.user._id,
-    farmer:          farmerId,
-    items:           orderItems,
+    customer:       req.user._id,
+    farmer:         farmerId,
+    items:          orderItems,
     totalAmount,
-    deliveryAddress,
-    paymentMethod:   paymentMethod || 'cash_on_delivery',
-    isPreOrder:      isPreOrder || false,
-    statusHistory:   [{ status: 'pending', note: 'Order placed' }],
+    deliveryAddress: deliveryAddress || '',
+    paymentMethod:  paymentMethod || 'cash_on_delivery',
+    isPreOrder:     isPreOrder || false,
+    statusHistory:  [{ status: 'pending', note: 'Order placed' }],
   });
 
   const populated = await order.populate([
@@ -56,27 +53,50 @@ const createOrder = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, order: populated });
 });
 
-// ── GET /api/orders/my ───────────────────────────────────────
-// Customer sees their own orders
+// ── PUT /api/orders/:id/payment-method ────────────────────────
+// Called by Cart / PaymentModal to set address + payment method
+// before or after gateway redirect
+const updatePaymentMethod = asyncHandler(async (req, res) => {
+  const { deliveryAddress, paymentMethod } = req.body;
+  const order = await Order.findById(req.params.id);
+
+  if (!order) { res.status(404); throw new Error('Order not found'); }
+  if (order.customer.toString() !== req.user._id.toString()) {
+    res.status(403); throw new Error('Not your order');
+  }
+
+  if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+  if (paymentMethod)   order.paymentMethod   = paymentMethod;
+  await order.save();
+
+  res.json({ success: true, order });
+});
+
+// ── GET /api/orders/my ────────────────────────────────────────
 const getMyOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ customer: req.user._id })
     .populate('farmer', 'name farmName avatar')
     .sort({ createdAt: -1 });
-
   res.json({ success: true, orders });
 });
 
-// ── GET /api/orders/farmer ───────────────────────────────────
-// Farmer sees orders they received
+// ── GET /api/orders/mine  (alias for my) ─────────────────────
+const getMyOrdersAlias = asyncHandler(async (req, res) => {
+  const orders = await Order.find({ customer: req.user._id })
+    .populate('farmer', 'name farmName avatar')
+    .sort({ createdAt: -1 });
+  res.json({ success: true, orders });
+});
+
+// ── GET /api/orders/farmer ────────────────────────────────────
 const getFarmerOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ farmer: req.user._id })
     .populate('customer', 'name email phone')
     .sort({ createdAt: -1 });
-
   res.json({ success: true, orders });
 });
 
-// ── GET /api/orders/:id ──────────────────────────────────────
+// ── GET /api/orders/:id ───────────────────────────────────────
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id)
     .populate('customer', 'name email phone')
@@ -84,18 +104,16 @@ const getOrderById = asyncHandler(async (req, res) => {
 
   if (!order) { res.status(404); throw new Error('Order not found'); }
 
-  // Only the customer or farmer of this order can view it
   const isOwner =
     order.customer._id.toString() === req.user._id.toString() ||
     order.farmer._id.toString()   === req.user._id.toString();
 
-  if (!isOwner) { res.status(403); throw new Error('Not authorized to view this order'); }
+  if (!isOwner) { res.status(403); throw new Error('Not authorized'); }
 
   res.json({ success: true, order });
 });
 
-// ── PUT /api/orders/:id/status ───────────────────────────────
-// Farmer updates order status
+// ── PUT /api/orders/:id/status ────────────────────────────────
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status, note } = req.body;
   const order = await Order.findById(req.params.id);
@@ -107,11 +125,18 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 
   order.status = status;
   order.statusHistory.push({ status, note: note || '', updatedAt: new Date() });
-
-  if (status === 'delivered') order.isPaid = true;
+  if (status === 'delivered') { order.isPaid = true; order.paidAt = new Date(); }
 
   await order.save();
   res.json({ success: true, order });
 });
 
-module.exports = { createOrder, getMyOrders, getFarmerOrders, getOrderById, updateOrderStatus };
+module.exports = {
+  createOrder,
+  updatePaymentMethod,
+  getMyOrders,
+  getMyOrdersAlias,
+  getFarmerOrders,
+  getOrderById,
+  updateOrderStatus,
+};

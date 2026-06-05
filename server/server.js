@@ -17,9 +17,9 @@ const allowedOrigins = [
   'http://localhost:3000',
   /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
   /^http:\/\/127\.0\.0\.1:\d+$/,
-  /^https:\/\/.*\.vercel\.app$/,       // all Vercel deployments
-  /^https:\/\/.*\.onrender\.com$/,     // Render frontend if needed
-  process.env.FRONTEND_URL,            // custom domain if set
+  /^https:\/\/.*\.vercel\.app$/,
+  /^https:\/\/.*\.onrender\.com$/,
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 const corsOptions = {
@@ -40,10 +40,10 @@ const io = new Server(server, {
 app.set('io', io);
 
 io.on('connection', (socket) => {
-  socket.on('join', (userId) => socket.join(userId));
+  socket.on('join',              (userId)         => socket.join(userId));
   socket.on('join_conversation', (conversationId) => socket.join(conversationId));
-  socket.on('typing', ({ conversationId, userName }) => socket.to(conversationId).emit('typing', { userName }));
-  socket.on('stop_typing', (conversationId) => socket.to(conversationId).emit('stop_typing'));
+  socket.on('typing',      ({ conversationId, userName }) => socket.to(conversationId).emit('typing', { userName }));
+  socket.on('stop_typing', (conversationId)               => socket.to(conversationId).emit('stop_typing'));
   socket.on('disconnect', () => {});
 });
 
@@ -51,9 +51,11 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ── API Routes ────────────────────────────────────────────────
 app.use('/api/auth',          require('./routes/authRoutes'));
 app.use('/api/products',      require('./routes/productRoutes'));
 app.use('/api/orders',        require('./routes/orderRoutes'));
+app.use('/api/payment',       require('./routes/paymentRoutes'));   // ← NEW
 app.use('/api/reviews',       require('./routes/reviewRoutes'));
 app.use('/api/prices',        require('./routes/priceRoutes'));
 app.use('/api/chat',          require('./routes/chatRoutes'));

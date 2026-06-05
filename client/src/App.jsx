@@ -20,6 +20,7 @@ import MyOrders             from './pages/MyOrders.jsx';
 import OrderTracking        from './pages/OrderTracking.jsx';
 import Chat                 from './pages/Chat.jsx';
 import { PrivateRoute, FarmerRoute } from './routes/PrivateRoute.jsx';
+import PaymentResult from './pages/PaymentResult.jsx';
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/farmer/:id"   element={<FarmerProfile />} />
         <Route path="/login"        element={<Login />} />
         <Route path="/register"     element={<Register />} />
+        <Route path="/payment/result" element={<PaymentResult />} />
 
         <Route element={<PrivateRoute />}>
           <Route path="/profile"              element={<CustomerProfile />} />

@@ -9,27 +9,34 @@ const orderItemSchema = new mongoose.Schema({
   unit:     { type: String },
 });
 
+// ── Payment transaction sub-document ──────────────────────────
+const paymentTransactionSchema = new mongoose.Schema({
+  gateway:       { type: String, enum: ['bkash', 'nagad', 'cash_on_delivery'] },
+  // bKash fields
+  paymentID:     { type: String },   // bKash paymentID from /create
+  trxID:         { type: String },   // final transaction ID from /execute
+  // Nagad fields  
+  paymentReferenceId: { type: String },  // Nagad reference
+  merchantCallbackURL: { type: String },
+  // Common
+  amount:        { type: Number },
+  currency:      { type: String, default: 'BDT' },
+  status:        { type: String, enum: ['initiated', 'pending', 'completed', 'failed', 'cancelled', 'refunded'], default: 'initiated' },
+  rawResponse:   { type: mongoose.Schema.Types.Mixed },  // store full gateway response
+  initiatedAt:   { type: Date, default: Date.now },
+  completedAt:   { type: Date },
+  failureReason: { type: String },
+}, { _id: false });
+
 const orderSchema = new mongoose.Schema(
   {
-    customer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    farmer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    items: [orderItemSchema],
+    customer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    farmer:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    items:    [orderItemSchema],
 
-    totalAmount: {
-      type: Number,
-      required: true,
-    },
+    totalAmount:  { type: Number, required: true },
 
-    // Order status flow:
-    // pending → confirmed → harvested → out_for_delivery → delivered → cancelled
+    // status flow: pending → confirmed → harvested → out_for_delivery → delivered → cancelled
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'harvested', 'out_for_delivery', 'delivered', 'cancelled'],
@@ -38,22 +45,21 @@ const orderSchema = new mongoose.Schema(
 
     isPreOrder: { type: Boolean, default: false },
 
-    // Delivery info
+    // Delivery
     deliveryAddress: { type: String },
     deliveryDate:    { type: Date },
 
-    // Payment (simplified — no real payment gateway for college project)
+    // ── Payment ───────────────────────────────────────────────
     paymentMethod: {
       type: String,
       enum: ['cash_on_delivery', 'bkash', 'nagad'],
       default: 'cash_on_delivery',
     },
-    isPaid: { type: Boolean, default: false },
+    isPaid:      { type: Boolean, default: false },
+    paidAt:      { type: Date },
+    paymentTransaction: paymentTransactionSchema,
 
-    // QR code data (base64 string generated on frontend)
-    qrData: { type: String },
-
-    // Status history for timeline view
+    // Status history timeline
     statusHistory: [
       {
         status:    String,

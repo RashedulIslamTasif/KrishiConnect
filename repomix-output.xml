@@ -56,6 +56,7 @@ client/src/App.jsx
 client/src/components/CouponInput.jsx
 client/src/components/Navbar.jsx
 client/src/components/NotificationBell.jsx
+client/src/components/payment/PaymentModal.jsx
 client/src/components/ProductCard.jsx
 client/src/components/Recommendations.jsx
 client/src/context/AuthContext.jsx
@@ -81,6 +82,7 @@ client/src/pages/Login.jsx
 client/src/pages/Marketplace.jsx
 client/src/pages/MyOrders.jsx
 client/src/pages/OrderTracking.jsx
+client/src/pages/PaymentResult.jsx
 client/src/pages/ProductDetail.jsx
 client/src/pages/Register.jsx
 client/src/routes/PrivateRoute.jsx
@@ -96,6 +98,7 @@ server/controllers/chatController.js
 server/controllers/couponController.js
 server/controllers/notificationController.js
 server/controllers/orderController.js
+server/controllers/Paymentcontroller.js
 server/controllers/priceController.js
 server/controllers/productController.js
 server/controllers/reviewController.js
@@ -118,6 +121,7 @@ server/routes/chatRoutes.js
 server/routes/couponRoutes.js
 server/routes/notificationRoutes.js
 server/routes/orderRoutes.js
+server/routes/Paymentroutes.js
 server/routes/priceRoutes.js
 server/routes/productRoutes.js
 server/routes/reviewRoutes.js
@@ -129,6 +133,205 @@ server/utils/cloudinary.js
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="client/src/components/payment/PaymentModal.jsx">
+export default function PaymentModal(
+⋮----
+const handlePay = async () =>
+⋮----
+// First update the order with address + payment method if needed
+⋮----
+}).catch(() => {}); // best-effort — order already exists
+⋮----
+// bKash
+⋮----
+// Redirect to bKash hosted page
+⋮----
+// Nagad
+⋮----
+{/* Handle */}
+⋮----
+{/* Header */}
+⋮----
+{/* Order summary strip */}
+⋮----
+{/* Delivery address */}
+⋮----
+{/* Payment method cards */}
+⋮----
+{/* Logo circle */}
+⋮----
+{/* Radio dot */}
+⋮----
+{/* Error */}
+⋮----
+{/* Gateway notice */}
+⋮----
+{/* Pay button */}
+⋮----
+{/* Security note */}
+</file>
+
+<file path="client/src/pages/PaymentResult.jsx">
+export default function PaymentResult()
+⋮----
+const status  = searchParams.get('status');   // success | failure | cancel
+⋮----
+const [verified, setVerified] = useState(null); // null | true | false
+⋮----
+// If status === success, auto-verify with backend
+⋮----
+{/* Icon */}
+⋮----
+{/* Title */}
+⋮----
+{/* Subtitle */}
+⋮----
+{/* Transaction details */}
+⋮----
+{/* Verification status */}
+⋮----
+{/* Actions */}
+⋮----
+{/* Support note */}
+</file>
+
+<file path="server/controllers/Paymentcontroller.js">
+/**
+ * paymentController.js
+ *
+ * Real bKash & Nagad payment gateway integration.
+ *
+ * bKash Checkout API (v1.2.0-beta) docs:
+ *   https://developer.bka.sh/docs/checkout-url-v1-2-0-beta
+ *
+ * Nagad MFS API:
+ *   https://nagad.com.bd/developer/api-doc
+ *
+ * ENV variables needed:
+ *   BKASH_APP_KEY, BKASH_APP_SECRET, BKASH_USERNAME, BKASH_PASSWORD
+ *   BKASH_BASE_URL   (sandbox: https://tokenized.sandbox.bka.sh/v1.2.0-beta)
+ *   NAGAD_MERCHANT_ID, NAGAD_MERCHANT_PRIVATE_KEY, NAGAD_MERCHANT_PUBLIC_KEY
+ *   NAGAD_BASE_URL   (sandbox: http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0)
+ *   FRONTEND_URL     (e.g. https://yoursite.com  — for callback URLs)
+ */
+⋮----
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+⋮----
+/** Generate a unique merchant invoice number */
+const merchantInvoice = (orderId)
+⋮----
+// ─────────────────────────────────────────────────────────────
+// ██████  ██   ██  █████  ███████ ██   ██
+// ██   ██ ██  ██  ██   ██ ██      ██   ██
+// ██████  █████   ███████ ███████ ███████
+// ██   ██ ██  ██  ██   ██      ██ ██   ██
+// ██████  ██   ██ ██   ██ ███████ ██   ██
+// ─────────────────────────────────────────────────────────────
+⋮----
+/** Get (or refresh) bKash token */
+async function getBkashToken()
+⋮----
+// expires_in is in seconds; refresh 1 min early
+⋮----
+/**
+ * POST /api/payment/bkash/create
+ * Body: { orderId }
+ * Creates a bKash payment and returns the bkashURL to redirect the user to.
+ */
+⋮----
+mode:                  '0011',           // checkout URL mode
+⋮----
+// Persist transaction initiation
+⋮----
+/**
+ * POST /api/payment/bkash/callback
+ * Called by bKash after user completes payment (also used as our redirect handler).
+ * Query params: paymentID, status, orderId
+ */
+⋮----
+// status === 'success' — execute the payment
+⋮----
+// Payment execute failed
+⋮----
+/**
+ * POST /api/payment/bkash/verify/:orderId
+ * Lets the frontend double-check payment status.
+ */
+⋮----
+// ─────────────────────────────────────────────────────────────
+// ███    ██  █████   ██████   █████  ██████
+// ████   ██ ██   ██ ██       ██   ██ ██   ██
+// ██ ██  ██ ███████ ██   ███ ███████ ██   ██
+// ██  ██ ██ ██   ██ ██    ██ ██   ██ ██   ██
+// ██   ████ ██   ██  ██████  ██   ██ ██████
+// ─────────────────────────────────────────────────────────────
+⋮----
+/**
+ * Sign a Nagad request body with the merchant private key (RSA).
+ * Nagad requires the sensitive payload to be encrypted with their public key
+ * and signed with our private key.
+ */
+function nagadSign(data)
+⋮----
+function nagadEncrypt(data)
+⋮----
+/**
+ * POST /api/payment/nagad/create
+ * Body: { orderId }
+ * Step 1: Initialize Nagad payment session → Step 2: Place order → return payment URL
+ */
+⋮----
+const datetime    = new Date().toISOString().replace(/[-T:.Z]/g, '').slice(0, 14); // YYYYMMDDHHmmss
+⋮----
+// ── Step 1: Initialize ──
+⋮----
+// ── Step 2: Complete / place order ──
+⋮----
+currencyCode:     '050',   // BDT
+⋮----
+// Save initiation
+⋮----
+/**
+ * POST /api/payment/nagad/callback
+ * Nagad redirects here with payment_ref_id and status.
+ */
+⋮----
+// Verify with Nagad
+⋮----
+/**
+ * GET /api/payment/nagad/verify/:orderId
+ */
+⋮----
+// ─────────────────────────────────────────────────────────────
+// REFUND  (bKash only — Nagad refund API is same pattern)
+// ─────────────────────────────────────────────────────────────
+⋮----
+/**
+ * POST /api/payment/refund/:orderId
+ * Admin/farmer can issue a refund for a completed bKash payment.
+ */
+</file>
+
+<file path="server/routes/Paymentroutes.js">
+// ── bKash ──────────────────────────────────────────────────
+// Create a bKash payment session (returns bkashURL)
+⋮----
+// bKash redirects the user here after payment
+router.get('/bkash/callback',      bkashCallback);          // no auth — gateway callback
+// Frontend calls this to double-check payment status
+⋮----
+// ── Nagad ──────────────────────────────────────────────────
+// Create a Nagad payment session (returns callURL)
+⋮----
+// Nagad redirects the user here after payment
+router.get('/nagad/callback',      nagadCallback);           // no auth — gateway callback
+// Frontend calls this to double-check payment status
+⋮----
+// ── Refund ─────────────────────────────────────────────────
+</file>
 
 <file path="client/client.gitignore">
 node_modules/
@@ -506,25 +709,21 @@ const createNotification = async (
 </file>
 
 <file path="server/controllers/orderController.js">
-// ── POST /api/orders ─────────────────────────────────────────
-// Customer places an order
+// ── POST /api/orders ──────────────────────────────────────────
 ⋮----
-// Calculate total and build order items
+// ── PUT /api/orders/:id/payment-method ────────────────────────
+// Called by Cart / PaymentModal to set address + payment method
+// before or after gateway redirect
 ⋮----
-// Deduct stock (only for immediate orders, not pre-orders)
+// ── GET /api/orders/my ────────────────────────────────────────
 ⋮----
-// ── GET /api/orders/my ───────────────────────────────────────
-// Customer sees their own orders
+// ── GET /api/orders/mine  (alias for my) ─────────────────────
 ⋮----
-// ── GET /api/orders/farmer ───────────────────────────────────
-// Farmer sees orders they received
+// ── GET /api/orders/farmer ────────────────────────────────────
 ⋮----
-// ── GET /api/orders/:id ──────────────────────────────────────
+// ── GET /api/orders/:id ───────────────────────────────────────
 ⋮----
-// Only the customer or farmer of this order can view it
-⋮----
-// ── PUT /api/orders/:id/status ───────────────────────────────
-// Farmer updates order status
+// ── PUT /api/orders/:id/status ────────────────────────────────
 </file>
 
 <file path="server/controllers/priceController.js">
@@ -581,16 +780,25 @@ meta:    { type: mongoose.Schema.Types.Mixed }, // extra data
 </file>
 
 <file path="server/models/Order.js">
-// Order status flow:
-// pending → confirmed → harvested → out_for_delivery → delivered → cancelled
+// ── Payment transaction sub-document ──────────────────────────
 ⋮----
-// Delivery info
+// bKash fields
+paymentID:     { type: String },   // bKash paymentID from /create
+trxID:         { type: String },   // final transaction ID from /execute
+// Nagad fields
+paymentReferenceId: { type: String },  // Nagad reference
 ⋮----
-// Payment (simplified — no real payment gateway for college project)
+// Common
 ⋮----
-// QR code data (base64 string generated on frontend)
+rawResponse:   { type: mongoose.Schema.Types.Mixed },  // store full gateway response
 ⋮----
-// Status history for timeline view
+// status flow: pending → confirmed → harvested → out_for_delivery → delivered → cancelled
+⋮----
+// Delivery
+⋮----
+// ── Payment ───────────────────────────────────────────────
+⋮----
+// Status history timeline
 </file>
 
 <file path="server/models/PriceHistory.js">
@@ -652,6 +860,7 @@ isVerified:  { type: Boolean, default: false }, // Admin toggles this
     "seed": "node seed.js"
   },
   "dependencies": {
+    "axios": "^1.17.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
@@ -817,20 +1026,6 @@ export const useCart = () =>
 
 <file path="client/src/main.jsx">
 
-</file>
-
-<file path="client/src/pages/Cart.jsx">
-function CheckoutModal(
-⋮----
-export default function Cart()
-⋮----
-const placeOrder = async (
-⋮----
-{/* Header */}
-⋮----
-{/* Items */}
-⋮----
-{/* Summary */}
 </file>
 
 <file path="client/src/pages/CustomerProfile.jsx">
@@ -1022,11 +1217,11 @@ const seed = async () =>
 </file>
 
 <file path="server/server.js">
-/^https:\/\/.*\.vercel\.app$/,       // all Vercel deployments
-/^https:\/\/.*\.onrender\.com$/,     // Render frontend if needed
-process.env.FRONTEND_URL,            // custom domain if set
-⋮----
 origin: (origin, callback) =>
+⋮----
+// ── API Routes ────────────────────────────────────────────────
+⋮----
+app.use('/api/payment',       require('./routes/paymentRoutes'));   // ← NEW
 </file>
 
 <file path="client/index.html">
@@ -1082,6 +1277,33 @@ export default function ProductCard(
 {/* Image */}
 ⋮----
 {/* Info */}
+</file>
+
+<file path="client/src/pages/Cart.jsx">
+/* ── Farmer block modal (unchanged) ── */
+function FarmerBlockModal(
+⋮----
+export default function Cart()
+⋮----
+const [pendingOrder,    setPendingOrder]    = useState(null); // order doc returned from POST /orders
+⋮----
+// Step 1: Guard + create order record → open payment modal
+const handleCheckout = async () =>
+⋮----
+// Group by farmer
+⋮----
+// Create orders (one per farmer) — returns first one for payment
+⋮----
+deliveryAddress: '',        // will be filled in PaymentModal
+paymentMethod:   'bkash',   // will be overridden in PaymentModal
+⋮----
+// For simplicity show payment for the first (and usually only) order
+// Multi-farmer carts are split automatically above
+⋮----
+// COD path — called by PaymentModal when user picks cash_on_delivery
+const handleCodConfirmed = async (
+⋮----
+{/* Payment method preview icons */}
 </file>
 
 <file path="client/src/pages/farmer/AddProduct.jsx">
@@ -1286,6 +1508,63 @@ export default function FarmerOrders()
 const updateStatus = async (id, status) =>
 </file>
 
+<file path="client/src/pages/MyOrders.jsx">
+function Badge(
+⋮----
+function ReviewModal(
+⋮----
+const handleSubmit = async () =>
+⋮----
+export default function MyOrders()
+⋮----
+{/* Items */}
+</file>
+
+<file path="client/src/App.jsx">
+export default function App()
+</file>
+
+<file path="client/src/pages/Chat.jsx">
+export default function Chat()
+⋮----
+// On mobile: show list or chat, not both
+const [mobileView,    setMobileView]    = useState('list'); // 'list' | 'chat'
+⋮----
+const handleMsg = (
+const handleTyping_    = ()
+const handleStopTyping = ()
+⋮----
+const fetchConversations = async () =>
+⋮----
+const fetchMessages = async (id) =>
+⋮----
+const getOther = (c)
+⋮----
+const handleSend = async () =>
+⋮----
+const handleTypingInput = (val) =>
+⋮----
+const formatTime = (d) => new Date(d).toLocaleTimeString('en-BD',
+⋮----
+// ── MOBILE LAYOUT ─────────────────────────────────────
+⋮----
+// Show conversation list
+⋮----
+// Show active chat
+⋮----
+{/* Header */}
+⋮----
+{/* Messages */}
+⋮----
+{/* Input */}
+⋮----
+// ── DESKTOP LAYOUT ────────────────────────────────────
+⋮----
+{/* Sidebar */}
+⋮----
+{/* Chat */}
+</file>
+
 <file path="client/src/pages/Home.jsx">
 /* ── Animated counter ── */
 function Counter(
@@ -1360,63 +1639,6 @@ function DesktopProductCard(
 export default function Home()
 </file>
 
-<file path="client/src/pages/MyOrders.jsx">
-function Badge(
-⋮----
-function ReviewModal(
-⋮----
-const handleSubmit = async () =>
-⋮----
-export default function MyOrders()
-⋮----
-{/* Items */}
-</file>
-
-<file path="client/src/App.jsx">
-export default function App()
-</file>
-
-<file path="client/src/pages/Chat.jsx">
-export default function Chat()
-⋮----
-// On mobile: show list or chat, not both
-const [mobileView,    setMobileView]    = useState('list'); // 'list' | 'chat'
-⋮----
-const handleMsg = (
-const handleTyping_    = ()
-const handleStopTyping = ()
-⋮----
-const fetchConversations = async () =>
-⋮----
-const fetchMessages = async (id) =>
-⋮----
-const getOther = (c)
-⋮----
-const handleSend = async () =>
-⋮----
-const handleTypingInput = (val) =>
-⋮----
-const formatTime = (d) => new Date(d).toLocaleTimeString('en-BD',
-⋮----
-// ── MOBILE LAYOUT ─────────────────────────────────────
-⋮----
-// Show conversation list
-⋮----
-// Show active chat
-⋮----
-{/* Header */}
-⋮----
-{/* Messages */}
-⋮----
-{/* Input */}
-⋮----
-// ── DESKTOP LAYOUT ────────────────────────────────────
-⋮----
-{/* Sidebar */}
-⋮----
-{/* Chat */}
-</file>
-
 <file path="client/src/pages/Marketplace.jsx">
 /* ── Shared card styles ── */
 function MiniCard(
@@ -1484,40 +1706,6 @@ const clearFilters = () =>
 function FullCard(
 </file>
 
-<file path="client/src/pages/ProductDetail.jsx">
-function OrderModal(
-⋮----
-export default function ProductDetail()
-⋮----
-const handleOrderClick = () =>
-⋮----
-const handleConfirmOrder = async (
-⋮----
-{/* Back button */}
-⋮----
-{/* Mobile: single column. Desktop: 2 columns */}
-⋮----
-{/* LEFT — Image + info */}
-⋮----
-{/* Purchase card — on mobile it goes here BELOW the image */}
-⋮----
-{/* Price */}
-⋮----
-{/* Info grid */}
-⋮----
-{/* Farmer */}
-⋮----
-{/* Qty */}
-⋮----
-{/* Buttons */}
-⋮----
-{/* Price chart */}
-⋮----
-{/* Reviews */}
-⋮----
-{/* RIGHT — Desktop purchase card only */}
-</file>
-
 <file path="client/src/components/Navbar.jsx">
 export default function Navbar()
 ⋮----
@@ -1535,6 +1723,44 @@ const close  = ()
 {/* Hamburger */}
 ⋮----
 {/* Mobile menu */}
+</file>
+
+<file path="client/src/pages/ProductDetail.jsx">
+/* ── Farmer-blocked modal ── */
+function FarmerBlockModal(
+⋮----
+{/* Icon */}
+⋮----
+{/* Divider */}
+⋮----
+function OrderModal(
+⋮----
+export default function ProductDetail()
+⋮----
+// Centralised guard: farmers are blocked, guests redirect to login
+const guardBuy = (action) =>
+⋮----
+const handleOrderClick = () =>
+⋮----
+const handleAddToCart = () =>
+⋮----
+const handleConfirmOrder = async (
+⋮----
+// Button label for add-to-cart
+⋮----
+{/* LEFT */}
+⋮----
+{/* Mobile purchase card */}
+⋮----
+{/* Farmer banner inside buttons area */}
+⋮----
+{/* Price chart */}
+⋮----
+{/* Reviews */}
+⋮----
+{/* RIGHT — Desktop purchase card */}
+⋮----
+{/* Farmer notice banner */}
 </file>
 
 </files>
