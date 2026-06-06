@@ -39,8 +39,11 @@ export default function FarmerMap() {
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(260px, 1fr))', gap: isMobile ? 10 : 20 }}>
           {filtered.map(f => (
             <Link key={f._id} to={`/farmer/${f._id}`} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.12)', borderRadius:16, padding: isMobile ? 14 : 24, textDecoration:'none', color:'inherit', display:'block' }}>
-              <div style={{ width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius:'50%', background:'rgba(90,176,48,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize: isMobile ? 18 : 22, fontWeight:700, color:'#4e9e2a', marginBottom:12 }}>
-                {f.name?.[0]?.toUpperCase() || 'F'}
+              <div style={{ width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius:'50%', background:'rgba(90,176,48,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize: isMobile ? 18 : 22, fontWeight:700, color:'#4e9e2a', marginBottom:12, overflow:'hidden', flexShrink:0 }}>
+                {f.avatar
+                  ? <img src={f.avatar} alt={f.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                  : f.name?.[0]?.toUpperCase() || 'F'
+                }
               </div>
               <div style={{ fontSize: isMobile ? 13 : 15, fontWeight:600, color:'#1a2415', marginBottom:2 }}>{f.name}</div>
               {f.farmName && <div style={{ fontSize: isMobile ? 11 : 13, color:'#4e9e2a', marginBottom:4 }}>{f.farmName}</div>}

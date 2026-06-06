@@ -9,15 +9,27 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = new CloudinaryStorage({
+// ── Product image storage ─────────────────────────────────────
+const productStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder:           'krishiconnect/products',
-    allowed_formats:  ['jpg', 'jpeg', 'png', 'webp'],
-    transformation:   [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }],
+    folder:          'krishiconnect/products',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation:  [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }],
   },
 });
 
-const upload = multer({ storage });
+// ── Avatar / profile photo storage ───────────────────────────
+const avatarStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder:          'krishiconnect/avatars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation:  [{ width: 300, height: 300, crop: 'fill', gravity: 'face', quality: 'auto' }],
+  },
+});
 
-module.exports = { cloudinary, upload };
+const upload       = multer({ storage: productStorage });
+const uploadAvatar = multer({ storage: avatarStorage });
+
+module.exports = { cloudinary, upload, uploadAvatar };

@@ -120,7 +120,7 @@ export default function FarmerAccountProfile() {
   const [activeTab, setActiveTab] = useState('profile');
   const [focus,     setFocus]     = useState('');
 
-  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(() => user?.avatar || null);
   const [avatarFile,    setAvatarFile]    = useState(null);
   const [avatarSaving,  setAvatarSaving]  = useState(false);
 
@@ -148,7 +148,7 @@ export default function FarmerAccountProfile() {
       district: user.location?.district || '',
       address:  user.location?.address  || '',
     });
-    if (user.avatar) setAvatarPreview(user.avatar);
+    setAvatarPreview(user.avatar || null);
 
     api.get('/analytics/farmer').then(r => {
       const k = r.data.kpis || r.data;
@@ -173,22 +173,34 @@ export default function FarmerAccountProfile() {
     if (!file) return;
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
+    // Auto-upload immediately when file is selected
+    uploadAvatar(file);
   };
 
-  const uploadAvatar = async () => {
-    if (!avatarFile) return;
+ const uploadAvatar = async (fileToUpload) => {
+    const file = fileToUpload || avatarFile;
+    if (!file) return;
     setAvatarSaving(true);
     try {
       const fd = new FormData();
-      fd.append('avatar', avatarFile);
+      fd.append('avatar', file);
       const { data } = await api.put('/auth/profile', fd, { headers:{ 'Content-Type':'multipart/form-data' } });
-      const savedUser = data.user;
-      updateUser(savedUser);
-      // Replace local blob: URL with the persisted Cloudinary URL
-      if (savedUser?.avatar) setAvatarPreview(savedUser.avatar);
+      const newAvatarUrl = data?.user?.avatar;
+      if (newAvatarUrl) {
+        // Update localStorage directly to guarantee it's saved
+        const stored = JSON.parse(localStorage.getItem('krishi_user') || '{}');
+        stored.avatar = newAvatarUrl;
+        localStorage.setItem('krishi_user', JSON.stringify(stored));
+        updateUser({ ...data.user, avatar: newAvatarUrl });
+        setAvatarPreview(newAvatarUrl);
+        setMsg('Profile picture updated!');
+      } else {
+        setErr('Upload failed — no URL returned.');
+      }
       setAvatarFile(null);
-      setMsg('Profile picture updated!');
-    } catch { setErr('Failed to upload photo.'); }
+    } catch(e) {
+      setErr('Failed to upload photo.');
+    }
     finally { setAvatarSaving(false); }
   };
 
@@ -196,7 +208,8 @@ export default function FarmerAccountProfile() {
     setSaving(true); setMsg(''); setErr('');
     try {
       const { data } = await api.put('/auth/profile', form);
-      updateUser(data.user);
+      const currentAvatar = user?.avatar || '';
+      updateUser({ ...data.user, avatar: data.user?.avatar || currentAvatar });
       setMsg('Profile updated successfully!');
     } catch(e) { setErr(e.response?.data?.message||'Update failed.'); }
     finally { setSaving(false); }

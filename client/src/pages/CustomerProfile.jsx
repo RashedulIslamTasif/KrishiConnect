@@ -99,7 +99,7 @@ export default function CustomerProfile() {
 
   const [activeTab, setActiveTab] = useState('profile');
   const [focus,     setFocus]     = useState('');
-  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(() => user?.avatar || null);
   const [avatarFile,    setAvatarFile]    = useState(null);
   const [avatarSaving,  setAvatarSaving]  = useState(false);
 
@@ -117,8 +117,10 @@ export default function CustomerProfile() {
 
   useEffect(() => {
     if (!user) return;
+    console.log('[PROFILE] useEffect fired, user.avatar =', user.avatar);
+    console.log('[PROFILE] localStorage krishi_user =', localStorage.getItem('krishi_user'));
     setForm({ name: user.name||'', phone: user.phone||'', location: user.location?.district||user.location?.address||'' });
-    if (user.avatar) setAvatarPreview(user.avatar);
+    setAvatarPreview(user.avatar || null);
 
     api.get('/orders/mine').then(r => {
       const list = Array.isArray(r.data) ? r.data : r.data.orders||[];
@@ -137,31 +139,43 @@ export default function CustomerProfile() {
     if (!file) return;
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
+    // Auto-upload immediately when file is selected
+    uploadAvatar(file);
   };
 
-  const uploadAvatar = async () => {
-    if (!avatarFile) return;
+ const uploadAvatar = async (fileToUpload) => {
+    const file = fileToUpload || avatarFile;
+    if (!file) return;
     setAvatarSaving(true);
     try {
       const fd = new FormData();
-      fd.append('avatar', avatarFile);
+      fd.append('avatar', file);
       const { data } = await api.put('/auth/profile', fd, { headers:{ 'Content-Type':'multipart/form-data' } });
-      // data.user is the full updated user — extract avatar URL and persist
-      const savedUser = data.user;
-      updateUser(savedUser);
-      // Show the persisted cloud URL (not the local blob: preview)
-      if (savedUser?.avatar) setAvatarPreview(savedUser.avatar);
+      const newAvatarUrl = data?.user?.avatar;
+      if (newAvatarUrl) {
+        // Update localStorage directly to guarantee it's saved
+        const stored = JSON.parse(localStorage.getItem('krishi_user') || '{}');
+        stored.avatar = newAvatarUrl;
+        localStorage.setItem('krishi_user', JSON.stringify(stored));
+        updateUser({ ...data.user, avatar: newAvatarUrl });
+        setAvatarPreview(newAvatarUrl);
+        setMsg('Profile picture updated!');
+      } else {
+        setErr('Upload failed — no URL returned.');
+      }
       setAvatarFile(null);
-      setMsg('Profile picture updated!');
-    } catch { setErr('Failed to upload photo.'); }
+    } catch(e) {
+      setErr('Failed to upload photo.');
+    }
     finally { setAvatarSaving(false); }
   };
-
   const handleSave = async () => {
     setSaving(true); setMsg(''); setErr('');
     try {
       const { data } = await api.put('/auth/profile', { name:form.name, phone:form.phone, district:form.location });
-      updateUser(data.user);
+      // Preserve existing avatar — server may return empty avatar if no file was sent
+      const currentAvatar = user?.avatar || '';
+      updateUser({ ...data.user, avatar: data.user?.avatar || currentAvatar });
       setMsg('Profile updated successfully!');
     } catch(e) { setErr(e.response?.data?.message||'Update failed.'); }
     finally { setSaving(false); }

@@ -24,7 +24,7 @@ export default function Navbar() {
   return (
     <>
       <nav style={{
-        position: 'sticky', top: 0, zIndex: 100,
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         background: scrolled ? 'rgba(245,247,242,.96)' : 'rgba(245,247,242,.92)',
         backdropFilter: 'blur(20px)',
         borderBottom: `1px solid ${scrolled ? 'rgba(60,100,40,.14)' : 'rgba(60,100,40,.08)'}`,
