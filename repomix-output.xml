@@ -134,205 +134,6 @@ server/utils/cloudinary.js
 <files>
 This section contains the contents of the repository's files.
 
-<file path="client/src/components/payment/PaymentModal.jsx">
-export default function PaymentModal(
-⋮----
-const handlePay = async () =>
-⋮----
-// First update the order with address + payment method if needed
-⋮----
-}).catch(() => {}); // best-effort — order already exists
-⋮----
-// bKash
-⋮----
-// Redirect to bKash hosted page
-⋮----
-// Nagad
-⋮----
-{/* Handle */}
-⋮----
-{/* Header */}
-⋮----
-{/* Order summary strip */}
-⋮----
-{/* Delivery address */}
-⋮----
-{/* Payment method cards */}
-⋮----
-{/* Logo circle */}
-⋮----
-{/* Radio dot */}
-⋮----
-{/* Error */}
-⋮----
-{/* Gateway notice */}
-⋮----
-{/* Pay button */}
-⋮----
-{/* Security note */}
-</file>
-
-<file path="client/src/pages/PaymentResult.jsx">
-export default function PaymentResult()
-⋮----
-const status  = searchParams.get('status');   // success | failure | cancel
-⋮----
-const [verified, setVerified] = useState(null); // null | true | false
-⋮----
-// If status === success, auto-verify with backend
-⋮----
-{/* Icon */}
-⋮----
-{/* Title */}
-⋮----
-{/* Subtitle */}
-⋮----
-{/* Transaction details */}
-⋮----
-{/* Verification status */}
-⋮----
-{/* Actions */}
-⋮----
-{/* Support note */}
-</file>
-
-<file path="server/controllers/Paymentcontroller.js">
-/**
- * paymentController.js
- *
- * Real bKash & Nagad payment gateway integration.
- *
- * bKash Checkout API (v1.2.0-beta) docs:
- *   https://developer.bka.sh/docs/checkout-url-v1-2-0-beta
- *
- * Nagad MFS API:
- *   https://nagad.com.bd/developer/api-doc
- *
- * ENV variables needed:
- *   BKASH_APP_KEY, BKASH_APP_SECRET, BKASH_USERNAME, BKASH_PASSWORD
- *   BKASH_BASE_URL   (sandbox: https://tokenized.sandbox.bka.sh/v1.2.0-beta)
- *   NAGAD_MERCHANT_ID, NAGAD_MERCHANT_PRIVATE_KEY, NAGAD_MERCHANT_PUBLIC_KEY
- *   NAGAD_BASE_URL   (sandbox: http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0)
- *   FRONTEND_URL     (e.g. https://yoursite.com  — for callback URLs)
- */
-⋮----
-// ─────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────
-⋮----
-/** Generate a unique merchant invoice number */
-const merchantInvoice = (orderId)
-⋮----
-// ─────────────────────────────────────────────────────────────
-// ██████  ██   ██  █████  ███████ ██   ██
-// ██   ██ ██  ██  ██   ██ ██      ██   ██
-// ██████  █████   ███████ ███████ ███████
-// ██   ██ ██  ██  ██   ██      ██ ██   ██
-// ██████  ██   ██ ██   ██ ███████ ██   ██
-// ─────────────────────────────────────────────────────────────
-⋮----
-/** Get (or refresh) bKash token */
-async function getBkashToken()
-⋮----
-// expires_in is in seconds; refresh 1 min early
-⋮----
-/**
- * POST /api/payment/bkash/create
- * Body: { orderId }
- * Creates a bKash payment and returns the bkashURL to redirect the user to.
- */
-⋮----
-mode:                  '0011',           // checkout URL mode
-⋮----
-// Persist transaction initiation
-⋮----
-/**
- * POST /api/payment/bkash/callback
- * Called by bKash after user completes payment (also used as our redirect handler).
- * Query params: paymentID, status, orderId
- */
-⋮----
-// status === 'success' — execute the payment
-⋮----
-// Payment execute failed
-⋮----
-/**
- * POST /api/payment/bkash/verify/:orderId
- * Lets the frontend double-check payment status.
- */
-⋮----
-// ─────────────────────────────────────────────────────────────
-// ███    ██  █████   ██████   █████  ██████
-// ████   ██ ██   ██ ██       ██   ██ ██   ██
-// ██ ██  ██ ███████ ██   ███ ███████ ██   ██
-// ██  ██ ██ ██   ██ ██    ██ ██   ██ ██   ██
-// ██   ████ ██   ██  ██████  ██   ██ ██████
-// ─────────────────────────────────────────────────────────────
-⋮----
-/**
- * Sign a Nagad request body with the merchant private key (RSA).
- * Nagad requires the sensitive payload to be encrypted with their public key
- * and signed with our private key.
- */
-function nagadSign(data)
-⋮----
-function nagadEncrypt(data)
-⋮----
-/**
- * POST /api/payment/nagad/create
- * Body: { orderId }
- * Step 1: Initialize Nagad payment session → Step 2: Place order → return payment URL
- */
-⋮----
-const datetime    = new Date().toISOString().replace(/[-T:.Z]/g, '').slice(0, 14); // YYYYMMDDHHmmss
-⋮----
-// ── Step 1: Initialize ──
-⋮----
-// ── Step 2: Complete / place order ──
-⋮----
-currencyCode:     '050',   // BDT
-⋮----
-// Save initiation
-⋮----
-/**
- * POST /api/payment/nagad/callback
- * Nagad redirects here with payment_ref_id and status.
- */
-⋮----
-// Verify with Nagad
-⋮----
-/**
- * GET /api/payment/nagad/verify/:orderId
- */
-⋮----
-// ─────────────────────────────────────────────────────────────
-// REFUND  (bKash only — Nagad refund API is same pattern)
-// ─────────────────────────────────────────────────────────────
-⋮----
-/**
- * POST /api/payment/refund/:orderId
- * Admin/farmer can issue a refund for a completed bKash payment.
- */
-</file>
-
-<file path="server/routes/Paymentroutes.js">
-// ── bKash ──────────────────────────────────────────────────
-// Create a bKash payment session (returns bkashURL)
-⋮----
-// bKash redirects the user here after payment
-router.get('/bkash/callback',      bkashCallback);          // no auth — gateway callback
-// Frontend calls this to double-check payment status
-⋮----
-// ── Nagad ──────────────────────────────────────────────────
-// Create a Nagad payment session (returns callURL)
-⋮----
-// Nagad redirects the user here after payment
-router.get('/nagad/callback',      nagadCallback);           // no auth — gateway callback
-// Frontend calls this to double-check payment status
-⋮----
-// ── Refund ─────────────────────────────────────────────────
-</file>
-
 <file path="client/client.gitignore">
 node_modules/
 dist/
@@ -428,6 +229,44 @@ dist/
 // Cache successful responses
 </file>
 
+<file path="client/src/components/payment/PaymentModal.jsx">
+export default function PaymentModal(
+⋮----
+const handlePay = async () =>
+⋮----
+// First update the order with address + payment method if needed
+⋮----
+}).catch(() => {}); // best-effort — order already exists
+⋮----
+// bKash
+⋮----
+// Redirect to bKash hosted page
+⋮----
+// Nagad
+⋮----
+{/* Handle */}
+⋮----
+{/* Header */}
+⋮----
+{/* Order summary strip */}
+⋮----
+{/* Delivery address */}
+⋮----
+{/* Payment method cards */}
+⋮----
+{/* Logo circle */}
+⋮----
+{/* Radio dot */}
+⋮----
+{/* Error */}
+⋮----
+{/* Gateway notice */}
+⋮----
+{/* Pay button */}
+⋮----
+{/* Security note */}
+</file>
+
 <file path="client/src/context/AuthContext.jsx">
 export const AuthProvider = (
 ⋮----
@@ -461,6 +300,30 @@ const handler = ()
 export const useSocket = () =>
 ⋮----
 // Don't disconnect on component unmount — keep alive for notifications
+</file>
+
+<file path="client/src/pages/PaymentResult.jsx">
+export default function PaymentResult()
+⋮----
+const status  = searchParams.get('status');   // success | failure | cancel
+⋮----
+const [verified, setVerified] = useState(null); // null | true | false
+⋮----
+// If status === success, auto-verify with backend
+⋮----
+{/* Icon */}
+⋮----
+{/* Title */}
+⋮----
+{/* Subtitle */}
+⋮----
+{/* Transaction details */}
+⋮----
+{/* Verification status */}
+⋮----
+{/* Actions */}
+⋮----
+{/* Support note */}
 </file>
 
 <file path="client/src/routes/PrivateRoute.jsx">
@@ -708,22 +571,94 @@ process.exit(1); // Exit process with failure
 const createNotification = async (
 </file>
 
-<file path="server/controllers/orderController.js">
-// ── POST /api/orders ──────────────────────────────────────────
+<file path="server/controllers/Paymentcontroller.js">
+/**
+ * paymentController.js
+ *
+ * bKash Checkout API v1.2.0-beta
+ * Nagad MFS Remote Payment Gateway
+ *
+ * Required ENV:
+ *   BKASH_BASE_URL       https://tokenized.sandbox.bka.sh/v1.2.0-beta  (sandbox)
+ *   BKASH_APP_KEY        from bKash merchant portal
+ *   BKASH_APP_SECRET     from bKash merchant portal
+ *   BKASH_USERNAME       from bKash merchant portal
+ *   BKASH_PASSWORD       from bKash merchant portal
+ *
+ *   NAGAD_BASE_URL       http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0
+ *   NAGAD_MERCHANT_ID    from Nagad merchant portal
+ *   NAGAD_MERCHANT_PRIVATE_KEY   PEM string OR base64-encoded PEM (auto-detected)
+ *   NAGAD_MERCHANT_PUBLIC_KEY    PEM string OR base64 (provided by Nagad)
+ *
+ *   FRONTEND_URL         https://yoursite.com  (no trailing slash)
+ */
 ⋮----
-// ── PUT /api/orders/:id/payment-method ────────────────────────
-// Called by Cart / PaymentModal to set address + payment method
-// before or after gateway redirect
+// ─────────────────────────────────────────────────────────────
+// ENV VALIDATION — fail fast with clear messages
+// ─────────────────────────────────────────────────────────────
+const checkEnv = (keys) =>
 ⋮----
-// ── GET /api/orders/my ────────────────────────────────────────
+const merchantInvoice = (orderId)
 ⋮----
-// ── GET /api/orders/mine  (alias for my) ─────────────────────
+// ─────────────────────────────────────────────────────────────
+// ██████  ██   ██  █████  ███████ ██   ██
+// ██   ██ ██  ██  ██   ██ ██      ██   ██
+// ██████  █████   ███████ ███████ ███████
+// ██   ██ ██  ██  ██   ██      ██ ██   ██
+// ██████  ██   ██ ██   ██ ███████ ██   ██
+// ─────────────────────────────────────────────────────────────
 ⋮----
-// ── GET /api/orders/farmer ────────────────────────────────────
+async function getBkashToken()
 ⋮----
-// ── GET /api/orders/:id ───────────────────────────────────────
+// Validate env first
 ⋮----
-// ── PUT /api/orders/:id/status ────────────────────────────────
+// Validate URL format
+⋮----
+// POST /api/payment/bkash/create
+⋮----
+// GET /api/payment/bkash/callback  (bKash redirects here)
+⋮----
+// GET /api/payment/bkash/verify/:orderId
+⋮----
+// ─────────────────────────────────────────────────────────────
+// ███    ██  █████   ██████   █████  ██████
+// ████   ██ ██   ██ ██       ██   ██ ██   ██
+// ██ ██  ██ ███████ ██   ███ ███████ ██   ██
+// ██  ██ ██ ██   ██ ██    ██ ██   ██ ██   ██
+// ██   ████ ██   ██  ██████  ██   ██ ██████
+// ─────────────────────────────────────────────────────────────
+⋮----
+/**
+ * Smart key decoder — handles all common formats:
+ *   1. Raw PEM (starts with -----BEGIN...)
+ *   2. Base64-encoded PEM
+ *   3. Raw base64 key body (no headers) — wraps in PKCS8 headers
+ */
+function decodePemKey(envValue, type = 'PRIVATE KEY')
+⋮----
+// Already a PEM string
+⋮----
+// Try base64 decode → check if result is PEM
+⋮----
+// Treat as raw base64 key body — wrap with PEM headers
+⋮----
+// Split into 64-char lines
+⋮----
+function nagadSign(data)
+⋮----
+function nagadEncrypt(data)
+⋮----
+// POST /api/payment/nagad/create
+⋮----
+// Step 1: Initialize
+⋮----
+// Step 2: Complete / place order
+⋮----
+// GET /api/payment/nagad/callback
+⋮----
+// GET /api/payment/nagad/verify/:orderId
+⋮----
+// POST /api/payment/refund/:orderId
 </file>
 
 <file path="server/controllers/priceController.js">
@@ -779,28 +714,6 @@ link:    { type: String, default: '' },   // e.g. /orders/abc123
 meta:    { type: mongoose.Schema.Types.Mixed }, // extra data
 </file>
 
-<file path="server/models/Order.js">
-// ── Payment transaction sub-document ──────────────────────────
-⋮----
-// bKash fields
-paymentID:     { type: String },   // bKash paymentID from /create
-trxID:         { type: String },   // final transaction ID from /execute
-// Nagad fields
-paymentReferenceId: { type: String },  // Nagad reference
-⋮----
-// Common
-⋮----
-rawResponse:   { type: mongoose.Schema.Types.Mixed },  // store full gateway response
-⋮----
-// status flow: pending → confirmed → harvested → out_for_delivery → delivered → cancelled
-⋮----
-// Delivery
-⋮----
-// ── Payment ───────────────────────────────────────────────
-⋮----
-// Status history timeline
-</file>
-
 <file path="server/models/PriceHistory.js">
 // Product name used as key (e.g. "tomato", "potato")
 ⋮----
@@ -848,38 +761,6 @@ isVerified:  { type: Boolean, default: false }, // Admin toggles this
 // ── Compare entered password with hashed password ────────────
 </file>
 
-<file path="server/package.json">
-{
-  "name": "krishiconnect-server",
-  "version": "1.0.0",
-  "description": "KrishiConnect backend API",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "seed": "node seed.js"
-  },
-  "dependencies": {
-    "axios": "^1.17.0",
-    "bcryptjs": "^2.4.3",
-    "cloudinary": "^1.41.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "express-async-handler": "^1.2.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongodb": "^7.2.0",
-    "mongoose": "^8.4.1",
-    "multer": "^1.4.5-lts.1",
-    "multer-storage-cloudinary": "^4.0.0",
-    "socket.io": "^4.8.3"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
-  }
-}
-</file>
-
 <file path="server/render.yaml">
 services:
   - type: web
@@ -910,8 +791,22 @@ services:
 
 </file>
 
-<file path="server/routes/orderRoutes.js">
-
+<file path="server/routes/Paymentroutes.js">
+// ── bKash ──────────────────────────────────────────────────
+// Create a bKash payment session (returns bkashURL)
+⋮----
+// bKash redirects the user here after payment
+router.get('/bkash/callback',      bkashCallback);          // no auth — gateway callback
+// Frontend calls this to double-check payment status
+⋮----
+// ── Nagad ──────────────────────────────────────────────────
+// Create a Nagad payment session (returns callURL)
+⋮----
+// Nagad redirects the user here after payment
+router.get('/nagad/callback',      nagadCallback);           // no auth — gateway callback
+// Frontend calls this to double-check payment status
+⋮----
+// ── Refund ─────────────────────────────────────────────────
 </file>
 
 <file path="server/routes/priceRoutes.js">
@@ -1029,23 +924,49 @@ export const useCart = () =>
 </file>
 
 <file path="client/src/pages/CustomerProfile.jsx">
-badge:    (status) =>
+/* ── tiny helpers ── */
+⋮----
+const badge = (status) =>
+⋮----
+function SectionCard(
+⋮----
+function StatCard(
+⋮----
+function InputField(
+⋮----
+function Alert(
 ⋮----
 export default function CustomerProfile()
+⋮----
+const handleAvatarChange = (e) =>
+⋮----
+const uploadAvatar = async () =>
 ⋮----
 const handleSave = async () =>
 ⋮----
 const handlePasswordChange = async () =>
 ⋮----
-{/* Top card */}
+{/* ── Hero header ── */}
 ⋮----
-{/* Stats */}
+{/* decorative circles */}
 ⋮----
-{/* Edit Profile */}
+{/* Avatar */}
 ⋮----
-{/* Recent Orders */}
+{/* ── Stats row ── */}
 ⋮----
-{/* Change Password */}
+{/* ── Tabs ── */}
+⋮----
+{/* ── Profile tab ── */}
+⋮----
+{/* Avatar upload hint */}
+⋮----
+{/* Read-only info */}
+⋮----
+{/* ── Orders tab ── */}
+⋮----
+{/* ── Security tab ── */}
+⋮----
+{/* Mobile responsive fix */}
 </file>
 
 <file path="client/src/pages/farmer/AnalyticsDashboard.jsx">
@@ -1075,11 +996,21 @@ export default function AnalyticsDashboard()
 </file>
 
 <file path="client/src/pages/farmer/FarmerAccountProfile.jsx">
+function Alert(
+⋮----
+function StatCard(
+⋮----
+function SectionCard(
+⋮----
+function InputField(
+⋮----
+function QuickAction(
+⋮----
 export default function FarmerAccountProfile()
 ⋮----
-// Load analytics stats
+const handleAvatarChange = (e) =>
 ⋮----
-// Load recent orders
+const uploadAvatar = async () =>
 ⋮----
 const handleSave = async () =>
 ⋮----
@@ -1087,17 +1018,35 @@ const handlePasswordChange = async () =>
 ⋮----
 const hc = e => setForm(f => (
 ⋮----
-{/* Top card */}
+{/* ── Hero banner ── */}
 ⋮----
-{/* Stats */}
+{/* decorative */}
 ⋮----
-{/* Quick actions */}
+{/* Avatar with upload */}
 ⋮----
-{/* Edit profile */}
+{/* Verified badge */}
 ⋮----
-{/* Recent orders received */}
+{/* ── Stats ── */}
 ⋮----
-{/* Change password */}
+{/* ── Quick actions ── */}
+⋮----
+{/* ── Tabs ── */}
+⋮----
+{/* ── Profile tab ── */}
+⋮----
+{/* Avatar upload hint */}
+⋮----
+{/* Read-only info */}
+⋮----
+{/* ── Farm tab ── */}
+⋮----
+{/* Verification status */}
+⋮----
+{/* ── Orders tab ── */}
+⋮----
+{/* ── Security tab ── */}
+⋮----
+{/* Responsive overrides */}
 </file>
 
 <file path="client/src/pages/FarmerProfile.jsx">
@@ -1166,6 +1115,24 @@ const inputStyle = (field) => (
 const generateToken = (id) => jwt.sign(
 </file>
 
+<file path="server/controllers/orderController.js">
+// ── POST /api/orders ──────────────────────────────────────────
+⋮----
+// ── PUT /api/orders/:id/payment-method ────────────────────────
+// Called by Cart / PaymentModal to set address + payment method
+// before or after gateway redirect
+⋮----
+// ── GET /api/orders/my ────────────────────────────────────────
+⋮----
+// ── GET /api/orders/mine  (alias for my) ─────────────────────
+⋮----
+// ── GET /api/orders/farmer ────────────────────────────────────
+⋮----
+// ── GET /api/orders/:id ───────────────────────────────────────
+⋮----
+// ── PUT /api/orders/:id/status ────────────────────────────────
+</file>
+
 <file path="server/controllers/reviewController.js">
 // POST /api/reviews
 ⋮----
@@ -1176,7 +1143,65 @@ const generateToken = (id) => jwt.sign(
 // GET /api/reviews/farmer/:farmerId
 </file>
 
+<file path="server/models/Order.js">
+// ── Payment transaction sub-document ──────────────────────────
+⋮----
+// bKash fields
+paymentID:     { type: String },   // bKash paymentID from /create
+trxID:         { type: String },   // final transaction ID from /execute
+// Nagad fields
+paymentReferenceId: { type: String },  // Nagad reference
+⋮----
+// Common
+⋮----
+rawResponse:   { type: mongoose.Schema.Types.Mixed },  // store full gateway response
+⋮----
+// status flow: pending → confirmed → harvested → out_for_delivery → delivered → cancelled
+⋮----
+// Delivery
+⋮----
+// ── Payment ───────────────────────────────────────────────
+⋮----
+// Status history timeline
+</file>
+
+<file path="server/package.json">
+{
+  "name": "krishiconnect-server",
+  "version": "1.0.0",
+  "description": "KrishiConnect backend API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "axios": "^1.17.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-async-handler": "^1.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.2.0",
+    "mongoose": "^8.4.1",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
+</file>
+
 <file path="server/routes/authRoutes.js">
+
+</file>
+
+<file path="server/routes/orderRoutes.js">
 
 </file>
 
@@ -1214,14 +1239,6 @@ const seed = async () =>
 // ── Orders ───────────────────────────────────────────────────
 ⋮----
 // ── Reviews ──────────────────────────────────────────────────
-</file>
-
-<file path="server/server.js">
-origin: (origin, callback) =>
-⋮----
-// ── API Routes ────────────────────────────────────────────────
-⋮----
-app.use('/api/payment',       require('./routes/paymentRoutes'));   // ← NEW
 </file>
 
 <file path="client/index.html">
@@ -1279,51 +1296,21 @@ export default function ProductCard(
 {/* Info */}
 </file>
 
-<file path="client/src/pages/Cart.jsx">
-/* ── Farmer block modal (unchanged) ── */
-function FarmerBlockModal(
-⋮----
-export default function Cart()
-⋮----
-const [pendingOrder,    setPendingOrder]    = useState(null); // order doc returned from POST /orders
-⋮----
-// Step 1: Guard + create order record → open payment modal
-const handleCheckout = async () =>
-⋮----
-// Group by farmer
-⋮----
-// Create orders (one per farmer) — returns first one for payment
-⋮----
-deliveryAddress: '',        // will be filled in PaymentModal
-paymentMethod:   'bkash',   // will be overridden in PaymentModal
-⋮----
-// For simplicity show payment for the first (and usually only) order
-// Multi-farmer carts are split automatically above
-⋮----
-// COD path — called by PaymentModal when user picks cash_on_delivery
-const handleCodConfirmed = async (
-⋮----
-{/* Payment method preview icons */}
-</file>
-
 <file path="client/src/pages/farmer/AddProduct.jsx">
-/* ── Step indicator ── */
 function StepDot(
 ⋮----
-/* ── Photo picker bottom sheet ── */
 function PhotoSheet(
 ⋮----
-/* ── Section card wrapper ── */
 function Card(
 ⋮----
-/* ── Field label ── */
 function Label(
 ⋮----
 const inputStyle = (focus, field) => (
 ⋮----
-export default function AddProduct()
+// ── Photo-based category card (matches marketplace style) ──
+function CatCard(
 ⋮----
-const [step,    setStep]    = useState(1); // 1=photo+name, 2=pricing, 3=review
+export default function AddProduct()
 ⋮----
 const handleChange = e => setForm(f => (
 ⋮----
@@ -1331,37 +1318,21 @@ const pickFile = (e) =>
 ⋮----
 const handleSubmit = async () =>
 ⋮----
-/* ── Success screen ── */
+{/* Header */}
 ⋮----
-{/* Hidden file inputs */}
+{/* ── STEP 1 ── */}
 ⋮----
-{/* ── Top header bar ── */}
+{/* Photo */}
 ⋮----
-{/* Step dots */}
+{/* Product Info */}
 ⋮----
-{/* ══════════ STEP 1 ══════════ */}
+{/* Category — photo cards */}
 ⋮----
-{/* Photo card */}
+{/* Selected category label */}
 ⋮----
-{/* Edit overlay */}
+{/* ── STEP 2 ── */}
 ⋮----
-{/* Mini action pills */}
-⋮----
-{/* Product info card */}
-⋮----
-{/* Category card */}
-⋮----
-{/* ══════════ STEP 2 ══════════ */}
-⋮----
-{/* Live savings preview */}
-⋮----
-{/* Quick stock presets */}
-⋮----
-{/* ══════════ STEP 3 — REVIEW ══════════ */}
-⋮----
-{/* Preview card */}
-⋮----
-{/* Edit shortcuts */}
+{/* ── STEP 3 — REVIEW ── */}
 </file>
 
 <file path="client/src/pages/farmer/MyProducts.jsx">
@@ -1385,6 +1356,14 @@ export default function FarmerMap()
 // Accept images from Cloudinary upload OR from URL strings in body
 ⋮----
 // Accept images from file upload OR URL in body
+</file>
+
+<file path="server/server.js">
+origin: (origin, callback) =>
+⋮----
+// ── API Routes ────────────────────────────────────────────────
+⋮----
+app.use('/api/payment',       require('./routes/paymentRoutes'));   // ← NEW
 </file>
 
 <file path="client/src/index.css">
@@ -1478,6 +1457,33 @@ a.card-link {
 .page-container { padding: 0 16px; }
 </file>
 
+<file path="client/src/pages/Cart.jsx">
+/* ── Farmer block modal (unchanged) ── */
+function FarmerBlockModal(
+⋮----
+export default function Cart()
+⋮----
+const [pendingOrder,    setPendingOrder]    = useState(null); // order doc returned from POST /orders
+⋮----
+// Step 1: Guard + create order record → open payment modal
+const handleCheckout = async () =>
+⋮----
+// Group by farmer
+⋮----
+// Create orders (one per farmer) — returns first one for payment
+⋮----
+deliveryAddress: '',        // will be filled in PaymentModal
+paymentMethod:   'bkash',   // will be overridden in PaymentModal
+⋮----
+// For simplicity show payment for the first (and usually only) order
+// Multi-farmer carts are split automatically above
+⋮----
+// COD path — called by PaymentModal when user picks cash_on_delivery
+const handleCodConfirmed = async (
+⋮----
+{/* Payment method preview icons */}
+</file>
+
 <file path="client/src/pages/farmer/Dashboard.jsx">
 export default function Dashboard()
 ⋮----
@@ -1493,6 +1499,14 @@ export default function Dashboard()
 </file>
 
 <file path="client/src/pages/farmer/EditProduct.jsx">
+function CatCard(
+⋮----
+function Label(
+⋮----
+function SectionCard(
+⋮----
+const inputStyle = (focus, field) => (
+⋮----
 export default function EditProduct()
 ⋮----
 const handleChange = e => setForm(f => (
@@ -1500,6 +1514,24 @@ const handleChange = e => setForm(f => (
 const handleImagePick = (e) =>
 ⋮----
 const handleSubmit = async () =>
+⋮----
+{/* ── Hero header ── */}
+⋮----
+{/* Alerts */}
+⋮----
+{/* ── Product Photo ── */}
+⋮----
+{/* ── Product Info ── */}
+⋮----
+{/* ── Category — photo cards ── */}
+⋮----
+{/* Selected badge */}
+⋮----
+{/* ── Pricing ── */}
+⋮----
+{/* ── Stock ── */}
+⋮----
+{/* ── Actions ── */}
 </file>
 
 <file path="client/src/pages/farmer/FarmerOrders.jsx">
@@ -1518,10 +1550,6 @@ const handleSubmit = async () =>
 export default function MyOrders()
 ⋮----
 {/* Items */}
-</file>
-
-<file path="client/src/App.jsx">
-export default function App()
 </file>
 
 <file path="client/src/pages/Chat.jsx">
@@ -1637,6 +1665,10 @@ const handleDesktopSearch = (e) =>
 function DesktopProductCard(
 ⋮----
 export default function Home()
+</file>
+
+<file path="client/src/App.jsx">
+export default function App()
 </file>
 
 <file path="client/src/pages/Marketplace.jsx">
