@@ -94,7 +94,7 @@ function Alert({ type, msg }) {
 
 export default function CustomerProfile() {
   const navigate = useNavigate();
-  const { user, login } = useAuth();
+  const { user, updateUser } = useAuth();
   const fileRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState('profile');
@@ -116,10 +116,10 @@ export default function CustomerProfile() {
   const [pwSaving, setPwSaving] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      setForm({ name: user.name||'', phone: user.phone||'', location: user.location?.district||user.location?.address||'' });
-      if (user.avatar) setAvatarPreview(user.avatar);
-    }
+    if (!user) return;
+    setForm({ name: user.name||'', phone: user.phone||'', location: user.location?.district||user.location?.address||'' });
+    if (user.avatar) setAvatarPreview(user.avatar);
+
     api.get('/orders/mine').then(r => {
       const list = Array.isArray(r.data) ? r.data : r.data.orders||[];
       setOrders(list.slice(0, 5));
@@ -146,7 +146,11 @@ export default function CustomerProfile() {
       const fd = new FormData();
       fd.append('avatar', avatarFile);
       const { data } = await api.put('/auth/profile', fd, { headers:{ 'Content-Type':'multipart/form-data' } });
-      if (login) login({ ...user, ...data.user });
+      // data.user is the full updated user — extract avatar URL and persist
+      const savedUser = data.user;
+      updateUser(savedUser);
+      // Show the persisted cloud URL (not the local blob: preview)
+      if (savedUser?.avatar) setAvatarPreview(savedUser.avatar);
       setAvatarFile(null);
       setMsg('Profile picture updated!');
     } catch { setErr('Failed to upload photo.'); }
@@ -157,7 +161,7 @@ export default function CustomerProfile() {
     setSaving(true); setMsg(''); setErr('');
     try {
       const { data } = await api.put('/auth/profile', { name:form.name, phone:form.phone, district:form.location });
-      if (login) login({ ...user, ...data.user });
+      updateUser(data.user);
       setMsg('Profile updated successfully!');
     } catch(e) { setErr(e.response?.data?.message||'Update failed.'); }
     finally { setSaving(false); }

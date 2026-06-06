@@ -114,7 +114,7 @@ const TABS = [
 
 export default function FarmerAccountProfile() {
   const navigate = useNavigate();
-  const { user, login } = useAuth();
+  const { user, updateUser } = useAuth();
   const fileRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState('profile');
@@ -138,17 +138,18 @@ export default function FarmerAccountProfile() {
   const [pwSaving, setPwSaving] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      setForm({
-        name:     user.name     || '',
-        phone:    user.phone    || '',
-        farmName: user.farmName || '',
-        farmSize: user.farmSize || '',
-        district: user.location?.district || '',
-        address:  user.location?.address  || '',
-      });
-      if (user.avatar) setAvatarPreview(user.avatar);
-    }
+    if (!user) return;
+
+    setForm({
+      name:     user.name     || '',
+      phone:    user.phone    || '',
+      farmName: user.farmName || '',
+      farmSize: user.farmSize || '',
+      district: user.location?.district || '',
+      address:  user.location?.address  || '',
+    });
+    if (user.avatar) setAvatarPreview(user.avatar);
+
     api.get('/analytics/farmer').then(r => {
       const k = r.data.kpis || r.data;
       setStats({
@@ -160,6 +161,7 @@ export default function FarmerAccountProfile() {
         customers: k.uniqueCustomers || 0,
       });
     }).catch(()=>{});
+
     api.get('/orders/farmer').then(r => {
       const list = Array.isArray(r.data) ? r.data : r.data.orders||[];
       setRecentOrders(list.slice(0,5));
@@ -180,7 +182,10 @@ export default function FarmerAccountProfile() {
       const fd = new FormData();
       fd.append('avatar', avatarFile);
       const { data } = await api.put('/auth/profile', fd, { headers:{ 'Content-Type':'multipart/form-data' } });
-      if (login) login({ ...user, ...data.user });
+      const savedUser = data.user;
+      updateUser(savedUser);
+      // Replace local blob: URL with the persisted Cloudinary URL
+      if (savedUser?.avatar) setAvatarPreview(savedUser.avatar);
       setAvatarFile(null);
       setMsg('Profile picture updated!');
     } catch { setErr('Failed to upload photo.'); }
@@ -191,7 +196,7 @@ export default function FarmerAccountProfile() {
     setSaving(true); setMsg(''); setErr('');
     try {
       const { data } = await api.put('/auth/profile', form);
-      if (login) login({ ...user, ...data.user });
+      updateUser(data.user);
       setMsg('Profile updated successfully!');
     } catch(e) { setErr(e.response?.data?.message||'Update failed.'); }
     finally { setSaving(false); }
@@ -475,7 +480,7 @@ export default function FarmerAccountProfile() {
                 <div style={{ fontSize:12, color: user?.isVerified ? '#5a9040' : '#c47d0a', lineHeight:1.5 }}>
                   {user?.isVerified
                     ? 'Your NID has been verified. Customers can see your verified badge.'
-                    : 'Your NID verification is under review. You\'ll be notified once approved.'
+                    : "Your NID verification is under review. You'll be notified once approved."
                   }
                 </div>
               </div>

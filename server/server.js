@@ -16,6 +16,8 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://localhost:3000',
   /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
+  /^http:\/\/172\.\d+\.\d+\.\d+:\d+$/,
+  /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,
   /^http:\/\/127\.0\.0\.1:\d+$/,
   /^https:\/\/.*\.vercel\.app$/,
   /^https:\/\/.*\.onrender\.com$/,
@@ -55,7 +57,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth',          require('./routes/authRoutes'));
 app.use('/api/products',      require('./routes/productRoutes'));
 app.use('/api/orders',        require('./routes/orderRoutes'));
-app.use('/api/payment',       require('./routes/paymentRoutes'));   // ← NEW
+app.use('/api/payment',       require('./routes/Paymentroutes'));
 app.use('/api/reviews',       require('./routes/reviewRoutes'));
 app.use('/api/prices',        require('./routes/priceRoutes'));
 app.use('/api/chat',          require('./routes/chatRoutes'));

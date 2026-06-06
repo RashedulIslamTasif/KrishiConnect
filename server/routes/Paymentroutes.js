@@ -9,7 +9,7 @@ const {
   nagadCallback,
   nagadVerify,
   refundPayment,
-} = require('../controllers/paymentController');
+} = require('../controllers/Paymentcontroller');
 
 // ── bKash ──────────────────────────────────────────────────
 // Create a bKash payment session (returns bkashURL)
