@@ -25,6 +25,7 @@ export default function Navbar() {
     <>
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+        paddingTop: 'env(safe-area-inset-top)',
         background: scrolled ? 'rgba(245,247,242,.96)' : 'rgba(245,247,242,.92)',
         backdropFilter: 'blur(20px)',
         borderBottom: `1px solid ${scrolled ? 'rgba(60,100,40,.14)' : 'rgba(60,100,40,.08)'}`,
