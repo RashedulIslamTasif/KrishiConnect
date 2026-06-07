@@ -2985,112 +2985,6 @@ export default function OrderTracking() {
 }
 </file>
 
-<file path="client/src/pages/Register.jsx">
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
-
-const DISTRICTS = ['Dhaka','Chittagong','Rajshahi','Khulna','Sylhet','Barishal','Rangpur','Mymensingh','Comilla','Gazipur','Narayanganj','Bogura','Dinajpur','Jessore','Cox\'s Bazar','Tangail','Faridpur'];
-
-export default function Register() {
-  const [form, setForm] = useState({ name:'', email:'', password:'', role:'customer', location:'' });
-  const [error, setError]     = useState('');
-  const [loading, setLoading] = useState(false);
-  const [focusField, setFocusField] = useState('');
-  const navigate  = useNavigate();
-  const { register } = useAuth();
-
-  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
-
-  const handleSubmit = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      const user = await register(form);
-      navigate(user.role === 'farmer' ? '/dashboard' : '/marketplace');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const inputStyle = (field) => ({
-    width:'100%', background: focusField===field ? '#f9faf7' : '#f5f7f2',
-    border: `1.5px solid ${focusField===field ? '#4e9e2a' : 'rgba(60,100,40,.15)'}`,
-    borderRadius:14, padding:'13px 18px', color:'#1a2415', fontSize:15,
-    outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif',
-    boxShadow: focusField===field ? '0 0 0 3px rgba(78,158,42,.1)' : 'none',
-    transition:'all .2s ease', boxSizing:'border-box', marginBottom:18,
-  });
-
-  return (
-    <div style={{ minHeight:'100vh', background:'#f5f7f2', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
-      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
-      <div style={{ width:'100%', maxWidth:440, animation:'fadeUp .5s cubic-bezier(.22,1,.36,1) both' }}>
-
-        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:36 }}>
-          <img src="/icons/icon-192.png" alt="KrishiConnect" style={{ width:40, height:40, borderRadius:12, objectFit:"cover" }} />
-          <span style={{ fontSize:18, fontWeight:800, color:'#1a2415', letterSpacing:'-0.03em' }}>KrishiConnect</span>
-        </div>
-
-        <div style={{ fontSize:28, fontWeight:800, color:'#1a2415', marginBottom:6, letterSpacing:'-0.03em' }}>Create your account</div>
-        <div style={{ fontSize:14, color:'#7a9070', marginBottom:32 }}>Join thousands of farmers and customers on KrishiConnect</div>
-
-        {/* Role selector */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:24 }}>
-          {['customer','farmer'].map(r => (
-            <button key={r} onClick={() => setForm(f => ({ ...f, role:r }))}
-              style={{ padding:'14px', borderRadius:14, border:`2px solid ${form.role===r ? '#4e9e2a' : 'rgba(60,100,40,.15)'}`,
-                background: form.role===r ? '#e8f5e1' : '#fff',
-                color: form.role===r ? '#3a7d1e' : '#7a9070',
-                fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:14, cursor:'pointer',
-                transition:'all .2s', display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
-              <span style={{ fontSize:24 }}>{r==='customer' ? '🛒' : '👨‍🌾'}</span>
-              {r==='customer' ? 'I\'m a Customer' : 'I\'m a Farmer'}
-            </button>
-          ))}
-        </div>
-
-        {error && <div style={{ background:'rgba(192,64,64,.08)', border:'1.5px solid rgba(192,64,64,.2)', color:'#c04040', borderRadius:12, padding:'13px 16px', fontSize:13, marginBottom:20, display:'flex', gap:8 }}>⚠️ {error}</div>}
-
-        {[
-          { name:'name', label:'Full Name', placeholder:'Your full name', type:'text' },
-          { name:'email', label:'Email Address', placeholder:'you@example.com', type:'email' },
-          { name:'password', label:'Password', placeholder:'Min. 8 characters', type:'password' },
-        ].map(f => (
-          <div key={f.name}>
-            <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#7a9070', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>{f.label}</label>
-            <input
-              style={inputStyle(f.name)} type={f.type} name={f.name} placeholder={f.placeholder}
-              value={form[f.name]} onChange={handleChange}
-              onFocus={() => setFocusField(f.name)} onBlur={() => setFocusField('')}
-            />
-          </div>
-        ))}
-
-        <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#7a9070', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>District</label>
-        <select name="location" value={form.location} onChange={handleChange}
-          style={{ ...inputStyle('location'), background:'#f5f7f2', cursor:'pointer' }}
-          onFocus={() => setFocusField('location')} onBlur={() => setFocusField('')}>
-          <option value="">Select your district</option>
-          {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
-        </select>
-
-        <button onClick={handleSubmit} disabled={loading}
-          style={{ width:'100%', background: loading ? '#afc09e' : 'linear-gradient(135deg,#4e9e2a,#3a7d1e)', color:'#fff', border:'none', borderRadius:99, padding:'15px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15, cursor: loading ? 'default' : 'pointer', boxShadow: loading ? 'none' : '0 4px 16px rgba(78,158,42,.4)', transition:'all .2s', marginTop:4 }}>
-          {loading ? '⏳ Creating account...' : `Create ${form.role==='farmer' ? 'Farmer' : 'Customer'} Account →`}
-        </button>
-
-        <div style={{ textAlign:'center', marginTop:24, fontSize:14, color:'#7a9070' }}>
-          Already have an account? <Link to="/login" style={{ color:'#4e9e2a', textDecoration:'none', fontWeight:700 }}>Sign In →</Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-</file>
-
 <file path="server/config/db.js">
 const mongoose = require('mongoose');
 const seedAdmin = require('../utils/seeder');
@@ -4733,6 +4627,112 @@ export default function Login() {
 }
 </file>
 
+<file path="client/src/pages/Register.jsx">
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
+
+const DISTRICTS = ['Dhaka','Chittagong','Rajshahi','Khulna','Sylhet','Barishal','Rangpur','Mymensingh','Comilla','Gazipur','Narayanganj','Bogura','Dinajpur','Jessore','Cox\'s Bazar','Tangail','Faridpur'];
+
+export default function Register() {
+  const [form, setForm] = useState({ name:'', email:'', password:'', role:'customer', district:'' });
+  const [error, setError]     = useState('');
+  const [loading, setLoading] = useState(false);
+  const [focusField, setFocusField] = useState('');
+  const navigate  = useNavigate();
+  const { register } = useAuth();
+
+  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const user = await register(form);
+      navigate(user.role === 'farmer' ? '/dashboard' : '/marketplace');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputStyle = (field) => ({
+    width:'100%', background: focusField===field ? '#f9faf7' : '#f5f7f2',
+    border: `1.5px solid ${focusField===field ? '#4e9e2a' : 'rgba(60,100,40,.15)'}`,
+    borderRadius:14, padding:'13px 18px', color:'#1a2415', fontSize:15,
+    outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif',
+    boxShadow: focusField===field ? '0 0 0 3px rgba(78,158,42,.1)' : 'none',
+    transition:'all .2s ease', boxSizing:'border-box', marginBottom:18,
+  });
+
+  return (
+    <div style={{ minHeight:'100vh', background:'#f5f7f2', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
+      <div style={{ width:'100%', maxWidth:440, animation:'fadeUp .5s cubic-bezier(.22,1,.36,1) both' }}>
+
+        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:36 }}>
+          <img src="/icons/icon-192.png" alt="KrishiConnect" style={{ width:40, height:40, borderRadius:12, objectFit:"cover" }} />
+          <span style={{ fontSize:18, fontWeight:800, color:'#1a2415', letterSpacing:'-0.03em' }}>KrishiConnect</span>
+        </div>
+
+        <div style={{ fontSize:28, fontWeight:800, color:'#1a2415', marginBottom:6, letterSpacing:'-0.03em' }}>Create your account</div>
+        <div style={{ fontSize:14, color:'#7a9070', marginBottom:32 }}>Join thousands of farmers and customers on KrishiConnect</div>
+
+        {/* Role selector */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:24 }}>
+          {['customer','farmer'].map(r => (
+            <button key={r} onClick={() => setForm(f => ({ ...f, role:r }))}
+              style={{ padding:'14px', borderRadius:14, border:`2px solid ${form.role===r ? '#4e9e2a' : 'rgba(60,100,40,.15)'}`,
+                background: form.role===r ? '#e8f5e1' : '#fff',
+                color: form.role===r ? '#3a7d1e' : '#7a9070',
+                fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:14, cursor:'pointer',
+                transition:'all .2s', display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
+              <span style={{ fontSize:24 }}>{r==='customer' ? '🛒' : '👨‍🌾'}</span>
+              {r==='customer' ? 'I\'m a Customer' : 'I\'m a Farmer'}
+            </button>
+          ))}
+        </div>
+
+        {error && <div style={{ background:'rgba(192,64,64,.08)', border:'1.5px solid rgba(192,64,64,.2)', color:'#c04040', borderRadius:12, padding:'13px 16px', fontSize:13, marginBottom:20, display:'flex', gap:8 }}>⚠️ {error}</div>}
+
+        {[
+          { name:'name', label:'Full Name', placeholder:'Your full name', type:'text' },
+          { name:'email', label:'Email Address', placeholder:'you@example.com', type:'email' },
+          { name:'password', label:'Password', placeholder:'Min. 8 characters', type:'password' },
+        ].map(f => (
+          <div key={f.name}>
+            <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#7a9070', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>{f.label}</label>
+            <input
+              style={inputStyle(f.name)} type={f.type} name={f.name} placeholder={f.placeholder}
+              value={form[f.name]} onChange={handleChange}
+              onFocus={() => setFocusField(f.name)} onBlur={() => setFocusField('')}
+            />
+          </div>
+        ))}
+
+        <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#7a9070', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>District</label>
+        <select name="district" value={form.district} onChange={handleChange}
+          style={{ ...inputStyle('location'), background:'#f5f7f2', cursor:'pointer' }}
+          onFocus={() => setFocusField('district')} onBlur={() => setFocusField('')}>
+          <option value="">Select your district</option>
+          {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+
+        <button onClick={handleSubmit} disabled={loading}
+          style={{ width:'100%', background: loading ? '#afc09e' : 'linear-gradient(135deg,#4e9e2a,#3a7d1e)', color:'#fff', border:'none', borderRadius:99, padding:'15px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15, cursor: loading ? 'default' : 'pointer', boxShadow: loading ? 'none' : '0 4px 16px rgba(78,158,42,.4)', transition:'all .2s', marginTop:4 }}>
+          {loading ? '⏳ Creating account...' : `Create ${form.role==='farmer' ? 'Farmer' : 'Customer'} Account →`}
+        </button>
+
+        <div style={{ textAlign:'center', marginTop:24, fontSize:14, color:'#7a9070' }}>
+          Already have an account? <Link to="/login" style={{ color:'#4e9e2a', textDecoration:'none', fontWeight:700 }}>Sign In →</Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
 <file path="client/vite.config.js">
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -5781,190 +5781,6 @@ export default function FarmerOrders() {
           })
         )}
       </div>
-    </div>
-  );
-}
-</file>
-
-<file path="client/src/pages/FarmerMap.jsx">
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import api from '../api/axios.js';
-import { useResponsive } from '../hooks/useResponsive.js';
-
-export default function FarmerMap() {
-  const { isMobile } = useResponsive();
-  const [farmers, setFarmers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch]   = useState('');
-
-  useEffect(() => {
-    api.get('/auth/farmers').then(r => {
-      const d = r.data;
-      setFarmers(Array.isArray(d) ? d : d.farmers || []);
-    }).catch(() => setFarmers([])).finally(() => setLoading(false));
-  }, []);
-
-  const filtered = farmers.filter(f =>
-    f.name?.toLowerCase().includes(search.toLowerCase()) ||
-    f.farmName?.toLowerCase().includes(search.toLowerCase()) ||
-    f.location?.district?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const pad = isMobile ? '16px 12px' : '32px 48px';
-
-  return (
-    <div style={{ minHeight:'100vh', background:'#f5f7f2', fontFamily:'Plus Jakarta Sans,sans-serif', padding: pad }}>
-      <h1 style={{ fontSize: isMobile ? 22 : 30, fontWeight:700, color:'#1a2415', marginBottom:4 }}>Find Farmers</h1>
-      <p style={{ fontSize:13, color:'#7a9070', marginBottom:20 }}>Browse all farmers on KrishiConnect</p>
-
-      <input style={{ width:'100%', background:'#fff', border:'1px solid rgba(60,100,40,.12)', borderRadius:12, padding:'12px 16px', color:'#1a2415', fontSize:14, outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif', boxSizing:'border-box', marginBottom:20 }}
-        placeholder="Search by name, farm or district..."
-        value={search} onChange={e => setSearch(e.target.value)} />
-
-      {loading ? <div style={{ textAlign:'center', color:'#7a9070', padding:'60px 0' }}>Loading farmers...</div>
-      : filtered.length === 0 ? <div style={{ textAlign:'center', color:'#7a9070', padding:'60px 0' }}>No farmers found.</div>
-      : (
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(260px, 1fr))', gap: isMobile ? 10 : 20 }}>
-          {filtered.map(f => (
-            <Link key={f._id} to={`/farmer/${f._id}`} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.12)', borderRadius:16, padding: isMobile ? 14 : 24, textDecoration:'none', color:'inherit', display:'block' }}>
-              <div style={{ width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius:'50%', background:'rgba(90,176,48,.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize: isMobile ? 18 : 22, fontWeight:700, color:'#4e9e2a', marginBottom:12, overflow:'hidden', flexShrink:0 }}>
-                {f.avatar
-                  ? <img src={f.avatar} alt={f.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                  : f.name?.[0]?.toUpperCase() || 'F'
-                }
-              </div>
-              <div style={{ fontSize: isMobile ? 13 : 15, fontWeight:600, color:'#1a2415', marginBottom:2 }}>{f.name}</div>
-              {f.farmName && <div style={{ fontSize: isMobile ? 11 : 13, color:'#4e9e2a', marginBottom:4 }}>{f.farmName}</div>}
-              <div style={{ fontSize: isMobile ? 11 : 13, color:'#7a9070', marginBottom:10 }}>📍 {f.location?.district || 'Bangladesh'}</div>
-              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                <span style={{ background:'rgba(90,176,48,.12)', color:'#4e9e2a', fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:99 }}>View</span>
-                {f.isVerified && <span style={{ background:'rgba(29,158,117,.12)', color:'#1d9e75', fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:99 }}>✓ Verified</span>}
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-</file>
-
-<file path="client/src/pages/FarmerProfile.jsx">
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import api from '../api/axios.js';
-
-const s = {
-  page: { minHeight: '100vh', background: '#f5f7f2', padding: '40px 48px', maxWidth: 1100, margin: '0 auto' },
-  banner: { background: 'linear-gradient(135deg,#1a3a10,#2d5a1e)', border: '1px solid rgba(60,100,40,.12)', borderRadius: 20, padding: 36, marginBottom: 36, display: 'flex', gap: 28, alignItems: 'flex-start', flexWrap: 'wrap' },
-  avatar: { width: 80, height: 80, borderRadius: '50%', background: 'rgba(90,176,48,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700, color: '#4e9e2a', flexShrink: 0 },
-  name: { fontSize: 26, fontWeight: 700, color: '#1a2415', marginBottom: 4 },
-  farm: { fontSize: 15, color: '#4e9e2a', marginBottom: 8 },
-  meta: { fontSize: 13, color: '#7a9070', display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 8 },
-  verified: { display: 'inline-block', background: 'rgba(29,158,117,.15)', color: '#1d9e75', fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 99, border: '1px solid rgba(29,158,117,.3)', marginBottom: 12 },
-  chatBtn: { background: '#4e9e2a', color: '#fff', border: 'none', borderRadius: 99, padding: '10px 24px', fontFamily: 'Plus Jakarta Sans,sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'inline-block', marginLeft: 'auto', alignSelf: 'center' },
-  chatBtnDisabled: { background: 'rgba(60,100,40,.1)', color: '#7a9070', border: 'none', borderRadius: 99, padding: '10px 24px', fontFamily: 'Plus Jakarta Sans,sans-serif', fontWeight: 600, fontSize: 14, cursor: 'not-allowed', display: 'inline-block', marginLeft: 'auto', alignSelf: 'center' },
-  sectionTitle: { fontSize: 18, fontWeight: 600, color: '#1a2415', marginBottom: 20 },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 20 },
-  productCard: { background: '#fff', border: '1px solid rgba(60,100,40,.12)', borderRadius: 16, overflow: 'hidden', textDecoration: 'none', color: 'inherit', display: 'block' },
-  productImg: { width: '100%', height: 160, objectFit: 'cover', background: 'rgba(60,100,40,.1)' },
-  productBody: { padding: 16 },
-  productName: { fontSize: 14, fontWeight: 600, color: '#1a2415', marginBottom: 4 },
-  productPrice: { fontSize: 15, fontWeight: 700, color: '#4e9e2a' },
-  empty: { color: 'rgba(255,255,255,.65)', fontSize: 14, padding: '40px 0' },
-};
-
-export default function FarmerProfile() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [farmer, setFarmer]     = useState(null);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [chatLoading, setChatLoading] = useState(false);
-
-  useEffect(() => {
-    Promise.all([
-      api.get(`/auth/farmers/${id}`),
-      api.get(`/products?farmer=${id}&limit=20`),
-    ]).then(([fr, pr]) => {
-      const fd = fr.data;
-      setFarmer(fd.farmer || fd);
-      const pd = pr.data;
-      if (Array.isArray(pd)) setProducts(pd);
-      else if (Array.isArray(pd.products)) setProducts(pd.products);
-      else setProducts([]);
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, [id]);
-
-  const handleMessage = async () => {
-    setChatLoading(true);
-    try {
-      const { data } = await api.post('/chat/start', { recipientId: id });
-      const convoId = data.conversation?._id || data._id;
-      navigate(`/chat/${convoId}`);
-    } catch (err) {
-      if (err.response?.status === 401) {
-        navigate('/login');
-      } else {
-        alert('Could not start conversation. Please make sure you are logged in.');
-      }
-    } finally {
-      setChatLoading(false);
-    }
-  };
-
-  if (loading) return <div style={{ ...s.page, color: '#7a9070' }}>Loading...</div>;
-  if (!farmer) return <div style={{ ...s.page, color: '#7a9070' }}>Farmer not found.</div>;
-
-  return (
-    <div style={s.page}>
-      <div style={s.banner}>
-        <div style={{ ...s.avatar, overflow:'hidden', padding: 0 }}>
-          {farmer.avatar
-            ? <img src={farmer.avatar} alt={farmer.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-            : farmer.name?.[0]?.toUpperCase() || 'F'
-          }
-        </div>
-        <div style={{ flex: 1 }}>
-          {farmer.isVerified && <div style={s.verified}>Verified Farmer</div>}
-          <div style={s.name}>{farmer.name}</div>
-          {farmer.farmName && <div style={s.farm}>{farmer.farmName}</div>}
-          <div style={s.meta}>
-            {farmer.location?.district && <span>📍 {farmer.location.district}</span>}
-            {farmer.farmSize && <span>🌾 {farmer.farmSize}</span>}
-            {farmer.phone && <span>📞 {farmer.phone}</span>}
-          </div>
-        </div>
-        <button
-          style={chatLoading ? s.chatBtnDisabled : s.chatBtn}
-          onClick={handleMessage}
-          disabled={chatLoading}
-        >
-          {chatLoading ? 'Starting...' : '💬 Message'}
-        </button>
-      </div>
-
-      <div style={s.sectionTitle}>Products by {farmer.name}</div>
-      {products.length === 0 ? (
-        <div style={s.empty}>No products listed yet.</div>
-      ) : (
-        <div style={s.grid}>
-          {products.map(p => (
-            <Link key={p._id} to={`/products/${p._id}`} style={s.productCard}>
-              <img
-                src={p.images?.[0] || 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400'}
-                alt={p.name} style={s.productImg}
-                onError={e => e.target.src = 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400'}
-              />
-              <div style={s.productBody}>
-                <div style={s.productName}>{p.name}</div>
-                <div style={s.productPrice}>BDT {p.price}/{p.unit}</div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -7540,6 +7356,121 @@ export default function EditProduct() {
 }
 </file>
 
+<file path="client/src/pages/FarmerProfile.jsx">
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import api from '../api/axios.js';
+
+const s = {
+  page: { minHeight: '100vh', background: '#f5f7f2', padding: '40px 48px', maxWidth: 1100, margin: '0 auto' },
+  banner: { background: 'linear-gradient(135deg,#1a3a10,#2d5a1e)', border: '1px solid rgba(60,100,40,.12)', borderRadius: 20, padding: 36, marginBottom: 36, display: 'flex', gap: 28, alignItems: 'flex-start', flexWrap: 'wrap' },
+  avatar: { width: 80, height: 80, borderRadius: '50%', background: 'rgba(90,176,48,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700, color: '#4e9e2a', flexShrink: 0 },
+  name: { fontSize: 26, fontWeight: 700, color: '#1a2415', marginBottom: 4 },
+  farm: { fontSize: 15, color: '#4e9e2a', marginBottom: 8 },
+  meta: { fontSize: 13, color: '#7a9070', display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 8 },
+  verified: { display: 'inline-block', background: 'rgba(29,158,117,.15)', color: '#1d9e75', fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 99, border: '1px solid rgba(29,158,117,.3)', marginBottom: 12 },
+  chatBtn: { background: '#4e9e2a', color: '#fff', border: 'none', borderRadius: 99, padding: '10px 24px', fontFamily: 'Plus Jakarta Sans,sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'inline-block', marginLeft: 'auto', alignSelf: 'center' },
+  chatBtnDisabled: { background: 'rgba(60,100,40,.1)', color: '#7a9070', border: 'none', borderRadius: 99, padding: '10px 24px', fontFamily: 'Plus Jakarta Sans,sans-serif', fontWeight: 600, fontSize: 14, cursor: 'not-allowed', display: 'inline-block', marginLeft: 'auto', alignSelf: 'center' },
+  sectionTitle: { fontSize: 18, fontWeight: 600, color: '#1a2415', marginBottom: 20 },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 20 },
+  productCard: { background: '#fff', border: '1px solid rgba(60,100,40,.12)', borderRadius: 16, overflow: 'hidden', textDecoration: 'none', color: 'inherit', display: 'block' },
+  productImg: { width: '100%', height: 160, objectFit: 'cover', background: 'rgba(60,100,40,.1)' },
+  productBody: { padding: 16 },
+  productName: { fontSize: 14, fontWeight: 600, color: '#1a2415', marginBottom: 4 },
+  productPrice: { fontSize: 15, fontWeight: 700, color: '#4e9e2a' },
+  empty: { color: 'rgba(255,255,255,.65)', fontSize: 14, padding: '40px 0' },
+};
+
+export default function FarmerProfile() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [farmer, setFarmer]     = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      api.get(`/auth/farmers/${id}`),
+      api.get(`/products?farmer=${id}&limit=20`),
+    ]).then(([fr, pr]) => {
+      const fd = fr.data;
+      setFarmer(fd.farmer || fd);
+      const pd = pr.data;
+      if (Array.isArray(pd)) setProducts(pd);
+      else if (Array.isArray(pd.products)) setProducts(pd.products);
+      else setProducts([]);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [id]);
+
+  const handleMessage = async () => {
+    setChatLoading(true);
+    try {
+      const { data } = await api.post('/chat/start', { recipientId: id });
+      const convoId = data.conversation?._id || data._id;
+      navigate(`/chat/${convoId}`);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        navigate('/login');
+      } else {
+        alert('Could not start conversation. Please make sure you are logged in.');
+      }
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  if (loading) return <div style={{ ...s.page, color: '#7a9070' }}>Loading...</div>;
+  if (!farmer) return <div style={{ ...s.page, color: '#7a9070' }}>Farmer not found.</div>;
+
+  return (
+    <div style={s.page}>
+      <div style={s.banner}>
+        <div style={s.avatar}>{farmer.name?.[0]?.toUpperCase() || 'F'}</div>
+        <div style={{ flex: 1 }}>
+          {farmer.isVerified && <div style={s.verified}>Verified Farmer</div>}
+          <div style={s.name}>{farmer.name}</div>
+          {farmer.farmName && <div style={s.farm}>{farmer.farmName}</div>}
+          <div style={s.meta}>
+            {farmer.location?.district && <span>📍 {farmer.location.district}</span>}
+            {farmer.farmSize && <span>🌾 {farmer.farmSize}</span>}
+            {farmer.phone && <span>📞 {farmer.phone}</span>}
+          </div>
+        </div>
+        <button
+          style={chatLoading ? s.chatBtnDisabled : s.chatBtn}
+          onClick={handleMessage}
+          disabled={chatLoading}
+        >
+          {chatLoading ? 'Starting...' : '💬 Message'}
+        </button>
+      </div>
+
+      <div id="products" style={s.sectionTitle}>Products by {farmer.name}</div>
+      {products.length === 0 ? (
+        <div style={s.empty}>No products listed yet.</div>
+      ) : (
+        <div style={s.grid}>
+          {products.map(p => (
+            <Link key={p._id} to={`/products/${p._id}`} style={s.productCard}>
+              <img
+                src={p.images?.[0] || 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400'}
+                alt={p.name} style={s.productImg}
+                onError={e => e.target.src = 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400'}
+              />
+              <div style={s.productBody}>
+                <div style={s.productName}>{p.name}</div>
+                <div style={s.productPrice}>BDT {p.price}/{p.unit}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
 <file path="client/src/pages/Home.jsx">
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -8832,6 +8763,397 @@ export default function FarmerAccountProfile() {
           .farmer-tabs span:last-child { display:none; }
         }
       `}</style>
+    </div>
+  );
+}
+</file>
+
+<file path="client/src/pages/FarmerMap.jsx">
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../api/axios.js';
+import { useResponsive } from '../hooks/useResponsive.js';
+
+const DISTRICT_COORDS = {
+  'Dhaka':        [23.8103, 90.4125],
+  'Chittagong':   [22.3569, 91.7832],
+  'Rajshahi':     [24.3745, 88.6042],
+  'Khulna':       [22.8456, 89.5403],
+  'Sylhet':       [24.8949, 91.8687],
+  'Barishal':     [22.7010, 90.3535],
+  'Rangpur':      [25.7439, 89.2752],
+  'Mymensingh':   [24.7471, 90.4203],
+  'Comilla':      [23.4607, 91.1809],
+  'Gazipur':      [23.9999, 90.4203],
+  'Narayanganj':  [23.6238, 90.5000],
+  'Bogura':       [24.8510, 89.3711],
+  'Dinajpur':     [25.6279, 88.6338],
+  'Jessore':      [23.1664, 89.2182],
+  "Cox's Bazar":  [21.4272, 92.0058],
+  'Tangail':      [24.2512, 89.9167],
+  'Faridpur':     [23.6070, 89.8429],
+};
+const DISTRICTS = ['All Districts', ...Object.keys(DISTRICT_COORDS)];
+
+function ensureLeafletCSS() {
+  if (document.getElementById('leaflet-css')) return;
+  const link = document.createElement('link');
+  link.id = 'leaflet-css'; link.rel = 'stylesheet';
+  link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  document.head.appendChild(link);
+}
+
+function markerHTML(farmer, isSelected) {
+  const initial = farmer.name?.[0]?.toUpperCase() || 'F';
+  const size = isSelected ? 48 : 40;
+  const bg   = isSelected ? '#3a7d1e' : '#4e9e2a';
+  const shadow = isSelected ? '0 4px 20px rgba(78,158,42,.7)' : '0 2px 10px rgba(78,158,42,.4)';
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:${isSelected?18:15}px;font-weight:700;display:flex;align-items:center;justify-content:center;border:${isSelected?'3px':'2px'} solid #fff;box-shadow:${shadow};cursor:pointer;">${farmer.isVerified ? '✓' : initial}</div>`;
+}
+
+/* ── MAP sub-component ──────────────────────────────────────── */
+function MapView({ farmers, filtered, search, setSearch, district, setDistrict, zoomToDistrict }) {
+  const { isMobile }  = useResponsive();
+  const mapRef        = useRef(null);
+  const leafletMap    = useRef(null);
+  const markersRef    = useRef({});
+  const LRef          = useRef(null);
+  const [selected,   setSelected]   = useState(null);
+  const [listOpen,   setListOpen]   = useState(!isMobile);
+
+  useEffect(() => {
+    ensureLeafletCSS();
+    if (leafletMap.current || !mapRef.current) return;
+    import('leaflet').then(Lmod => {
+      const L = Lmod.default || Lmod;
+      LRef.current = L;
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      });
+      leafletMap.current = L.map(mapRef.current, { center: [23.6850, 90.3563], zoom: 7 });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors', maxZoom: 18,
+      }).addTo(leafletMap.current);
+    });
+    return () => { leafletMap.current?.remove(); leafletMap.current = null; };
+  }, []);
+
+  useEffect(() => {
+    if (!leafletMap.current || !LRef.current) return;
+    const L = LRef.current;
+    Object.values(markersRef.current).forEach(m => m.remove());
+    markersRef.current = {};
+    filtered.forEach(farmer => {
+      const lat = farmer.location?.lat || DISTRICT_COORDS[farmer.location?.district]?.[0] || 23.8103;
+      const lng = farmer.location?.lng || DISTRICT_COORDS[farmer.location?.district]?.[1] || 90.4125;
+      const icon = L.divIcon({ html: markerHTML(farmer, false), className: '', iconSize: [40,40], iconAnchor: [20,20] });
+      const marker = L.marker([lat, lng], { icon }).addTo(leafletMap.current)
+        .on('click', () => { setSelected(farmer); if (isMobile) setListOpen(false); });
+      marker.bindTooltip(`<b>${farmer.name}</b><br/>${farmer.location?.district || 'Bangladesh'}`,
+        { direction: 'top', offset: [0,-24], className: 'krishi-tooltip' });
+      markersRef.current[farmer._id] = marker;
+    });
+    if (!document.getElementById('krishi-map-style')) {
+      const s = document.createElement('style'); s.id = 'krishi-map-style';
+      // Fix zoom controls: push them below the sticky toggle bar (~50px) + navbar (60px) = 110px total
+      s.textContent = `.krishi-tooltip{background:#1a2415;color:#fff;border:none;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;padding:6px 10px;box-shadow:0 2px 12px rgba(0,0,0,.2)}.krishi-tooltip::before{display:none}.leaflet-tooltip-top.krishi-tooltip::before{display:block;border-top-color:#1a2415}.leaflet-top.leaflet-left{top:12px!important;left:8px!important}`;
+      document.head.appendChild(s);
+    }
+    // Clear selected if it's no longer in filtered
+    setSelected(prev => prev && filtered.find(f => f._id === prev._id) ? prev : null);
+  }, [filtered]);
+
+  useEffect(() => {
+    if (!LRef.current) return;
+    const L = LRef.current;
+    filtered.forEach(farmer => {
+      const marker = markersRef.current[farmer._id];
+      if (!marker) return;
+      const isSel = selected?._id === farmer._id;
+      marker.setIcon(L.divIcon({ html: markerHTML(farmer, isSel), className: '', iconSize: isSel?[48,48]:[40,40], iconAnchor: isSel?[24,24]:[20,20] }));
+    });
+    if (selected && leafletMap.current) {
+      const lat = selected.location?.lat || DISTRICT_COORDS[selected.location?.district]?.[0] || 23.8103;
+      const lng = selected.location?.lng || DISTRICT_COORDS[selected.location?.district]?.[1] || 90.4125;
+      leafletMap.current.setView([lat, lng], 10, { animate: true });
+    }
+  }, [selected, filtered]);
+
+  const handleDistrictZoom = (d) => {
+    setDistrict(d);
+    if (d !== 'All Districts' && leafletMap.current && DISTRICT_COORDS[d])
+      leafletMap.current.setView(DISTRICT_COORDS[d], 10, { animate: true });
+    else if (leafletMap.current)
+      leafletMap.current.setView([23.6850, 90.3563], 7, { animate: true });
+  };
+
+  const SIDEBAR_W = isMobile ? '100%' : '300px';
+
+  return (
+    <>
+      {/* Mobile search bar — fixed strip below navbar */}
+      {isMobile && !listOpen && (
+        <div style={{ position:'fixed', top:60, left:0, right:0, zIndex:200, background:'rgba(245,247,242,.97)', borderBottom:'1px solid rgba(60,100,40,.1)', padding:'8px 12px', display:'flex', gap:8, backdropFilter:'blur(8px)', boxShadow:'0 2px 8px rgba(0,0,0,.08)' }}>
+          <div style={{ flex:1, position:'relative' }}>
+            <span style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', fontSize:14, pointerEvents:'none' }}>🔍</span>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search farmers, districts…"
+              style={{ width:'100%', boxSizing:'border-box', background:'#fff', border:'1.5px solid rgba(60,100,40,.15)', borderRadius:10, padding:'10px 10px 10px 32px', fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:14, color:'#1a2415', outline:'none' }} />
+          </div>
+          <button onClick={() => setListOpen(true)} style={{ flexShrink:0, background:'#4e9e2a', border:'none', borderRadius:10, padding:'10px 14px', fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', whiteSpace:'nowrap' }}>
+            🌾 {filtered.length}
+          </button>
+        </div>
+      )}
+
+      {/* Map + sidebar container */}
+      <div style={{ position:'fixed', top: isMobile && !listOpen ? 162 : 110, left:0, right:0, bottom:0, display:'flex', overflow:'hidden', transition:'top .2s ease' }}>
+        {/* Sidebar */}
+        <div style={{ width:SIDEBAR_W, flexShrink:0, display:'flex', flexDirection:'column', background:'#fff', borderRight:'1px solid rgba(60,100,40,.1)', zIndex:10, position:isMobile?'absolute':'relative', top:isMobile?0:'auto', left:isMobile?0:'auto', bottom:isMobile?0:'auto', transform:isMobile && !listOpen?'translateX(-100%)':'translateX(0)', transition:'transform .3s ease', boxShadow:isMobile?'4px 0 20px rgba(0,0,0,.15)':'none' }}>
+          <div style={{ padding:'16px 14px 10px', borderBottom:'1px solid rgba(60,100,40,.08)', flexShrink:0 }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+              <div style={{ fontSize:15, fontWeight:800, color:'#1a2415' }}>🗺️ Farmer Map</div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span style={{ fontSize:11, color:'#7a9070' }}>{filtered.length} farmers</span>
+                {isMobile && <button onClick={() => setListOpen(false)} style={{ background:'none', border:'none', fontSize:20, color:'#7a9070', cursor:'pointer' }}>✕</button>}
+              </div>
+            </div>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search farmers, farms, districts…"
+              style={{ width:'100%', boxSizing:'border-box', background:'#f5f7f2', border:'1.5px solid rgba(60,100,40,.12)', borderRadius:9, padding:'9px 12px', fontSize:13, color:'#1a2415', outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif', marginBottom:8 }} />
+            <select value={district} onChange={e => handleDistrictZoom(e.target.value)}
+              style={{ width:'100%', boxSizing:'border-box', background:'#f5f7f2', border:'1.5px solid rgba(60,100,40,.12)', borderRadius:9, padding:'9px 12px', fontSize:13, color:'#1a2415', outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif', cursor:'pointer' }}>
+              {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+            </select>
+          </div>
+          <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch' }}>
+            {filtered.length === 0 ? (
+              <div style={{ padding:40, textAlign:'center', color:'#7a9070' }}>
+                <div style={{ fontSize:32, marginBottom:8 }}>🌾</div>
+                <div style={{ fontSize:14, fontWeight:600, color:'#1a2415' }}>No farmers found</div>
+              </div>
+            ) : filtered.map(f => {
+              const isSel = selected?._id === f._id;
+              return (
+                <div key={f._id} onClick={() => { setSelected(f); if (isMobile) setListOpen(false); }}
+                  style={{ padding:'12px 14px', display:'flex', gap:10, alignItems:'center', cursor:'pointer', borderBottom:'1px solid rgba(60,100,40,.06)', background:isSel?'rgba(78,158,42,.08)':'transparent', borderLeft:`3px solid ${isSel?'#4e9e2a':'transparent'}`, transition:'background .15s' }}>
+                  <div style={{ width:40, height:40, borderRadius:'50%', flexShrink:0, background:isSel?'#4e9e2a':'rgba(90,176,48,.18)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, color:isSel?'#fff':'#4e9e2a', fontSize:16, overflow:'hidden' }}>
+                    {f.avatar ? <img src={f.avatar} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : f.name?.[0]?.toUpperCase()}
+                  </div>
+                  <div style={{ flex:1, overflow:'hidden' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:2 }}>
+                      <span style={{ fontSize:13, fontWeight:700, color:'#1a2415', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</span>
+                      {f.isVerified && <span style={{ fontSize:10, background:'rgba(29,158,117,.12)', color:'#1d9e75', fontWeight:700, padding:'1px 5px', borderRadius:99, flexShrink:0 }}>✓</span>}
+                    </div>
+                    {f.farmName && <div style={{ fontSize:11, color:'#4e9e2a', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.farmName}</div>}
+                    <div style={{ fontSize:11, color:'#7a9070' }}>📍 {f.location?.district || 'Bangladesh'}</div>
+                  </div>
+                  <span style={{ color:'#c0d0b8', fontSize:16, flexShrink:0 }}>›</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Map */}
+        <div style={{ flex:1, position:'relative' }}>
+          <div ref={mapRef} style={{ width:'100%', height:'100%' }} />
+          {selected && (
+            <div style={{ position:'absolute', bottom:isMobile?16:24, left:isMobile?12:24, right:isMobile?12:'auto', width:isMobile?'auto':300, background:'#fff', borderRadius:16, padding:16, boxShadow:'0 8px 32px rgba(0,0,0,.18)', zIndex:500, border:'1px solid rgba(60,100,40,.1)', animation:'popIn .2s ease' }}>
+              <style>{`@keyframes popIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
+              <button onClick={() => setSelected(null)} style={{ position:'absolute', top:10, right:12, background:'none', border:'none', fontSize:18, color:'#7a9070', cursor:'pointer' }}>✕</button>
+              <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:12 }}>
+                <div style={{ width:48, height:48, borderRadius:'50%', background:'rgba(78,158,42,.15)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, color:'#4e9e2a', fontSize:20, overflow:'hidden' }}>
+                  {selected.avatar ? <img src={selected.avatar} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : selected.name?.[0]?.toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <span style={{ fontSize:15, fontWeight:800, color:'#1a2415' }}>{selected.name}</span>
+                    {selected.isVerified && <span style={{ fontSize:10, background:'rgba(29,158,117,.12)', color:'#1d9e75', fontWeight:700, padding:'2px 7px', borderRadius:99 }}>✓ Verified</span>}
+                  </div>
+                  {selected.farmName && <div style={{ fontSize:12, color:'#4e9e2a', marginTop:1 }}>{selected.farmName}</div>}
+                  <div style={{ fontSize:12, color:'#7a9070', marginTop:2 }}>📍 {selected.location?.district || 'Bangladesh'}</div>
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <Link to={`/farmer/${selected._id}`} style={{ flex:1, background:'#4e9e2a', color:'#fff', textDecoration:'none', borderRadius:10, padding:'10px', textAlign:'center', fontSize:13, fontWeight:700 }}>View Profile →</Link>
+                <Link to={`/farmer/${selected._id}#products`} style={{ flex:1, background:'rgba(78,158,42,.1)', color:'#3a7d1e', textDecoration:'none', borderRadius:10, padding:'10px', textAlign:'center', fontSize:13, fontWeight:700 }}>🛒 Products</Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── CARD sub-component ─────────────────────────────────────── */
+function CardView({ farmers, filtered, loading, search, setSearch, district, setDistrict, isMobile }) {
+  const pad = isMobile ? '16px 14px' : '28px 40px';
+  return (
+    <div style={{ minHeight:'calc(100vh - 60px)', background:'#f5f7f2', fontFamily:'Plus Jakarta Sans,sans-serif', padding:pad }}>
+      {/* Header */}
+      <div style={{ marginBottom:20 }}>
+        <h1 style={{ fontSize:isMobile?22:28, fontWeight:800, color:'#1a2415', marginBottom:4, letterSpacing:'-0.02em' }}>Find Farmers</h1>
+        <p style={{ fontSize:13, color:'#7a9070' }}>Browse all verified farmers on KrishiConnect</p>
+      </div>
+
+      {/* Search + filter row */}
+      <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+        <div style={{ flex:1, minWidth: isMobile ? '100%' : 'auto', position:'relative' }}>
+          <span style={{ position:'absolute', left:13, top:'50%', transform:'translateY(-50%)', fontSize:15, pointerEvents:'none' }}>🔍</span>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, farm or district…"
+            style={{ width:'100%', boxSizing:'border-box', background:'#fff', border:'1.5px solid rgba(60,100,40,.12)', borderRadius:12, padding:'12px 14px 12px 38px', color:'#1a2415', fontSize:14, outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif', boxShadow:'0 1px 4px rgba(0,0,0,.04)' }} />
+        </div>
+        <select value={district} onChange={e => setDistrict(e.target.value)}
+          style={{ background:'#fff', border:'1.5px solid rgba(60,100,40,.12)', borderRadius:12, padding:'12px 14px', color:'#1a2415', fontSize:13, outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif', cursor:'pointer', minWidth:isMobile?'100%':160, boxSizing:'border-box', boxShadow:'0 1px 4px rgba(0,0,0,.04)' }}>
+          {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+        </select>
+      </div>
+
+      {/* Results count */}
+      {!loading && (
+        <div style={{ fontSize:13, color:'#7a9070', marginBottom:16 }}>
+          {filtered.length} farmer{filtered.length !== 1 ? 's' : ''} found
+        </div>
+      )}
+
+      {/* Cards grid */}
+      {loading ? (
+        <div style={{ textAlign:'center', color:'#7a9070', padding:'60px 0', fontSize:14 }}>Loading farmers…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ textAlign:'center', color:'#7a9070', padding:'60px 0' }}>
+          <div style={{ fontSize:40, marginBottom:12 }}>🌾</div>
+          <div style={{ fontSize:16, fontWeight:600, color:'#1a2415', marginBottom:6 }}>No farmers found</div>
+          <div style={{ fontSize:13 }}>Try a different search or district</div>
+        </div>
+      ) : (
+        <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'repeat(auto-fill,minmax(240px,1fr))', gap:isMobile?12:20 }}>
+          {filtered.map(f => (
+            <Link key={f._id} to={`/farmer/${f._id}`}
+              style={{ background:'#fff', border:'1.5px solid rgba(60,100,40,.1)', borderRadius:16, padding:isMobile?14:20, textDecoration:'none', color:'inherit', display:'block', transition:'box-shadow .2s, transform .2s', boxShadow:'0 1px 6px rgba(0,0,0,.05)' }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow='0 6px 24px rgba(78,158,42,.15)'; e.currentTarget.style.transform='translateY(-2px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow='0 1px 6px rgba(0,0,0,.05)'; e.currentTarget.style.transform='translateY(0)'; }}>
+              {/* Avatar */}
+              <div style={{ width:isMobile?46:56, height:isMobile?46:56, borderRadius:'50%', background:'rgba(90,176,48,.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:isMobile?20:24, fontWeight:800, color:'#4e9e2a', marginBottom:12, overflow:'hidden', border:'2px solid rgba(78,158,42,.1)' }}>
+                {f.avatar ? <img src={f.avatar} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : f.name?.[0]?.toUpperCase() || 'F'}
+              </div>
+              {/* Name + verified */}
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
+                <div style={{ fontSize:isMobile?13:15, fontWeight:700, color:'#1a2415', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</div>
+                {f.isVerified && <span style={{ fontSize:10, background:'rgba(29,158,117,.1)', color:'#1d9e75', fontWeight:700, padding:'2px 7px', borderRadius:99, flexShrink:0 }}>✓</span>}
+              </div>
+              {f.farmName && <div style={{ fontSize:isMobile?11:13, color:'#4e9e2a', marginBottom:4, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.farmName}</div>}
+              <div style={{ fontSize:isMobile?11:12, color:'#7a9070', marginBottom:12 }}>📍 {f.location?.district || 'Bangladesh'}</div>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                <span style={{ background:'rgba(90,176,48,.1)', color:'#3a7d1e', fontSize:11, fontWeight:700, padding:'4px 10px', borderRadius:99 }}>View Profile</span>
+                {f.isVerified && <span style={{ background:'rgba(29,158,117,.08)', color:'#1d9e75', fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:99 }}>✓ Verified</span>}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── MAIN PAGE ──────────────────────────────────────────────── */
+export default function FarmerMap() {
+  const { isMobile } = useResponsive();
+  const [farmers,  setFarmers]  = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [search,   setSearch]   = useState('');
+  const [district, setDistrict] = useState('All Districts');
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'map'
+
+  useEffect(() => {
+    api.get('/auth/farmers').then(r => {
+      const d = r.data;
+      const list = Array.isArray(d) ? d : d.farmers || [];
+      const coordEntries = Object.entries(DISTRICT_COORDS);
+      const inferDistrict = (lat, lng) => {
+        if (!lat || !lng) return '';
+        let best = '', bestDist = Infinity;
+        coordEntries.forEach(([name, [dlat, dlng]]) => {
+          const dist = Math.abs(lat - dlat) + Math.abs(lng - dlng);
+          if (dist < bestDist) { bestDist = dist; best = name; }
+        });
+        return bestDist < 1.5 ? best : '';
+      };
+      setFarmers(list.map(f => {
+        const rawDistrict = f.location?.district?.trim() || '';
+        return { ...f, location: { ...f.location, district: rawDistrict || inferDistrict(f.location?.lat, f.location?.lng) } };
+      }));
+    }).catch(() => setFarmers([])).finally(() => setLoading(false));
+  }, []);
+
+  const filtered = farmers.filter(f => {
+    const q = search.toLowerCase();
+    const matchSearch = !q ||
+      f.name?.toLowerCase().includes(q) ||
+      f.farmName?.toLowerCase().includes(q) ||
+      f.location?.district?.toLowerCase().includes(q);
+    const matchDistrict = district === 'All Districts' ||
+      f.location?.district?.toLowerCase().trim() === district.toLowerCase().trim();
+    return matchSearch && matchDistrict;
+  });
+
+  const zoomToDistrict = (d) => setDistrict(d);
+
+  return (
+    <div style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+      {/* ── View toggle bar ───────────────────────────────────── */}
+      <div style={{
+        position: 'sticky', top: 60, zIndex: 90,
+        background: 'rgba(245,247,242,.97)', backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(60,100,40,.1)',
+        padding: '10px 16px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: 12,
+      }}>
+        <div style={{ fontSize: 13, color: '#7a9070', fontWeight: 600 }}>
+          {loading ? 'Loading…' : `${filtered.length} farmer${filtered.length !== 1 ? 's' : ''}`}
+        </div>
+
+        {/* Toggle pill */}
+        <div style={{ display: 'flex', background: '#eef2ea', borderRadius: 10, padding: 3, gap: 2 }}>
+          {[
+            { key: 'cards', label: '⊞ Cards' },
+            { key: 'map',   label: '🗺️ Map'  },
+          ].map(({ key, label }) => (
+            <button key={key} onClick={() => setViewMode(key)}
+              style={{
+                background: viewMode === key ? '#4e9e2a' : 'transparent',
+                color: viewMode === key ? '#fff' : '#5a7050',
+                border: 'none', borderRadius: 8,
+                padding: isMobile ? '7px 14px' : '7px 20px',
+                fontFamily: 'Plus Jakarta Sans, sans-serif',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                transition: 'all .15s',
+              }}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Views ─────────────────────────────────────────────── */}
+      {viewMode === 'cards' ? (
+        <CardView
+          farmers={farmers} filtered={filtered} loading={loading}
+          search={search} setSearch={setSearch}
+          district={district} setDistrict={setDistrict}
+          isMobile={isMobile}
+        />
+      ) : (
+        <MapView
+          farmers={farmers} filtered={filtered}
+          search={search} setSearch={setSearch}
+          district={district} setDistrict={setDistrict}
+          zoomToDistrict={zoomToDistrict}
+        />
+      )}
     </div>
   );
 }
