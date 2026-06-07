@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar               from './components/Navbar.jsx';
 import Home                 from './pages/Home.jsx';
 import Marketplace          from './pages/Marketplace.jsx';
@@ -23,9 +23,12 @@ import { PrivateRoute, FarmerRoute } from './routes/PrivateRoute.jsx';
 import PaymentResult from './pages/PaymentResult.jsx';
 
 export default function App() {
+  const { pathname } = useLocation();
+  const showNavbar = pathname === '/';
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f7f2', paddingTop: 'calc(58px + env(safe-area-inset-top, 0px))' }}>
-      <Navbar />
+    <div style={{ minHeight: '100vh', background: '#f5f7f2', paddingTop: showNavbar ? 'calc(58px + env(safe-area-inset-top, 0px))' : '0' }}>
+      {showNavbar && <Navbar />}
       <Routes>
         <Route path="/"             element={<Home />} />
         <Route path="/marketplace"  element={<Marketplace />} />
