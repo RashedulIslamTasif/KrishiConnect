@@ -16,7 +16,9 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      navigate(user.role === 'farmer' ? '/dashboard' : '/marketplace');
+      if (user.role === 'admin')        navigate('/admin');
+      else if (user.role === 'farmer')  navigate('/dashboard');
+      else                              navigate('/marketplace');
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password.');
     } finally {

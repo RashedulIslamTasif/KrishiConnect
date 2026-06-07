@@ -33,12 +33,17 @@ export default function Navbar({ minimalMode = false, hide = false }) {
     }
   };
 
+  // Resolve where the "Hi, Name" link points based on role
+  const profileLink =
+    user?.role === 'admin'    ? '/admin' :
+    user?.role === 'customer' ? '/profile' :
+                                '/dashboard/profile';
+
   return (
     <>
       {/* ── Navbar ── */}
       <nav style={{
         position: 'fixed',
-        // Push below the mobile OS status bar using safe-area-inset-top
         top: 'env(safe-area-inset-top, 0px)',
         left: 0, right: 0,
         zIndex: 1000,
@@ -72,6 +77,9 @@ export default function Navbar({ minimalMode = false, hide = false }) {
               { to:'/orders', label:'My Orders' },
               { to:'/chat',   label:'Messages'  },
             ] : []),
+            ...(user?.role==='admin' ? [
+              { to:'/admin', label:'🛡️ Admin Panel' },
+            ] : []),
           ].map(n => (
             <Link key={n.to} to={n.to} style={{
               color: active(n.to) ? 'var(--green-hi)' : 'var(--muted)',
@@ -102,8 +110,8 @@ export default function Navbar({ minimalMode = false, hide = false }) {
               {/* 🔔 Notifications */}
               {user && <NotificationBell />}
 
-              {/* 🛒 Cart */}
-              {user?.role !== 'farmer' && (
+              {/* 🛒 Cart — hidden for admin and farmer */}
+              {user?.role !== 'farmer' && user?.role !== 'admin' && (
                 <Link to="/cart" style={{ position:'relative', textDecoration:'none', display:'flex', alignItems:'center', justifyContent:'center', width:38, height:38, borderRadius:12, background: active('/cart') ? 'rgba(78,158,42,.12)' : '#fff', border:'1px solid rgba(60,100,40,.14)', boxShadow:'0 1px 4px rgba(0,0,0,.06)', flexShrink:0, transition:'all .2s' }}>
                   <span style={{ fontSize:16 }}>🛒</span>
                   {cartCount > 0 && (
@@ -118,7 +126,7 @@ export default function Navbar({ minimalMode = false, hide = false }) {
               <div id="desktop-auth" style={{ display:'flex', gap:8, alignItems:'center' }}>
                 {user ? (
                   <>
-                    <Link to={user.role==='customer' ? '/profile' : '/dashboard/profile'} style={{ fontSize:13, color:'var(--muted)', textDecoration:'none', whiteSpace:'nowrap', fontWeight:500 }}>
+                    <Link to={profileLink} style={{ fontSize:13, color:'var(--muted)', textDecoration:'none', whiteSpace:'nowrap', fontWeight:500 }}>
                       Hi, <strong style={{ color:'var(--ink)' }}>{user.name.split(' ')[0]}</strong>
                     </Link>
                     <button onClick={() => { logout(); navigate('/'); }} style={{ fontSize:12, padding:'8px 16px', background:'#fff', border:'1px solid rgba(60,100,40,.14)', borderRadius:99, color:'var(--muted)', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
@@ -235,6 +243,11 @@ export default function Navbar({ minimalMode = false, hide = false }) {
           ))}
 
           <div style={{ marginTop:20, paddingTop:20, borderTop:'1px solid rgba(60,100,40,.12)' }}>
+            {user?.role === 'admin' && (
+              <Link to="/admin" onClick={close} style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderRadius:14, marginBottom:8, color:'#5060c0', textDecoration:'none', fontSize:15, fontWeight:700, background:'rgba(80,96,192,.07)' }}>
+                <span style={{fontSize:18}}>🛡️</span>Admin Panel
+              </Link>
+            )}
             {user ? (
               <button onClick={() => { logout(); navigate('/'); close(); }}
                 style={{ width:'100%', background:'rgba(224,85,85,.08)', color:'#d04040', border:'1px solid rgba(224,85,85,.2)', borderRadius:14, padding:'14px', fontFamily:'inherit', fontWeight:600, fontSize:15, cursor:'pointer' }}>

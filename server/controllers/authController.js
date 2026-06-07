@@ -4,22 +4,21 @@ const User = require('../models/User');
 
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
 
+const safeUser = (u) => ({
+  _id: u._id, name: u.name, email: u.email, role: u.role,
+  avatar: u.avatar, phone: u.phone, farmName: u.farmName, farmSize: u.farmSize,
+  isVerified: u.isVerified, verificationStatus: u.verificationStatus,
+  nidImage: u.nidImage, selfieImage: u.selfieImage, rejectionReason: u.rejectionReason,
+  location: u.location, createdAt: u.createdAt, updatedAt: u.updatedAt,
+});
+
 // ── Register ──────────────────────────────────────────────────
 const register = asyncHandler(async (req, res) => {
   const { name, email, password, role, phone, farmName, district, lat, lng } = req.body;
   const exists = await User.findOne({ email });
   if (exists) { res.status(400); throw new Error('Email already registered'); }
-  const user = await User.create({
-    name, email, password,
-    role: role || 'customer',
-    phone, farmName,
-    location: { district, lat, lng },
-  });
-  res.status(201).json({
-    success: true,
-    token: generateToken(user._id),
-    user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, isVerified: user.isVerified, location: user.location },
-  });
+  const user = await User.create({ name, email, password, role: role || 'customer', phone, farmName, location: { district, lat, lng } });
+  res.status(201).json({ success: true, token: generateToken(user._id), user: safeUser(user) });
 });
 
 // ── Login ─────────────────────────────────────────────────────
@@ -27,59 +26,61 @@ const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) { res.status(400); throw new Error('Please provide email and password'); }
   const user = await User.findOne({ email }).select('+password');
-  if (!user) { res.status(401); throw new Error('Invalid email or password'); }
-  const isMatch = await user.matchPassword(password);
-  if (!isMatch) { res.status(401); throw new Error('Invalid email or password'); }
-  res.json({
-    success: true,
-    token: generateToken(user._id),
-    user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, isVerified: user.isVerified, location: user.location, createdAt: user.createdAt },
-  });
+  if (!user || !(await user.matchPassword(password))) { res.status(401); throw new Error('Invalid email or password'); }
+  res.json({ success: true, token: generateToken(user._id), user: safeUser(user) });
 });
 
 // ── Get current user ──────────────────────────────────────────
 const getMe = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
-  res.json({ success: true, user });
+  res.json({ success: true, user: safeUser(user) });
 });
 
 // ── Update profile ────────────────────────────────────────────
-// FIX: Only update location sub-fields that were actually sent in the request.
-// Previously the whole location object was reassigned using || fallback, which
-// caused lat/lng to be set to undefined (and dropped by Mongo) on avatar-only
-// uploads where no location fields were included in the FormData body.
 const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
   if (!user) { res.status(404); throw new Error('User not found'); }
-
   const { name, phone, farmName, farmSize, district, address, lat, lng } = req.body;
-
   if (name     !== undefined) user.name     = name;
   if (phone    !== undefined) user.phone    = phone;
   if (farmName !== undefined) user.farmName = farmName;
   if (farmSize !== undefined) user.farmSize = farmSize;
-
-  // Only patch the location fields that were actually provided
   if (district !== undefined) user.location.district = district;
   if (address  !== undefined) user.location.address  = address;
   if (lat      !== undefined) user.location.lat       = Number(lat);
   if (lng      !== undefined) user.location.lng       = Number(lng);
-
-  // req.file is set by uploadAvatar middleware (multer-storage-cloudinary).
-  // req.file.path is the persistent Cloudinary URL.
   if (req.file) user.avatar = req.file.path;
-
   const updated = await user.save();
-  res.json({ success: true, user: updated });
+  res.json({ success: true, user: safeUser(updated) });
+});
+
+// ── Submit NID verification ───────────────────────────────────
+// POST /api/auth/verify-nid   (farmer only, multipart: nidImage + selfieImage)
+const submitNidVerification = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) { res.status(404); throw new Error('User not found'); }
+  if (user.role !== 'farmer') { res.status(403); throw new Error('Only farmers can submit NID verification'); }
+  if (user.verificationStatus === 'approved') { res.status(400); throw new Error('Already verified'); }
+
+  if (!req.files?.nidImage?.[0] || !req.files?.selfieImage?.[0]) {
+    res.status(400); throw new Error('Both NID photo and selfie are required');
+  }
+
+  user.nidImage    = req.files.nidImage[0].path;
+  user.selfieImage = req.files.selfieImage[0].path;
+  user.verificationStatus = 'pending';
+  user.rejectionReason    = '';
+  await user.save();
+
+  res.json({ success: true, message: 'Verification documents submitted. Admin will review within 24–48 hours.', user: safeUser(user) });
 });
 
 // ── Change password ───────────────────────────────────────────
 const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword) { res.status(400); throw new Error('Please provide current and new password'); }
+  if (!currentPassword || !newPassword) { res.status(400); throw new Error('Provide current and new password'); }
   const user = await User.findById(req.user._id).select('+password');
-  const isMatch = await user.matchPassword(currentPassword);
-  if (!isMatch) { res.status(401); throw new Error('Current password is incorrect'); }
+  if (!(await user.matchPassword(currentPassword))) { res.status(401); throw new Error('Current password is incorrect'); }
   user.password = newPassword;
   await user.save();
   res.json({ success: true, message: 'Password changed successfully' });
@@ -91,8 +92,8 @@ const getFarmers = asyncHandler(async (req, res) => {
   const query = { role: 'farmer' };
   if (search) {
     query.$or = [
-      { name:              { $regex: search, $options: 'i' } },
-      { farmName:          { $regex: search, $options: 'i' } },
+      { name: { $regex: search, $options: 'i' } },
+      { farmName: { $regex: search, $options: 'i' } },
       { 'location.district': { $regex: search, $options: 'i' } },
     ];
   }
@@ -100,31 +101,43 @@ const getFarmers = asyncHandler(async (req, res) => {
   res.json({ success: true, farmers });
 });
 
-// ── Get single farmer by ID (public) ─────────────────────────
+// ── Get single farmer (public) ────────────────────────────────
 const getFarmerById = asyncHandler(async (req, res) => {
   const farmer = await User.findOne({ _id: req.params.id, role: 'farmer' }).select('-password');
   if (!farmer) { res.status(404); throw new Error('Farmer not found'); }
   res.json({ success: true, farmer });
 });
 
-// ── Verify / unverify a farmer (admin only) ───────────────────
-// PATCH /api/auth/farmers/:id/verify   { "isVerified": true | false }
-// Omitting isVerified in the body defaults to true (i.e. approve).
+// ── Admin: get all pending verifications ──────────────────────
+const getPendingVerifications = asyncHandler(async (req, res) => {
+  const farmers = await User.find({ role: 'farmer', verificationStatus: { $in: ['pending', 'approved', 'rejected'] } })
+    .select('-password')
+    .sort({ verificationStatus: 1, updatedAt: -1 });
+  res.json({ success: true, farmers });
+});
+
+// ── Admin: approve or reject farmer ──────────────────────────
 const verifyFarmer = asyncHandler(async (req, res) => {
   const farmer = await User.findOne({ _id: req.params.id, role: 'farmer' });
   if (!farmer) { res.status(404); throw new Error('Farmer not found'); }
-  farmer.isVerified = req.body.isVerified ?? true;
+  const { action, reason } = req.body; // action: 'approve' | 'reject'
+  if (action === 'approve') {
+    farmer.isVerified = true;
+    farmer.verificationStatus = 'approved';
+    farmer.rejectionReason = '';
+  } else if (action === 'reject') {
+    farmer.isVerified = false;
+    farmer.verificationStatus = 'rejected';
+    farmer.rejectionReason = reason || 'Documents could not be verified.';
+  } else {
+    res.status(400); throw new Error('action must be approve or reject');
+  }
   await farmer.save();
-  res.json({ success: true, message: `Farmer ${farmer.isVerified ? 'verified' : 'unverified'} successfully`, farmer });
+  res.json({ success: true, farmer: safeUser(farmer) });
 });
 
 module.exports = {
-  register,
-  login,
-  getMe,
-  updateProfile,
-  changePassword,
-  getFarmers,
-  getFarmerById,
-  verifyFarmer,
+  register, login, getMe, updateProfile, submitNidVerification,
+  changePassword, getFarmers, getFarmerById,
+  getPendingVerifications, verifyFarmer,
 };

@@ -3,6 +3,127 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
+// ── NID Verification Section ──────────────────────────────────
+function VerificationSection({ user, updateUser }) {
+  const [nidFile,     setNidFile]     = useState(null);
+  const [selfieFile,  setSelfieFile]  = useState(null);
+  const [nidPreview,  setNidPreview]  = useState(null);
+  const [selfPreview, setSelfPreview] = useState(null);
+  const [submitting,  setSubmitting]  = useState(false);
+  const [msg,         setMsg]         = useState('');
+  const [err,         setErr]         = useState('');
+
+  const status = user?.verificationStatus || 'none';
+
+  const pickFile = (setter, previewSetter) => (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    setter(f);
+    previewSetter(URL.createObjectURL(f));
+  };
+
+  const handleSubmit = async () => {
+    if (!nidFile || !selfieFile) { setErr('Please select both photos.'); return; }
+    setSubmitting(true); setErr(''); setMsg('');
+    try {
+      const fd = new FormData();
+      fd.append('nidImage',    nidFile);
+      fd.append('selfieImage', selfieFile);
+      const { data } = await api.post('/auth/verify-nid', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      updateUser(data.user);
+      setMsg('Documents submitted! Admin will review within 24–48 hours.');
+      setNidFile(null); setSelfieFile(null);
+      setNidPreview(null); setSelfPreview(null);
+    } catch (e) {
+      setErr(e?.response?.data?.message || 'Submission failed. Try again.');
+    } finally { setSubmitting(false); }
+  };
+
+  // ── Approved ──
+  if (status === 'approved') return (
+    <div style={{ background:'linear-gradient(135deg,#e8f5e1,#d4edd1)', border:'1px solid rgba(78,158,42,.2)', borderRadius:16, padding:'16px 20px', display:'flex', alignItems:'center', gap:14 }}>
+      <div style={{ fontSize:32 }}>✅</div>
+      <div>
+        <div style={{ fontSize:15, fontWeight:800, color:'#3a7d1e', marginBottom:3 }}>Verified Farmer</div>
+        <div style={{ fontSize:12, color:'#5a9040', lineHeight:1.5 }}>Your NID has been verified. Customers can see your verified badge.</div>
+      </div>
+    </div>
+  );
+
+  // ── Pending ──
+  if (status === 'pending') return (
+    <div style={{ background:'linear-gradient(135deg,#fef3d8,#fde8c0)', border:'1px solid rgba(196,125,10,.2)', borderRadius:16, padding:'16px 20px', display:'flex', alignItems:'center', gap:14 }}>
+      <div style={{ fontSize:32 }}>⏳</div>
+      <div>
+        <div style={{ fontSize:15, fontWeight:800, color:'#c47d0a', marginBottom:3 }}>Verification Under Review</div>
+        <div style={{ fontSize:12, color:'#c47d0a', lineHeight:1.5 }}>Your documents have been submitted. Admin will verify within 24–48 hours.</div>
+      </div>
+    </div>
+  );
+
+  // ── Rejected ──
+  const showUploadForm = status === 'none' || status === 'rejected';
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+      {status === 'rejected' && (
+        <div style={{ background:'linear-gradient(135deg,#fde8e8,#fdd)', border:'1px solid rgba(200,60,60,.2)', borderRadius:16, padding:'16px 20px', display:'flex', alignItems:'flex-start', gap:14 }}>
+          <div style={{ fontSize:28 }}>❌</div>
+          <div>
+            <div style={{ fontSize:14, fontWeight:800, color:'#c04040', marginBottom:4 }}>Verification Rejected</div>
+            <div style={{ fontSize:12, color:'#c04040', lineHeight:1.5 }}>{user.rejectionReason || 'Documents could not be verified.'}</div>
+            <div style={{ fontSize:12, color:'#c04040', marginTop:6, fontWeight:600 }}>Please re-submit clear photos below.</div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload form */}
+      <div style={{ background:'#fff', border:'1px solid rgba(60,100,40,.12)', borderRadius:16, padding:'18px 20px' }}>
+        <div style={{ fontSize:14, fontWeight:800, color:'#1a2415', marginBottom:4 }}>
+          {status === 'none' ? '🪪 Get Verified' : '🔄 Re-submit Documents'}
+        </div>
+        <div style={{ fontSize:12, color:'#7a9070', marginBottom:16, lineHeight:1.6 }}>
+          Upload a photo of your NID card and a selfie holding it next to your face. Admin will visually verify that they match.
+        </div>
+
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+          {/* NID photo */}
+          <label style={{ cursor:'pointer' }}>
+            <div style={{ fontSize:12, fontWeight:700, color:'#3a7d1e', marginBottom:6 }}>📄 NID Card Photo</div>
+            <div style={{ border:'2px dashed rgba(78,158,42,.3)', borderRadius:12, height:120, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', overflow:'hidden', background:'#f7faf5' }}>
+              {nidPreview
+                ? <img src={nidPreview} alt="NID" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                : <><div style={{ fontSize:28, marginBottom:4 }}>📷</div><div style={{ fontSize:11, color:'#7a9070' }}>Tap to select</div></>
+              }
+            </div>
+            <input type="file" accept="image/*" onChange={pickFile(setNidFile, setNidPreview)} style={{ display:'none' }} />
+          </label>
+
+          {/* Selfie holding NID */}
+          <label style={{ cursor:'pointer' }}>
+            <div style={{ fontSize:12, fontWeight:700, color:'#3a7d1e', marginBottom:6 }}>🤳 Selfie Holding NID</div>
+            <div style={{ border:'2px dashed rgba(78,158,42,.3)', borderRadius:12, height:120, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', overflow:'hidden', background:'#f7faf5' }}>
+              {selfPreview
+                ? <img src={selfPreview} alt="Selfie" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                : <><div style={{ fontSize:28, marginBottom:4 }}>🤳</div><div style={{ fontSize:11, color:'#7a9070' }}>Tap to select</div></>
+              }
+            </div>
+            <input type="file" accept="image/*" capture="user" onChange={pickFile(setSelfieFile, setSelfPreview)} style={{ display:'none' }} />
+          </label>
+        </div>
+
+        {err && <div style={{ fontSize:12, color:'#c04040', marginBottom:10, background:'rgba(200,60,60,.07)', padding:'8px 12px', borderRadius:8 }}>{err}</div>}
+        {msg && <div style={{ fontSize:12, color:'#3a7d1e', marginBottom:10, background:'rgba(78,158,42,.07)', padding:'8px 12px', borderRadius:8 }}>{msg}</div>}
+
+        <button onClick={handleSubmit} disabled={submitting || !nidFile || !selfieFile}
+          style={{ width:'100%', background: (!nidFile || !selfieFile) ? '#c8e6b5' : '#4e9e2a', color:'#fff', border:'none', borderRadius:12, padding:'12px', fontWeight:700, fontSize:14, cursor: (!nidFile || !selfieFile) ? 'not-allowed' : 'pointer', fontFamily:'inherit', transition:'background .2s' }}>
+          {submitting ? 'Submitting…' : 'Submit for Verification'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const STATUS_COLOR = {
   delivered:        { bg:'#e8f5e1', color:'#3a7d1e',  label:'Delivered'     },
   pending:          { bg:'#fef3d8', color:'#c47d0a',   label:'Pending'       },
@@ -173,34 +294,22 @@ export default function FarmerAccountProfile() {
     if (!file) return;
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
-    // Auto-upload immediately when file is selected
-    uploadAvatar(file);
   };
 
- const uploadAvatar = async (fileToUpload) => {
-    const file = fileToUpload || avatarFile;
-    if (!file) return;
+  const uploadAvatar = async () => {
+    if (!avatarFile) return;
     setAvatarSaving(true);
     try {
       const fd = new FormData();
-      fd.append('avatar', file);
+      fd.append('avatar', avatarFile);
       const { data } = await api.put('/auth/profile', fd, { headers:{ 'Content-Type':'multipart/form-data' } });
-      const newAvatarUrl = data?.user?.avatar;
-      if (newAvatarUrl) {
-        // Update localStorage directly to guarantee it's saved
-        const stored = JSON.parse(localStorage.getItem('krishi_user') || '{}');
-        stored.avatar = newAvatarUrl;
-        localStorage.setItem('krishi_user', JSON.stringify(stored));
-        updateUser({ ...data.user, avatar: newAvatarUrl });
-        setAvatarPreview(newAvatarUrl);
-        setMsg('Profile picture updated!');
-      } else {
-        setErr('Upload failed — no URL returned.');
-      }
+      const savedUser = data.user;
+      updateUser(savedUser);
+      // Replace local blob: URL with the persisted Cloudinary URL
+      if (savedUser?.avatar) setAvatarPreview(savedUser.avatar);
       setAvatarFile(null);
-    } catch(e) {
-      setErr('Failed to upload photo.');
-    }
+      setMsg('Profile picture updated!');
+    } catch { setErr('Failed to upload photo.'); }
     finally { setAvatarSaving(false); }
   };
 
@@ -208,8 +317,7 @@ export default function FarmerAccountProfile() {
     setSaving(true); setMsg(''); setErr('');
     try {
       const { data } = await api.put('/auth/profile', form);
-      const currentAvatar = user?.avatar || '';
-      updateUser({ ...data.user, avatar: data.user?.avatar || currentAvatar });
+      updateUser(data.user);
       setMsg('Profile updated successfully!');
     } catch(e) { setErr(e.response?.data?.message||'Update failed.'); }
     finally { setSaving(false); }
@@ -479,25 +587,8 @@ export default function FarmerAccountProfile() {
                 placeholder="Village, Upazila..." focus={focus} onFocus={setFocus} onBlur={setFocus} />
             </div>
 
-            {/* Verification status */}
-            <div style={{
-              background: user?.isVerified ? 'linear-gradient(135deg,#e8f5e1,#d4edd1)' : 'linear-gradient(135deg,#fef3d8,#fde8c0)',
-              border: `1px solid ${user?.isVerified ? 'rgba(78,158,42,.2)' : 'rgba(196,125,10,.2)'}`,
-              borderRadius:16, padding:'16px 20px', display:'flex', alignItems:'center', gap:14,
-            }}>
-              <div style={{ fontSize:28 }}>{user?.isVerified ? '✅' : '⏳'}</div>
-              <div>
-                <div style={{ fontSize:14, fontWeight:800, color: user?.isVerified ? '#3a7d1e' : '#c47d0a', marginBottom:3 }}>
-                  {user?.isVerified ? 'Verified Farmer' : 'Verification Pending'}
-                </div>
-                <div style={{ fontSize:12, color: user?.isVerified ? '#5a9040' : '#c47d0a', lineHeight:1.5 }}>
-                  {user?.isVerified
-                    ? 'Your NID has been verified. Customers can see your verified badge.'
-                    : "Your NID verification is under review. You'll be notified once approved."
-                  }
-                </div>
-              </div>
-            </div>
+            {/* Verification status + NID upload */}
+            <VerificationSection user={user} updateUser={updateUser} />
           </SectionCard>
         )}
 

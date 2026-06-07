@@ -6,8 +6,9 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { useResponsive } from '../hooks/useResponsive.js';
 
-/* ── Farmer-blocked modal ── */
-function FarmerBlockModal({ onClose, navigate }) {
+/* ── Block modal — works for both farmer and admin ── */
+function BlockedModal({ role, onClose, navigate }) {
+  const isAdmin = role === 'admin';
   return (
     <div style={{
       position:'fixed', inset:0, background:'rgba(10,25,8,.65)',
@@ -22,24 +23,26 @@ function FarmerBlockModal({ onClose, navigate }) {
       }}>
         <style>{`@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}`}</style>
 
-        {/* Icon */}
         <div style={{
           width:72, height:72, borderRadius:'50%',
-          background:'linear-gradient(135deg,#fef3d8,#fde8c0)',
-          border:'2px solid rgba(196,125,10,.15)',
+          background: isAdmin ? 'linear-gradient(135deg,#e8eaf6,#c5cae9)' : 'linear-gradient(135deg,#fef3d8,#fde8c0)',
+          border: `2px solid ${isAdmin ? 'rgba(80,96,192,.2)' : 'rgba(196,125,10,.15)'}`,
           display:'flex', alignItems:'center', justifyContent:'center',
           fontSize:34, margin:'0 auto 20px',
-        }}>🌾</div>
+        }}>{isAdmin ? '🛡️' : '🌾'}</div>
 
         <div style={{ fontSize:20, fontWeight:800, color:'#1a2415', marginBottom:10, letterSpacing:'-0.02em' }}>
-          Farmers Can't Order
+          {isAdmin ? "Admins Can't Order" : "Farmers Can't Order"}
         </div>
         <div style={{ fontSize:14, color:'#7a9070', lineHeight:1.7, marginBottom:28 }}>
-          Your account is registered as a <strong style={{ color:'#c47d0a' }}>Farmer</strong>.
-          To buy products, you need a separate <strong style={{ color:'#4e9e2a' }}>Customer account</strong>.
+          Your account is registered as an{' '}
+          <strong style={{ color: isAdmin ? '#5060c0' : '#c47d0a' }}>
+            {isAdmin ? 'Admin' : 'Farmer'}
+          </strong>.
+          {' '}To buy products, you need a separate{' '}
+          <strong style={{ color:'#4e9e2a' }}>Customer account</strong>.
         </div>
 
-        {/* Divider */}
         <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
           <div style={{ flex:1, height:1, background:'rgba(60,100,40,.1)' }} />
           <span style={{ fontSize:11, color:'#afc09e', fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em' }}>What would you like to do?</span>
@@ -136,8 +139,8 @@ export default function ProductDetail() {
   const [qty,      setQty]      = useState(1);
   const [loading,  setLoading]  = useState(true);
   const [ordering, setOrdering] = useState(false);
-  const [showModal,    setShowModal]    = useState(false);
-  const [showFarmerBlock, setShowFarmerBlock] = useState(false);
+  const [showModal,      setShowModal]      = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
@@ -165,10 +168,12 @@ export default function ProductDetail() {
   const savings = product.marketPrice > product.price
     ? Math.round(((product.marketPrice - product.price) / product.marketPrice) * 100) : 0;
 
-  // Centralised guard: farmers are blocked, guests redirect to login
-  const guardBuy = (action) => {
-    if (!user)              { navigate('/login'); return false; }
-    if (user.role === 'farmer') { setShowFarmerBlock(true); return false; }
+  const isBlocked = user?.role === 'farmer' || user?.role === 'admin';
+
+  // Centralised guard: farmers and admins are blocked, guests redirect to login
+  const guardBuy = () => {
+    if (!user)     { navigate('/login'); return false; }
+    if (isBlocked) { setShowBlockModal(true); return false; }
     return true;
   };
 
@@ -206,13 +211,26 @@ export default function ProductDetail() {
     farmer: p.farmerPrice, market: p.marketPrice,
   }));
 
-  // Button label for add-to-cart
   const cartBtnLabel = addedToCart ? '✓ Added!' : '🛒 Cart';
+
+  // Inline notice banner for blocked accounts
+  const BlockedBanner = () => isBlocked ? (
+    <div style={{
+      background: user.role === 'admin' ? 'linear-gradient(135deg,#e8eaf6,#c5cae9)' : 'linear-gradient(135deg,#fef3d8,#fde8c0)',
+      border: `1px solid ${user.role === 'admin' ? 'rgba(80,96,192,.2)' : 'rgba(196,125,10,.2)'}`,
+      borderRadius:12, padding:'10px 14px', marginBottom:12, display:'flex', alignItems:'center', gap:10,
+    }}>
+      <span style={{ fontSize:18 }}>{user.role === 'admin' ? '🛡️' : '🌾'}</span>
+      <div style={{ fontSize:12, color: user.role === 'admin' ? '#5060c0' : '#c47d0a', fontWeight:600, lineHeight:1.5 }}>
+        {user.role === 'admin' ? 'Admin' : 'Farmer'} accounts can't place orders. Log in as a customer to buy.
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div style={{ minHeight:'100vh', padding: pad }}>
-      {showFarmerBlock && (
-        <FarmerBlockModal onClose={() => setShowFarmerBlock(false)} navigate={navigate} />
+      {showBlockModal && (
+        <BlockedModal role={user?.role} onClose={() => setShowBlockModal(false)} navigate={navigate} />
       )}
       {showModal && (
         <OrderModal product={product} qty={qty} onConfirm={handleConfirmOrder} onClose={() => setShowModal(false)} ordering={ordering} />
@@ -280,13 +298,7 @@ export default function ProductDetail() {
                 <span style={{ marginLeft:'auto',fontSize:18,fontWeight:700,color:'#4e9e2a' }}>BDT {(product.price*qty).toLocaleString()}</span>
               </div>
 
-              {/* Farmer banner inside buttons area */}
-              {user?.role === 'farmer' && (
-                <div style={{ background:'linear-gradient(135deg,#fef3d8,#fde8c0)', border:'1px solid rgba(196,125,10,.2)', borderRadius:12, padding:'10px 14px', marginBottom:12, display:'flex', alignItems:'center', gap:10 }}>
-                  <span style={{ fontSize:18 }}>🌾</span>
-                  <div style={{ fontSize:12, color:'#c47d0a', fontWeight:600, lineHeight:1.5 }}>Farmer accounts can't place orders. Use a customer account to buy.</div>
-                </div>
-              )}
+              <BlockedBanner />
 
               <div style={{ display:'flex', gap:8 }}>
                 <button onClick={handleAddToCart} disabled={product.stock===0}
@@ -379,13 +391,7 @@ export default function ProductDetail() {
                 <div style={{ marginLeft:'auto',fontSize:20,fontWeight:700,color:'#4e9e2a' }}>BDT {(product.price*qty).toLocaleString()}</div>
               </div>
 
-              {/* Farmer notice banner */}
-              {user?.role === 'farmer' && (
-                <div style={{ background:'linear-gradient(135deg,#fef3d8,#fde8c0)', border:'1px solid rgba(196,125,10,.2)', borderRadius:12, padding:'12px 16px', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
-                  <span style={{ fontSize:20 }}>🌾</span>
-                  <div style={{ fontSize:12, color:'#c47d0a', fontWeight:600, lineHeight:1.5 }}>Farmer accounts can't place orders. Use a customer account to buy.</div>
-                </div>
-              )}
+              <BlockedBanner />
 
               <div style={{ display:'flex', gap:10 }}>
                 <button onClick={handleAddToCart} disabled={product.stock===0}

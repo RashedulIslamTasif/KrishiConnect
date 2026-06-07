@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext.jsx';
 import api from '../api/axios.js';
 import PaymentModal from '../components/payment/PaymentModal.jsx';
 
-/* ── Farmer block modal (unchanged) ── */
-function FarmerBlockModal({ onClose, navigate }) {
+/* ── Block modal — works for both farmer and admin ── */
+function BlockedModal({ role, onClose, navigate }) {
+  const isAdmin = role === 'admin';
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(10,25,8,.65)', backdropFilter:'blur(6px)',
       display:'flex', alignItems:'center', justifyContent:'center', zIndex:1100, padding:'20px' }}>
@@ -15,12 +16,21 @@ function FarmerBlockModal({ onClose, navigate }) {
         boxShadow:'0 24px 64px rgba(10,25,8,.18)' }}>
         <style>{`@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}`}</style>
         <div style={{ width:72, height:72, borderRadius:'50%',
-          background:'linear-gradient(135deg,#fef3d8,#fde8c0)', border:'2px solid rgba(196,125,10,.15)',
-          display:'flex', alignItems:'center', justifyContent:'center', fontSize:34, margin:'0 auto 20px' }}>🌾</div>
-        <div style={{ fontSize:20, fontWeight:800, color:'#1a2415', marginBottom:10 }}>Farmers Can't Order</div>
+          background: isAdmin ? 'linear-gradient(135deg,#e8eaf6,#c5cae9)' : 'linear-gradient(135deg,#fef3d8,#fde8c0)',
+          border: `2px solid ${isAdmin ? 'rgba(80,96,192,.2)' : 'rgba(196,125,10,.15)'}`,
+          display:'flex', alignItems:'center', justifyContent:'center', fontSize:34, margin:'0 auto 20px' }}>
+          {isAdmin ? '🛡️' : '🌾'}
+        </div>
+        <div style={{ fontSize:20, fontWeight:800, color:'#1a2415', marginBottom:10 }}>
+          {isAdmin ? "Admins Can't Order" : "Farmers Can't Order"}
+        </div>
         <div style={{ fontSize:14, color:'#7a9070', lineHeight:1.7, marginBottom:28 }}>
-          Your account is registered as a <strong style={{ color:'#c47d0a' }}>Farmer</strong>.
-          To buy products, you need a <strong style={{ color:'#4e9e2a' }}>Customer account</strong>.
+          Your account is registered as an{' '}
+          <strong style={{ color: isAdmin ? '#5060c0' : '#c47d0a' }}>
+            {isAdmin ? 'Admin' : 'Farmer'}
+          </strong>.
+          To buy products, please log in with a{' '}
+          <strong style={{ color:'#4e9e2a' }}>Customer account</strong>.
         </div>
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           <button onClick={() => { onClose(); navigate('/register?role=customer'); }}
@@ -49,23 +59,24 @@ export default function Cart() {
   const { user }   = useAuth();
   const navigate   = useNavigate();
 
-  const [pendingOrder,    setPendingOrder]    = useState(null); // order doc returned from POST /orders
+  const [pendingOrder,    setPendingOrder]    = useState(null);
   const [showPayment,     setShowPayment]     = useState(false);
-  const [showFarmerBlock, setShowFarmerBlock] = useState(false);
+  const [showBlockModal,  setShowBlockModal]  = useState(false);
   const [creating,        setCreating]        = useState(false);
   const [success,         setSuccess]         = useState(false);
 
   const total   = items.reduce((s, i) => s + i.price * i.qty, 0);
   const savings = items.reduce((s, i) => s + Math.max(0, (i.marketPrice || i.price) - i.price) * i.qty, 0);
 
+  const isBlocked = user?.role === 'farmer' || user?.role === 'admin';
+
   // Step 1: Guard + create order record → open payment modal
   const handleCheckout = async () => {
-    if (!user)                  { navigate('/login'); return; }
-    if (user.role === 'farmer') { setShowFarmerBlock(true); return; }
+    if (!user)      { navigate('/login'); return; }
+    if (isBlocked)  { setShowBlockModal(true); return; }
 
     setCreating(true);
     try {
-      // Group by farmer
       const byFarmer = {};
       items.forEach(i => {
         const fid = i.farmer?._id || i.farmer;
@@ -73,21 +84,18 @@ export default function Cart() {
         byFarmer[fid].push({ product: i._id, name: i.name, quantity: i.qty, price: i.price, image: i.images?.[0] || '' });
       });
 
-      // Create orders (one per farmer) — returns first one for payment
       const results = await Promise.all(
         Object.entries(byFarmer).map(([farmerId, orderItems]) =>
           api.post('/orders', {
             farmerId,
             items: orderItems,
-            deliveryAddress: '',        // will be filled in PaymentModal
-            paymentMethod:   'bkash',   // will be overridden in PaymentModal
+            deliveryAddress: '',
+            paymentMethod:   'bkash',
             totalAmount: orderItems.reduce((s, i) => s + i.quantity * i.price, 0),
           }).then(r => r.data.order)
         )
       );
 
-      // For simplicity show payment for the first (and usually only) order
-      // Multi-farmer carts are split automatically above
       setPendingOrder(results[0]);
       setShowPayment(true);
     } catch (e) {
@@ -97,7 +105,6 @@ export default function Cart() {
     }
   };
 
-  // COD path — called by PaymentModal when user picks cash_on_delivery
   const handleCodConfirmed = async ({ address, payment }) => {
     try {
       await api.put(`/orders/${pendingOrder._id}/payment-method`, {
@@ -136,7 +143,13 @@ export default function Cart() {
     <div style={{ minHeight:'100vh', background:'#f5f7f2', fontFamily:'Plus Jakarta Sans,sans-serif' }}>
       <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
-      {showFarmerBlock && <FarmerBlockModal onClose={() => setShowFarmerBlock(false)} navigate={navigate} />}
+      {showBlockModal && (
+        <BlockedModal
+          role={user?.role}
+          onClose={() => setShowBlockModal(false)}
+          navigate={navigate}
+        />
+      )}
       {showPayment && pendingOrder && (
         <PaymentModal
           order={pendingOrder}
@@ -207,13 +220,23 @@ export default function Cart() {
               </div>
             ))}
 
-            {user?.role === 'farmer' && (
-              <div style={{ background:'linear-gradient(135deg,#fef3d8,#fde8c0)', border:'1px solid rgba(196,125,10,.2)',
+            {/* Blocked account notice banner */}
+            {isBlocked && (
+              <div style={{ background: user.role === 'admin'
+                  ? 'linear-gradient(135deg,#e8eaf6,#c5cae9)'
+                  : 'linear-gradient(135deg,#fef3d8,#fde8c0)',
+                border: `1px solid ${user.role === 'admin' ? 'rgba(80,96,192,.2)' : 'rgba(196,125,10,.2)'}`,
                 borderRadius:16, padding:'14px 18px', marginTop:8, display:'flex', alignItems:'center', gap:12 }}>
-                <span style={{ fontSize:24, flexShrink:0 }}>🌾</span>
+                <span style={{ fontSize:24, flexShrink:0 }}>{user.role === 'admin' ? '🛡️' : '🌾'}</span>
                 <div>
-                  <div style={{ fontSize:13, fontWeight:800, color:'#c47d0a', marginBottom:2 }}>Farmer Account Detected</div>
-                  <div style={{ fontSize:12, color:'#c47d0a', lineHeight:1.5 }}>You can't checkout with a farmer account.</div>
+                  <div style={{ fontSize:13, fontWeight:800,
+                    color: user.role === 'admin' ? '#5060c0' : '#c47d0a', marginBottom:2 }}>
+                    {user.role === 'admin' ? 'Admin Account Detected' : 'Farmer Account Detected'}
+                  </div>
+                  <div style={{ fontSize:12,
+                    color: user.role === 'admin' ? '#5060c0' : '#c47d0a', lineHeight:1.5 }}>
+                    You can't checkout with {user.role === 'admin' ? 'an admin' : 'a farmer'} account. Log in as a customer to order.
+                  </div>
                 </div>
               </div>
             )}
@@ -239,7 +262,6 @@ export default function Cart() {
                 <span>Total</span><span style={{ color:'#4e9e2a' }}>৳{total.toLocaleString()}</span>
               </div>
 
-              {/* Payment method preview icons */}
               <div style={{ display:'flex', gap:8, marginBottom:16, alignItems:'center' }}>
                 <span style={{ fontSize:11, color:'#afc09e', fontWeight:600 }}>Pay with:</span>
                 {[['#E2136E','🟣','bKash'],['#F16522','🟠','Nagad'],['#4e9e2a','💵','COD']].map(([c,logo,lbl]) => (
@@ -259,8 +281,10 @@ export default function Cart() {
                 {creating ? (
                   <><span style={{ display:'inline-block', width:18, height:18, border:'2px solid rgba(255,255,255,.4)',
                     borderTopColor:'#fff', borderRadius:'50%', animation:'spin .7s linear infinite' }} /> Creating order…</>
+                ) : isBlocked ? (
+                  `${user.role === 'admin' ? '🛡️ Log In as Customer' : '🌾 Switch to Customer Account'}`
                 ) : (
-                  user?.role === 'farmer' ? '🌾 Switch to Customer Account' : 'Select Payment Method →'
+                  'Select Payment Method →'
                 )}
               </button>
               <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>

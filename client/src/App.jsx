@@ -21,6 +21,7 @@ import OrderTracking        from './pages/OrderTracking.jsx';
 import Chat                 from './pages/Chat.jsx';
 import { PrivateRoute, FarmerRoute } from './routes/PrivateRoute.jsx';
 import PaymentResult from './pages/PaymentResult.jsx';
+import AdminPanel from './pages/AdminPanel.jsx';
 
 export default function App() {
   const { pathname } = useLocation();
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/login"        element={<Login />} />
         <Route path="/register"     element={<Register />} />
         <Route path="/payment/result" element={<PaymentResult />} />
+        <Route path="/admin" element={<AdminPanel />} />
 
         <Route element={<PrivateRoute />}>
           <Route path="/profile"              element={<CustomerProfile />} />
