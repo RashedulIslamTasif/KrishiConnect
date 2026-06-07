@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import NotificationBell from './NotificationBell.jsx';
 
-export default function Navbar() {
+export default function Navbar({ minimalMode = false }) {
   const { user, logout } = useAuth();
   const { cartCount }    = useCart();
   const { pathname }     = useLocation();
@@ -84,53 +84,58 @@ export default function Navbar() {
         {/* Right side icons */}
         <div style={{ display:'flex', gap:6, alignItems:'center' }}>
 
-          {/* 🔍 Search button */}
-          <button
-            onClick={() => setSearchOpen(o => !o)}
-            style={{ width:38, height:38, borderRadius:12, background: searchOpen ? 'rgba(78,158,42,.12)' : '#fff', border:'1px solid rgba(60,100,40,.14)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, boxShadow:'0 1px 4px rgba(0,0,0,.06)', transition:'all .2s' }}
-            aria-label="Search"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={searchOpen ? '#4e9e2a' : '#6b7a5e'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </button>
+          {/* In minimal mode, only show hamburger */}
+          {!minimalMode && (
+            <>
+              {/* 🔍 Search button */}
+              <button
+                onClick={() => setSearchOpen(o => !o)}
+                style={{ width:38, height:38, borderRadius:12, background: searchOpen ? 'rgba(78,158,42,.12)' : '#fff', border:'1px solid rgba(60,100,40,.14)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, boxShadow:'0 1px 4px rgba(0,0,0,.06)', transition:'all .2s' }}
+                aria-label="Search"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={searchOpen ? '#4e9e2a' : '#6b7a5e'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </button>
 
-          {/* 🔔 Notifications */}
-          {user && <NotificationBell />}
+              {/* 🔔 Notifications */}
+              {user && <NotificationBell />}
 
-          {/* 🛒 Cart */}
-          {user?.role !== 'farmer' && (
-            <Link to="/cart" style={{ position:'relative', textDecoration:'none', display:'flex', alignItems:'center', justifyContent:'center', width:38, height:38, borderRadius:12, background: active('/cart') ? 'rgba(78,158,42,.12)' : '#fff', border:'1px solid rgba(60,100,40,.14)', boxShadow:'0 1px 4px rgba(0,0,0,.06)', flexShrink:0, transition:'all .2s' }}>
-              <span style={{ fontSize:16 }}>🛒</span>
-              {cartCount > 0 && (
-                <span style={{ position:'absolute', top:-4, right:-4, background:'#4e9e2a', color:'#fff', fontSize:9, fontWeight:700, borderRadius:'50%', width:16, height:16, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  {cartCount > 9 ? '9+' : cartCount}
-                </span>
+              {/* 🛒 Cart */}
+              {user?.role !== 'farmer' && (
+                <Link to="/cart" style={{ position:'relative', textDecoration:'none', display:'flex', alignItems:'center', justifyContent:'center', width:38, height:38, borderRadius:12, background: active('/cart') ? 'rgba(78,158,42,.12)' : '#fff', border:'1px solid rgba(60,100,40,.14)', boxShadow:'0 1px 4px rgba(0,0,0,.06)', flexShrink:0, transition:'all .2s' }}>
+                  <span style={{ fontSize:16 }}>🛒</span>
+                  {cartCount > 0 && (
+                    <span style={{ position:'absolute', top:-4, right:-4, background:'#4e9e2a', color:'#fff', fontSize:9, fontWeight:700, borderRadius:'50%', width:16, height:16, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </span>
+                  )}
+                </Link>
               )}
-            </Link>
+
+              {/* Desktop auth */}
+              <div id="desktop-auth" style={{ display:'flex', gap:8, alignItems:'center' }}>
+                {user ? (
+                  <>
+                    <Link to={user.role==='customer' ? '/profile' : '/dashboard/profile'} style={{ fontSize:13, color:'var(--muted)', textDecoration:'none', whiteSpace:'nowrap', fontWeight:500 }}>
+                      Hi, <strong style={{ color:'var(--ink)' }}>{user.name.split(' ')[0]}</strong>
+                    </Link>
+                    <button onClick={() => { logout(); navigate('/'); }} style={{ fontSize:12, padding:'8px 16px', background:'#fff', border:'1px solid rgba(60,100,40,.14)', borderRadius:99, color:'var(--muted)', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" style={{ fontSize:13, color:'var(--muted)', textDecoration:'none', whiteSpace:'nowrap', fontWeight:500, padding:'7px 14px' }}>Login</Link>
+                    <Link to="/register" style={{ fontSize:13, padding:'8px 18px', textDecoration:'none', background:'#4e9e2a', color:'#fff', borderRadius:99, fontWeight:700, whiteSpace:'nowrap' }}>Join Free</Link>
+                  </>
+                )}
+              </div>
+            </>
           )}
 
-          {/* Desktop auth */}
-          <div id="desktop-auth" style={{ display:'flex', gap:8, alignItems:'center' }}>
-            {user ? (
-              <>
-                <Link to={user.role==='customer' ? '/profile' : '/dashboard/profile'} style={{ fontSize:13, color:'var(--muted)', textDecoration:'none', whiteSpace:'nowrap', fontWeight:500 }}>
-                  Hi, <strong style={{ color:'var(--ink)' }}>{user.name.split(' ')[0]}</strong>
-                </Link>
-                <button onClick={() => { logout(); navigate('/'); }} style={{ fontSize:12, padding:'8px 16px', background:'#fff', border:'1px solid rgba(60,100,40,.14)', borderRadius:99, color:'var(--muted)', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" style={{ fontSize:13, color:'var(--muted)', textDecoration:'none', whiteSpace:'nowrap', fontWeight:500, padding:'7px 14px' }}>Login</Link>
-                <Link to="/register" style={{ fontSize:13, padding:'8px 18px', textDecoration:'none', background:'#4e9e2a', color:'#fff', borderRadius:99, fontWeight:700, whiteSpace:'nowrap' }}>Join Free</Link>
-              </>
-            )}
-          </div>
-
-          {/* Hamburger */}
-          <button id="hamburger" onClick={() => setMenuOpen(o => !o)} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.14)', borderRadius:10, padding:'7px 10px', cursor:'pointer', fontSize:16, display:'none', flexShrink:0 }}>
+          {/* Hamburger — always visible */}
+          <button id="hamburger" onClick={() => setMenuOpen(o => !o)} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.14)', borderRadius:10, padding:'7px 10px', cursor:'pointer', fontSize:16, display: minimalMode ? 'flex' : 'none', flexShrink:0 }}>
             {menuOpen ? '✕' : '☰'}
           </button>
         </div>

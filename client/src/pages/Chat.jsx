@@ -5,127 +5,170 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useResponsive } from '../hooks/useResponsive.js';
 import useSocket from '../hooks/useSocket.js';
 
-/* ─── tiny style tag injected once ─────────────────────────── */
-const CHAT_STYLES = `
+const S = `
   .chat-root {
-    --nav-h: 60px;
     position: fixed;
-    top: var(--nav-h);
-    left: 0; right: 0; bottom: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     display: flex;
     flex-direction: column;
-    background: #f5f7f2;
+    background: #f0f2f0;
     overflow: hidden;
   }
-  /* iOS viewport fix – fills real visible area */
-  @supports (height: 100dvh) {
-    .chat-root { top: var(--nav-h); height: calc(100dvh - var(--nav-h)); position: fixed; }
+  .chat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    padding-top: env(safe-area-inset-top, 0px);
+    height: calc(60px + env(safe-area-inset-top, 0px));
+    background: #fff;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
   }
   .chat-messages {
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 16px 12px;
+    padding: 12px 14px 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
   }
   .chat-input-bar {
     flex-shrink: 0;
     display: flex;
-    gap: 8px;
-    padding: 10px 12px;
-    padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+    align-items: flex-end;
+    gap: 10px;
+    padding: 10px 14px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
     background: #fff;
-    border-top: 1px solid rgba(60,100,40,.1);
+    border-top: 1px solid rgba(0,0,0,.08);
   }
   .chat-input {
     flex: 1;
-    background: #f5f7f2;
-    border: 1.5px solid rgba(60,100,40,.15);
-    border-radius: 24px;
-    padding: 11px 16px;
-    color: #1a2415;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #f0f2f0;
+    border: none;
+    border-radius: 22px;
+    padding: 10px 16px;
+    color: #1a1a1a;
+    font-family: inherit;
     font-size: 15px;
     outline: none;
-    min-width: 0;
+    resize: none;
+    max-height: 120px;
+    line-height: 1.4;
   }
-  .chat-input:focus { border-color: #4e9e2a; }
   .chat-send-btn {
     background: #4e9e2a;
     border: none;
     border-radius: 50%;
-    width: 44px; height: 44px;
+    width: 40px; height: 40px;
     flex-shrink: 0;
     color: #fff;
-    font-size: 20px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: background .15s;
+    transition: background .15s, transform .1s;
   }
-  .chat-send-btn:active { background: #3d7f22; }
+  .chat-send-btn:active { background: #3d7f22; transform: scale(.92); }
   .bubble-me {
-    background: #4e9e2a; color: #fff;
+    background: #4e9e2a;
+    color: #fff;
     border-radius: 18px 18px 4px 18px;
-    padding: 10px 14px;
-    max-width: 78%;
+    padding: 9px 13px;
+    max-width: 75%;
     font-size: 15px;
-    line-height: 1.5;
+    line-height: 1.45;
     word-break: break-word;
   }
   .bubble-other {
-    background: #eef2ea; color: #1a2415;
-    border-radius: 18px 18px 18px 4px;
-    padding: 10px 14px;
-    max-width: 78%;
-    font-size: 15px;
-    line-height: 1.5;
-    word-break: break-word;
-  }
-  .chat-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
     background: #fff;
-    border-bottom: 1px solid rgba(60,100,40,.1);
-    flex-shrink: 0;
+    color: #1a1a1a;
+    border-radius: 18px 18px 18px 4px;
+    padding: 9px 13px;
+    max-width: 75%;
+    font-size: 15px;
+    line-height: 1.45;
+    word-break: break-word;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08);
   }
-  .avatar-circle {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    background: rgba(90,176,48,.18);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; color: #4e9e2a; font-size: 16px;
-    flex-shrink: 0;
-  }
-  .convo-item {
-    padding: 14px 16px;
-    display: flex; gap: 12px; align-items: center;
-    cursor: pointer;
-    border-bottom: 1px solid rgba(60,100,40,.07);
-    transition: background .12s;
-  }
-  .convo-item:active { background: rgba(90,176,48,.1); }
   .back-btn {
     background: transparent;
     border: none;
     color: #4e9e2a;
-    font-size: 26px;
+    font-size: 28px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 0;
     line-height: 1;
     flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
   }
+  .av {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(78,158,42,.18);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: #4e9e2a; font-size: 16px;
+    flex-shrink: 0; overflow: hidden;
+  }
+  .av img { width: 100%; height: 100%; object-fit: cover; }
+  .convo-item {
+    display: flex; gap: 12px; align-items: center;
+    padding: 13px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(0,0,0,.05);
+    transition: background .12s;
+    background: #fff;
+  }
+  .convo-item:active { background: #f0f2f0; }
+  .date-label {
+    text-align: center;
+    font-size: 11px;
+    color: #8a8a8a;
+    margin: 12px 0 6px;
+    font-weight: 500;
+  }
+  .typing-bubble {
+    display: flex; gap: 4px; align-items: center;
+    background: #fff; border-radius: 18px 18px 18px 4px;
+    padding: 10px 14px; width: fit-content;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #aaa; animation: bounce .9s infinite; }
+  .dot:nth-child(2) { animation-delay: .15s; }
+  .dot:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
 `;
 
-function injectStyles() {
-  if (document.getElementById('chat-styles')) return;
+function inject() {
+  if (document.getElementById('chat-css')) return;
   const el = document.createElement('style');
-  el.id = 'chat-styles';
-  el.textContent = CHAT_STYLES;
+  el.id = 'chat-css';
+  el.textContent = S;
   document.head.appendChild(el);
+}
+
+function Avatar({ user }) {
+  if (!user) return <div className="av">?</div>;
+  return (
+    <div className="av">
+      {user.avatar
+        ? <img src={user.avatar} alt={user.name} />
+        : user.name?.[0]?.toUpperCase() || '?'}
+    </div>
+  );
+}
+
+function formatTime(d) {
+  return new Date(d).toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit' });
+}
+function formatDateLabel(d) {
+  const date = new Date(d);
+  const today = new Date();
+  const diff = Math.floor((today - date) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  return date.toLocaleDateString('en-BD', { month: 'short', day: 'numeric' });
 }
 
 export default function Chat() {
@@ -135,6 +178,7 @@ export default function Chat() {
   const socket       = useSocket();
   const navigate     = useNavigate();
   const bottomRef    = useRef(null);
+  const inputRef     = useRef(null);
 
   const [conversations, setConversations] = useState([]);
   const [activeConvo,   setActiveConvo]   = useState(null);
@@ -145,36 +189,34 @@ export default function Chat() {
   const [mobileView,    setMobileView]    = useState('list');
   const typingTimeout = useRef(null);
 
-  useEffect(() => { injectStyles(); fetchConversations(); }, []);
+  useEffect(() => { inject(); fetchConversations(); }, []);
 
   useEffect(() => {
     if (!activeConvo) return;
     fetchMessages(activeConvo._id);
     if (isMobile) setMobileView('chat');
     socket?.emit('join_conversation', activeConvo._id);
-
     const handleMsg = ({ conversationId, message }) => {
       if (conversationId !== activeConvo._id) return;
       const senderId = message.sender?._id || message.sender;
       if (senderId === user._id) return;
       setMessages(prev => prev.some(m => m._id === message._id) ? prev : [...prev, message]);
     };
-    const handleTyping_    = () => setIsTyping(true);
-    const handleStopTyping = () => setIsTyping(false);
-
+    const onTyping    = () => setIsTyping(true);
+    const onStopTyping = () => setIsTyping(false);
     socket?.on('new_message', handleMsg);
-    socket?.on('typing', handleTyping_);
-    socket?.on('stop_typing', handleStopTyping);
+    socket?.on('typing',      onTyping);
+    socket?.on('stop_typing', onStopTyping);
     return () => {
       socket?.off('new_message', handleMsg);
-      socket?.off('typing', handleTyping_);
-      socket?.off('stop_typing', handleStopTyping);
+      socket?.off('typing',      onTyping);
+      socket?.off('stop_typing', onStopTyping);
     };
   }, [activeConvo, socket, user._id, isMobile]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isTyping]);
 
   const fetchConversations = async () => {
     try {
@@ -182,7 +224,7 @@ export default function Chat() {
       setConversations(data.conversations);
       if (urlConvoId) {
         const found = data.conversations.find(c => c._id === urlConvoId);
-        if (found) { setActiveConvo(found); if (isMobile) setMobileView('chat'); }
+        if (found) setActiveConvo(found);
       } else if (data.conversations.length > 0 && !isMobile) {
         setActiveConvo(data.conversations[0]);
       }
@@ -199,10 +241,11 @@ export default function Chat() {
   const getOther = (c) => c?.participants?.find(p => p._id !== user._id);
 
   const handleSend = async () => {
-    if (!text.trim() || !activeConvo) return;
     const msgText = text.trim();
+    if (!msgText || !activeConvo) return;
     setText('');
     socket?.emit('stop_typing', activeConvo._id);
+    inputRef.current?.focus();
     try {
       const { data } = await api.post(`/chat/${activeConvo._id}/messages`, { text: msgText });
       setMessages(prev => prev.some(m => m._id === data.message._id) ? prev : [...prev, data.message]);
@@ -223,44 +266,52 @@ export default function Chat() {
     }, 1500);
   };
 
-  const formatTime = (d) => new Date(d).toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit' });
+  // Group messages by date for date labels
+  const groupedMessages = () => {
+    const groups = [];
+    let lastDate = null;
+    messages.forEach(msg => {
+      const d = formatDateLabel(msg.createdAt);
+      if (d !== lastDate) { groups.push({ type: 'date', label: d }); lastDate = d; }
+      groups.push({ type: 'msg', msg });
+    });
+    return groups;
+  };
+
   const other = getOther(activeConvo);
 
-  /* ── MOBILE: conversation list ────────────────────────────── */
+  /* ── MOBILE: conversation list ── */
   if (isMobile && mobileView === 'list') {
     return (
-      <div className="chat-root">
-        {/* Header */}
+      <div className="chat-root" style={{ background: '#fff' }}>
         <div className="chat-header">
-          <button className="back-btn" onClick={() => navigate(-1)}>‹</button>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#1a2415' }}>Messages</div>
-            <div style={{ fontSize: 11, color: '#7a9070' }}>{conversations.length} conversations</div>
+          <button className="back-btn" onClick={() => navigate(-1)}>
+            <svg width="10" height="18" viewBox="0 0 10 18" fill="none"><path d="M9 1L1 9L9 17" stroke="#4e9e2a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a' }}>Messages</div>
           </div>
         </div>
 
-        {/* List */}
         <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {conversations.length === 0 ? (
-            <div style={{ padding: 48, textAlign: 'center', color: '#7a9070' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#1a2415', marginBottom: 6 }}>No messages yet</div>
+            <div style={{ padding: 48, textAlign: 'center', color: '#8a8a8a' }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>💬</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a', marginBottom: 6 }}>No messages yet</div>
               <div style={{ fontSize: 13 }}>Message a farmer from any product page.</div>
             </div>
           ) : conversations.map(c => {
             const o = getOther(c);
             return (
-              <div key={c._id} className="convo-item"
-                style={{ background: activeConvo?._id === c._id ? 'rgba(90,176,48,.1)' : 'transparent' }}
-                onClick={() => setActiveConvo(c)}>
-                <div className="avatar-circle" style={{ width: 48, height: 48, fontSize: 20 }}>{o?.name?.[0] || '?'}</div>
+              <div key={c._id} className="convo-item" onClick={() => setActiveConvo(c)}>
+                <Avatar user={o} />
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#1a2415', marginBottom: 2 }}>{o?.name}</div>
-                  <div style={{ fontSize: 12, color: '#7a9070', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a', marginBottom: 2 }}>{o?.name}</div>
+                  <div style={{ fontSize: 13, color: '#8a8a8a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {c.lastMessage || 'Start a conversation'}
                   </div>
                 </div>
-                <span style={{ color: '#b0bfaa', fontSize: 20 }}>›</span>
+                <svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M1 1l6 6-6 6" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </div>
             );
           })}
@@ -269,41 +320,46 @@ export default function Chat() {
     );
   }
 
-  /* ── MOBILE: active chat ──────────────────────────────────── */
+  /* ── MOBILE: active chat (Messenger style) ── */
   if (isMobile) {
     return (
       <div className="chat-root">
         {/* Header */}
         <div className="chat-header">
-          <button className="back-btn" onClick={() => setMobileView('list')}>‹</button>
-          {other?.avatar
-            ? <img src={other.avatar} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-            : <div className="avatar-circle">{other?.name?.[0]}</div>}
+          <button className="back-btn" onClick={() => setMobileView('list')}>
+            <svg width="10" height="18" viewBox="0 0 10 18" fill="none"><path d="M9 1L1 9L9 17" stroke="#4e9e2a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <Avatar user={other} />
           <div style={{ flex: 1, overflow: 'hidden' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#1a2415', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{other?.name}</div>
-            <div style={{ fontSize: 11, color: '#4e9e2a' }}>{other?.role === 'farmer' ? '🌾 Farmer' : '🛒 Customer'}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{other?.name}</div>
+            <div style={{ fontSize: 12, color: '#4e9e2a', fontWeight: 500 }}>{other?.role === 'farmer' ? 'Farmer' : 'Customer'}</div>
           </div>
         </div>
 
         {/* Messages */}
         <div className="chat-messages">
           {messages.length === 0 && (
-            <div style={{ textAlign: 'center', color: '#b0bfaa', fontSize: 13, marginTop: 32 }}>
-              Say hello to {other?.name}! 👋
+            <div style={{ textAlign: 'center', color: '#aaa', fontSize: 13, marginTop: 40 }}>
+              Say hi to {other?.name}! 👋
             </div>
           )}
-          {messages.map(msg => {
+          {groupedMessages().map((item, i) => {
+            if (item.type === 'date') return <div key={i} className="date-label">{item.label}</div>;
+            const { msg } = item;
             const isMe = (msg.sender?._id || msg.sender) === user._id;
             return (
-              <div key={msg._id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+              <div key={msg._id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: 2 }}>
                 <div className={isMe ? 'bubble-me' : 'bubble-other'}>{msg.text}</div>
-                <div style={{ fontSize: 10, color: '#a0b090', marginTop: 3 }}>{formatTime(msg.createdAt)}</div>
+                <div style={{ fontSize: 10, color: '#aaa', marginTop: 3, paddingLeft: isMe ? 0 : 4, paddingRight: isMe ? 4 : 0 }}>{formatTime(msg.createdAt)}</div>
               </div>
             );
           })}
           {isTyping && (
-            <div style={{ alignSelf: 'flex-start', fontSize: 12, color: '#7a9070', fontStyle: 'italic', padding: '4px 8px' }}>
-              {other?.name} is typing…
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <Avatar user={other} />
+              <div className="typing-bubble">
+                <div className="dot" /><div className="dot" /><div className="dot" />
+              </div>
             </div>
           )}
           <div ref={bottomRef} />
@@ -311,41 +367,44 @@ export default function Chat() {
 
         {/* Input bar */}
         <div className="chat-input-bar">
-          <input
+          <textarea
+            ref={inputRef}
             className="chat-input"
+            rows={1}
             value={text}
-            onChange={e => handleTypingInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
+            onChange={e => { handleTypingInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; }}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
             placeholder={`Message ${other?.name || ''}…`}
           />
-          <button className="chat-send-btn" onClick={handleSend} aria-label="Send">↑</button>
+          <button className="chat-send-btn" onClick={handleSend} aria-label="Send">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
         </div>
       </div>
     );
   }
 
-  /* ── DESKTOP LAYOUT ───────────────────────────────────────── */
-  const h = 'calc(100vh - 60px)';
+  /* ── DESKTOP ── */
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', height: h, overflow: 'hidden' }}>
-      {/* Sidebar */}
-      <div style={{ background: '#fff', borderRight: '1px solid rgba(60,100,40,.1)', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(60,100,40,.1)' }}>
-          <div style={{ fontSize: 15, fontWeight: 700 }}>Messages</div>
-          <div style={{ fontSize: 12, color: '#7a9070', marginTop: 2 }}>{conversations.length} conversations</div>
+    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', height: '100vh', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', borderRight: '1px solid rgba(0,0,0,.08)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(0,0,0,.07)' }}>
+          <div style={{ fontSize: 17, fontWeight: 700 }}>Messages</div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {conversations.length === 0 && <div style={{ padding: 24, textAlign: 'center', color: '#7a9070', fontSize: 13 }}>No conversations yet.</div>}
+          {conversations.length === 0 && <div style={{ padding: 24, textAlign: 'center', color: '#8a8a8a', fontSize: 13 }}>No conversations yet.</div>}
           {conversations.map(c => {
             const o = getOther(c);
             const act = activeConvo?._id === c._id;
             return (
               <div key={c._id} onClick={() => setActiveConvo(c)}
-                style={{ padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', background: act ? 'rgba(90,176,48,.12)' : 'transparent', borderLeft: `3px solid ${act ? '#4e9e2a' : 'transparent'}`, transition: 'background .12s' }}>
-                <div className="avatar-circle">{o?.name?.[0] || '?'}</div>
+                style={{ padding: '13px 16px', display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', background: act ? 'rgba(78,158,42,.08)' : 'transparent', borderLeft: `3px solid ${act ? '#4e9e2a' : 'transparent'}`, transition: 'background .12s' }}>
+                <Avatar user={o} />
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1a2415' }}>{o?.name}</div>
-                  <div style={{ fontSize: 11, color: '#7a9070', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.lastMessage || 'Start a conversation'}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>{o?.name}</div>
+                  <div style={{ fontSize: 12, color: '#8a8a8a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.lastMessage || 'Start a conversation'}</div>
                 </div>
               </div>
             );
@@ -353,43 +412,52 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Chat panel */}
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#f0f2f0' }}>
         {!activeConvo ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7a9070', fontSize: 14, flexDirection: 'column', gap: 12 }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8a8a', flexDirection: 'column', gap: 12 }}>
             <div style={{ fontSize: 48 }}>💬</div>
-            <div>Select a conversation to start chatting</div>
+            <div style={{ fontSize: 14 }}>Select a conversation</div>
           </div>
         ) : (
           <>
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(60,100,40,.1)', display: 'flex', alignItems: 'center', gap: 12, background: '#fff', flexShrink: 0 }}>
-              <div className="avatar-circle" style={{ fontSize: 14 }}>{other?.name?.[0]}</div>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(0,0,0,.08)', display: 'flex', alignItems: 'center', gap: 12, background: '#fff', flexShrink: 0 }}>
+              <Avatar user={other} />
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>{other?.name}</div>
-                <div style={{ fontSize: 11, color: '#4e9e2a' }}>{other?.role === 'farmer' ? '🌾 Farmer' : '🛒 Customer'}</div>
+                <div style={{ fontSize: 15, fontWeight: 600 }}>{other?.name}</div>
+                <div style={{ fontSize: 12, color: '#4e9e2a' }}>{other?.role === 'farmer' ? '🌾 Farmer' : '🛒 Customer'}</div>
               </div>
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {messages.map(msg => {
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {groupedMessages().map((item, i) => {
+                if (item.type === 'date') return <div key={i} className="date-label">{item.label}</div>;
+                const { msg } = item;
                 const isMe = (msg.sender?._id || msg.sender) === user._id;
                 return (
-                  <div key={msg._id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                    <div className={isMe ? 'bubble-me' : 'bubble-other'} style={{ maxWidth: '65%' }}>{msg.text}</div>
-                    <div style={{ fontSize: 10, color: '#7a9070', marginTop: 3, textAlign: isMe ? 'right' : 'left' }}>{formatTime(msg.createdAt)}</div>
+                  <div key={msg._id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: 2 }}>
+                    <div className={isMe ? 'bubble-me' : 'bubble-other'} style={{ maxWidth: '60%' }}>{msg.text}</div>
+                    <div style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>{formatTime(msg.createdAt)}</div>
                   </div>
                 );
               })}
-              {isTyping && <div style={{ alignSelf: 'flex-start', fontSize: 12, color: '#7a9070', fontStyle: 'italic' }}>{other?.name} is typing…</div>}
+              {isTyping && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Avatar user={other} />
+                  <div className="typing-bubble"><div className="dot" /><div className="dot" /><div className="dot" /></div>
+                </div>
+              )}
               <div ref={bottomRef} />
             </div>
-            <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(60,100,40,.1)', display: 'flex', gap: 10, background: '#fff', flexShrink: 0 }}>
-              <input value={text} onChange={e => handleTypingInput(e.target.value)}
+            <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(0,0,0,.08)', display: 'flex', gap: 10, background: '#fff', flexShrink: 0, alignItems: 'flex-end' }}>
+              <textarea value={text} onChange={e => { handleTypingInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; }}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                rows={1}
                 placeholder={`Message ${other?.name}…`}
-                style={{ flex: 1, background: '#fff', border: '1.5px solid rgba(60,100,40,.15)', borderRadius: 12, padding: '12px 18px', color: '#1a2415', fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, outline: 'none' }} />
+                style={{ flex: 1, background: '#f0f2f0', border: 'none', borderRadius: 22, padding: '10px 16px', color: '#1a1a1a', fontFamily: 'inherit', fontSize: 14, outline: 'none', resize: 'none', maxHeight: 120, lineHeight: 1.4 }} />
               <button onClick={handleSend}
-                style={{ background: '#4e9e2a', border: 'none', borderRadius: 12, padding: '12px 22px', color: '#fff', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-                Send ↑
+                style={{ background: '#4e9e2a', border: 'none', borderRadius: '50%', width: 40, height: 40, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+                </svg>
               </button>
             </div>
           </>

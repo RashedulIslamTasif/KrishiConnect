@@ -24,11 +24,11 @@ import PaymentResult from './pages/PaymentResult.jsx';
 
 export default function App() {
   const { pathname } = useLocation();
-  const showNavbar = pathname === '/';
+  const isHome = pathname === '/';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f7f2', paddingTop: showNavbar ? 'calc(58px + env(safe-area-inset-top, 0px))' : '0' }}>
-      {showNavbar && <Navbar />}
+    <div style={{ minHeight: '100vh', background: '#f5f7f2', paddingTop: 'calc(58px + env(safe-area-inset-top, 0px))' }}>
+      <Navbar minimalMode={!isHome} />
       <Routes>
         <Route path="/"             element={<Home />} />
         <Route path="/marketplace"  element={<Marketplace />} />
