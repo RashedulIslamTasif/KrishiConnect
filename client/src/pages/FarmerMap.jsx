@@ -183,6 +183,10 @@ export default function FarmerMap() {
           box-shadow:0 2px 12px rgba(0,0,0,.2); }
         .krishi-tooltip::before { display:none; }
         .leaflet-tooltip-top.krishi-tooltip::before { display:block; border-top-color:#1a2415; }
+        /* Push zoom controls below the mobile search bar */
+        @media (max-width: 639px) {
+          .leaflet-top.leaflet-left { top: 64px !important; left: 8px !important; }
+        }
       `;
       document.head.appendChild(s);
     }
@@ -356,38 +360,38 @@ export default function FarmerMap() {
         {/* Map container */}
         <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
 
-        {/* Mobile top bar: search + farmer count button */}
+        {/* Mobile: search bar at top-right (avoids zoom controls at top-left) */}
         {isMobile && !listOpen && (
           <div style={{
-            position: 'absolute', top: 12, left: 12, right: 12, zIndex: 500,
+            position: 'absolute', top: 12, left: 60, right: 12, zIndex: 500,
             display: 'flex', gap: 8, alignItems: 'center',
           }}>
-            {/* Search box */}
+            {/* Search input */}
             <div style={{ flex: 1, position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 15, pointerEvents: 'none' }}>🔍</span>
+              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, pointerEvents: 'none' }}>🔍</span>
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search farmers, districts…"
+                placeholder="Search farmers…"
                 style={{
                   width: '100%', boxSizing: 'border-box',
                   background: '#fff', border: '1.5px solid rgba(60,100,40,.15)',
-                  borderRadius: 10, padding: '11px 12px 11px 34px',
+                  borderRadius: 10, padding: '10px 10px 10px 30px',
                   fontFamily: 'inherit', fontSize: 13, color: '#1a2415',
-                  outline: 'none', boxShadow: '0 2px 12px rgba(0,0,0,.12)',
+                  outline: 'none', boxShadow: '0 2px 12px rgba(0,0,0,.14)',
                 }}
               />
             </div>
-            {/* Farmer count / open list button */}
+            {/* Open list button */}
             <button onClick={() => setListOpen(true)}
               style={{
                 flexShrink: 0,
                 background: '#4e9e2a', border: 'none',
-                borderRadius: 10, padding: '11px 14px',
-                fontFamily: 'inherit', fontSize: 13, fontWeight: 700,
+                borderRadius: 10, padding: '10px 12px',
+                fontFamily: 'inherit', fontSize: 12, fontWeight: 700,
                 color: '#fff', cursor: 'pointer',
-                boxShadow: '0 2px 12px rgba(78,158,42,.35)',
-                display: 'flex', alignItems: 'center', gap: 6,
+                boxShadow: '0 2px 10px rgba(78,158,42,.4)',
+                display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
               }}>
               🌾 {loading ? '…' : filtered.length}
             </button>
