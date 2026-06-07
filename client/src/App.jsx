@@ -24,7 +24,7 @@ import PaymentResult from './pages/PaymentResult.jsx';
 
 export default function App() {
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f7f2', paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
+    <div style={{ minHeight: '100vh', background: '#f5f7f2', paddingTop: 'calc(58px + env(safe-area-inset-top, 0px))' }}>
       <Navbar />
       <Routes>
         <Route path="/"             element={<Home />} />
