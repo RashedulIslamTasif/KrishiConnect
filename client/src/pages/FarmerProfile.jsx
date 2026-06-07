@@ -67,12 +67,7 @@ export default function FarmerProfile() {
   return (
     <div style={s.page}>
       <div style={s.banner}>
-        <div style={{ ...s.avatar, overflow:'hidden', padding: 0 }}>
-          {farmer.avatar
-            ? <img src={farmer.avatar} alt={farmer.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-            : farmer.name?.[0]?.toUpperCase() || 'F'
-          }
-        </div>
+        <div style={s.avatar}>{farmer.name?.[0]?.toUpperCase() || 'F'}</div>
         <div style={{ flex: 1 }}>
           {farmer.isVerified && <div style={s.verified}>Verified Farmer</div>}
           <div style={s.name}>{farmer.name}</div>
@@ -92,7 +87,7 @@ export default function FarmerProfile() {
         </button>
       </div>
 
-      <div style={s.sectionTitle}>Products by {farmer.name}</div>
+      <div id="products" style={s.sectionTitle}>Products by {farmer.name}</div>
       {products.length === 0 ? (
         <div style={s.empty}>No products listed yet.</div>
       ) : (

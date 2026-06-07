@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 const DISTRICTS = ['Dhaka','Chittagong','Rajshahi','Khulna','Sylhet','Barishal','Rangpur','Mymensingh','Comilla','Gazipur','Narayanganj','Bogura','Dinajpur','Jessore','Cox\'s Bazar','Tangail','Faridpur'];
 
 export default function Register() {
-  const [form, setForm] = useState({ name:'', email:'', password:'', role:'customer', location:'' });
+  const [form, setForm] = useState({ name:'', email:'', password:'', role:'customer', district:'' });
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
   const [focusField, setFocusField] = useState('');
@@ -82,9 +82,9 @@ export default function Register() {
         ))}
 
         <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#7a9070', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>District</label>
-        <select name="location" value={form.location} onChange={handleChange}
+        <select name="district" value={form.district} onChange={handleChange}
           style={{ ...inputStyle('location'), background:'#f5f7f2', cursor:'pointer' }}
-          onFocus={() => setFocusField('location')} onBlur={() => setFocusField('')}>
+          onFocus={() => setFocusField('district')} onBlur={() => setFocusField('')}>
           <option value="">Select your district</option>
           {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
         </select>

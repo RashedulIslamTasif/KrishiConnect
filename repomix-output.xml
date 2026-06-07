@@ -135,277 +135,6 @@ server/utils/seeder.js
 <files>
 This section contains the contents of the repository's files.
 
-<file path="client/src/pages/AdminPanel.jsx">
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../api/axios.js';
-import { useAuth } from '../context/AuthContext.jsx';
-
-const STATUS_COLORS = {
-  pending:  { bg:'#fef3d8', color:'#c47d0a', label:'Pending Review' },
-  approved: { bg:'#e8f5e1', color:'#3a7d1e', label:'Approved' },
-  rejected: { bg:'#fde8e8', color:'#c04040', label:'Rejected' },
-  none:     { bg:'#f0f0f0', color:'#888',    label:'Not Submitted' },
-};
-
-export default function AdminPanel() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
-  const [farmers,   setFarmers]   = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [selected,  setSelected]  = useState(null); // farmer being reviewed
-  const [reason,    setReason]    = useState('');
-  const [acting,    setActing]    = useState(false);
-  const [msg,       setMsg]       = useState('');
-  const [tab,       setTab]       = useState('pending'); // pending | approved | rejected | all
-  const [zoom,      setZoom]      = useState(null); // image URL to zoom
-
-  useEffect(() => {
-    if (!user) return;
-    if (user.role !== 'admin') { navigate('/'); return; }
-    fetchFarmers();
-  }, [user]);
-
-  const fetchFarmers = async () => {
-    setLoading(true);
-    try {
-      const { data } = await api.get('/auth/admin/verifications');
-      setFarmers(data.farmers);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
-  const handleAction = async (action) => {
-    if (action === 'reject' && !reason.trim()) {
-      alert('Please enter a rejection reason.'); return;
-    }
-    setActing(true);
-    try {
-      await api.patch(`/auth/admin/farmers/${selected._id}/verify`, { action, reason });
-      setMsg(`Farmer ${action === 'approve' ? 'approved ✅' : 'rejected ❌'} successfully.`);
-      setSelected(null);
-      setReason('');
-      fetchFarmers();
-      setTimeout(() => setMsg(''), 3000);
-    } catch (e) {
-      alert(e?.response?.data?.message || 'Action failed.');
-    } finally { setActing(false); }
-  };
-
-  const filtered = farmers.filter(f => tab === 'all' ? true : (f.verificationStatus || 'none') === tab);
-  const counts = {
-    pending:  farmers.filter(f => f.verificationStatus === 'pending').length,
-    approved: farmers.filter(f => f.verificationStatus === 'approved').length,
-    rejected: farmers.filter(f => f.verificationStatus === 'rejected').length,
-    all:      farmers.length,
-  };
-
-  return (
-    <div style={{ minHeight:'100vh', background:'#f5f7f2', fontFamily:'Plus Jakarta Sans,sans-serif' }}>
-
-      {/* Header */}
-      <div style={{ background:'#fff', borderBottom:'1px solid rgba(60,100,40,.12)', padding:'0 20px', display:'flex', alignItems:'center', gap:12, height:60, position:'sticky', top:0, zIndex:100 }}>
-        <button onClick={() => navigate('/')} style={{ background:'none', border:'none', cursor:'pointer', fontSize:20, color:'#4e9e2a', padding:0 }}>←</button>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:16, fontWeight:800, color:'#1a2415' }}>Admin Panel</div>
-          <div style={{ fontSize:11, color:'#7a9070' }}>Farmer NID Verification</div>
-        </div>
-        {msg && <div style={{ fontSize:12, fontWeight:600, color:'#3a7d1e', background:'rgba(78,158,42,.1)', padding:'6px 14px', borderRadius:99 }}>{msg}</div>}
-      </div>
-
-      <div style={{ padding:'20px 16px', maxWidth:800, margin:'0 auto' }}>
-
-        {/* Stats */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
-          {[
-            { key:'all',      label:'Total',    icon:'👥', color:'#5060c0' },
-            { key:'pending',  label:'Pending',  icon:'⏳', color:'#c47d0a' },
-            { key:'approved', label:'Approved', icon:'✅', color:'#3a7d1e' },
-            { key:'rejected', label:'Rejected', icon:'❌', color:'#c04040' },
-          ].map(s => (
-            <div key={s.key} onClick={() => setTab(s.key)}
-              style={{ background: tab===s.key ? s.color : '#fff', borderRadius:14, padding:'14px 10px', textAlign:'center', cursor:'pointer', border:`1px solid ${tab===s.key ? s.color : 'rgba(60,100,40,.1)'}`, transition:'all .2s' }}>
-              <div style={{ fontSize:22 }}>{s.icon}</div>
-              <div style={{ fontSize:20, fontWeight:800, color: tab===s.key ? '#fff' : s.color }}>{counts[s.key]}</div>
-              <div style={{ fontSize:10, fontWeight:600, color: tab===s.key ? 'rgba(255,255,255,.8)' : '#7a9070', textTransform:'uppercase', letterSpacing:'.05em' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Farmer list */}
-        {loading ? (
-          <div style={{ textAlign:'center', padding:60, color:'#7a9070' }}>Loading...</div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign:'center', padding:60, color:'#7a9070' }}>
-            <div style={{ fontSize:40, marginBottom:12 }}>🌾</div>
-            <div style={{ fontSize:15, fontWeight:600 }}>No farmers in this category</div>
-          </div>
-        ) : filtered.map(farmer => {
-          const st = STATUS_COLORS[farmer.verificationStatus || 'none'];
-          return (
-            <div key={farmer._id} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:18, marginBottom:12, overflow:'hidden' }}>
-              {/* Farmer row */}
-              <div style={{ padding:'16px 18px', display:'flex', alignItems:'center', gap:12 }}>
-                {/* Avatar */}
-                <div style={{ width:48, height:48, borderRadius:'50%', background:'rgba(78,158,42,.1)', overflow:'hidden', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontWeight:700, color:'#4e9e2a' }}>
-                  {farmer.avatar ? <img src={farmer.avatar} alt={farmer.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : farmer.name?.[0]?.toUpperCase()}
-                </div>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:15, fontWeight:700, color:'#1a2415', marginBottom:2 }}>{farmer.name}</div>
-                  <div style={{ fontSize:12, color:'#7a9070', marginBottom:4 }}>{farmer.email} · {farmer.location?.district || '—'}</div>
-                  <span style={{ fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:99, background:st.bg, color:st.color }}>
-                    {st.label}
-                  </span>
-                </div>
-                {/* Review button — only for pending */}
-                {farmer.verificationStatus === 'pending' && (
-                  <button onClick={() => { setSelected(farmer); setReason(''); }}
-                    style={{ background:'#4e9e2a', color:'#fff', border:'none', borderRadius:10, padding:'8px 16px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
-                    Review →
-                  </button>
-                )}
-                {farmer.verificationStatus === 'rejected' && (
-                  <button onClick={() => { setSelected(farmer); setReason(''); }}
-                    style={{ background:'rgba(200,60,60,.1)', color:'#c04040', border:'1px solid rgba(200,60,60,.2)', borderRadius:10, padding:'8px 16px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
-                    Re-review
-                  </button>
-                )}
-              </div>
-
-              {/* Rejection reason if rejected */}
-              {farmer.verificationStatus === 'rejected' && farmer.rejectionReason && (
-                <div style={{ padding:'10px 18px', background:'rgba(200,60,60,.05)', borderTop:'1px solid rgba(200,60,60,.1)', fontSize:12, color:'#c04040' }}>
-                  Rejection reason: {farmer.rejectionReason}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ── Review Modal ── */}
-      {selected && (
-        <div onClick={() => setSelected(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', zIndex:200, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
-          <div onClick={e => e.stopPropagation()}
-            style={{ background:'#fff', borderRadius:'24px 24px 0 0', width:'100%', maxWidth:600, maxHeight:'90vh', overflowY:'auto', padding:'24px 20px 32px' }}>
-
-            {/* Handle */}
-            <div style={{ width:40, height:4, background:'#ddd', borderRadius:99, margin:'0 auto 20px' }} />
-
-            <div style={{ fontSize:17, fontWeight:800, color:'#1a2415', marginBottom:4 }}>Review: {selected.name}</div>
-            <div style={{ fontSize:12, color:'#7a9070', marginBottom:20 }}>{selected.email} · {selected.location?.district}</div>
-
-            {/* Check: name match */}
-            <div style={{ background:'rgba(78,158,42,.06)', border:'1px solid rgba(78,158,42,.15)', borderRadius:12, padding:'12px 14px', marginBottom:16, fontSize:13, color:'#3a7d1e' }}>
-              <strong>Account name:</strong> {selected.name}<br/>
-              <span style={{ fontSize:11, color:'#7a9070' }}>Verify this matches the name on the NID card below</span>
-            </div>
-
-            {/* NID photos */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20 }}>
-              <div>
-                <div style={{ fontSize:12, fontWeight:700, color:'#3a7d1e', marginBottom:6 }}>📄 NID Card</div>
-                {selected.nidImage ? (
-                  <img onClick={() => setZoom(selected.nidImage)} src={selected.nidImage} alt="NID"
-                    style={{ width:'100%', borderRadius:12, border:'1px solid rgba(60,100,40,.15)', cursor:'zoom-in', objectFit:'cover', height:160 }} />
-                ) : <div style={{ height:160, background:'#f5f5f5', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', color:'#bbb', fontSize:12 }}>Not submitted</div>}
-              </div>
-              <div>
-                <div style={{ fontSize:12, fontWeight:700, color:'#3a7d1e', marginBottom:6 }}>🤳 Selfie with NID</div>
-                {selected.selfieImage ? (
-                  <img onClick={() => setZoom(selected.selfieImage)} src={selected.selfieImage} alt="Selfie"
-                    style={{ width:'100%', borderRadius:12, border:'1px solid rgba(60,100,40,.15)', cursor:'zoom-in', objectFit:'cover', height:160 }} />
-                ) : <div style={{ height:160, background:'#f5f5f5', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', color:'#bbb', fontSize:12 }}>Not submitted</div>}
-              </div>
-            </div>
-
-            <div style={{ fontSize:11, color:'#7a9070', marginBottom:20, background:'#f9faf7', borderRadius:10, padding:'10px 14px', lineHeight:1.7 }}>
-              <strong style={{ color:'#1a2415' }}>Checklist:</strong><br/>
-              ☐ Name on NID matches account name<br/>
-              ☐ NID card looks like a real Bangladesh NID<br/>
-              ☐ Face in selfie matches face on NID card<br/>
-              ☐ Photos are clear and readable
-            </div>
-
-            {/* Rejection reason input */}
-            <div style={{ marginBottom:16 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:'#c04040', marginBottom:6 }}>Rejection reason (required only if rejecting):</div>
-              <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}
-                placeholder="e.g. NID card photo is blurry, face in selfie doesn't match NID..."
-                style={{ width:'100%', border:'1.5px solid rgba(60,100,40,.15)', borderRadius:10, padding:'10px 12px', fontFamily:'inherit', fontSize:13, color:'#1a2415', outline:'none', resize:'none', background:'#f9faf7', boxSizing:'border-box' }} />
-            </div>
-
-            {/* Action buttons */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-              <button onClick={() => handleAction('reject')} disabled={acting}
-                style={{ padding:'14px', background:'rgba(200,60,60,.08)', color:'#c04040', border:'1px solid rgba(200,60,60,.2)', borderRadius:14, fontWeight:700, fontSize:15, cursor:'pointer', fontFamily:'inherit' }}>
-                ❌ Reject
-              </button>
-              <button onClick={() => handleAction('approve')} disabled={acting}
-                style={{ padding:'14px', background:'#4e9e2a', color:'#fff', border:'none', borderRadius:14, fontWeight:700, fontSize:15, cursor:'pointer', fontFamily:'inherit' }}>
-                ✅ Approve
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Image zoom modal ── */}
-      {zoom && (
-        <div onClick={() => setZoom(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.9)', zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
-          <img src={zoom} alt="Zoomed" style={{ maxWidth:'100%', maxHeight:'100%', borderRadius:12, objectFit:'contain' }} />
-          <button onClick={() => setZoom(null)} style={{ position:'absolute', top:20, right:20, background:'rgba(255,255,255,.2)', border:'none', borderRadius:'50%', width:40, height:40, color:'#fff', fontSize:20, cursor:'pointer' }}>✕</button>
-        </div>
-      )}
-    </div>
-  );
-}
-</file>
-
-<file path="server/utils/seeder.js">
-const User = require('../models/User');
-
-const seedAdmin = async () => {
-  try {
-    const email    = process.env.ADMIN_EMAIL;
-    const password = process.env.ADMIN_PASSWORD;
-
-    if (!email || !password) {
-      console.log('[Seeder] ADMIN_EMAIL or ADMIN_PASSWORD not set in .env — skipping admin seed.');
-      return;
-    }
-
-    const exists = await User.findOne({ email });
-    if (exists) {
-      // Make sure the existing account is actually admin role
-      if (exists.role !== 'admin') {
-        exists.role = 'admin';
-        await exists.save();
-        console.log(`[Seeder] Updated ${email} to admin role.`);
-      } else {
-        console.log(`[Seeder] Admin account already exists: ${email}`);
-      }
-      return;
-    }
-
-    await User.create({
-      name:     'Admin',
-      email,
-      password,
-      role:     'admin',
-      isVerified: true,
-    });
-
-    console.log(`[Seeder] ✅ Admin account created: ${email}`);
-  } catch (err) {
-    console.error('[Seeder] Failed to seed admin:', err.message);
-  }
-};
-
-module.exports = seedAdmin;
-</file>
-
 <file path="client/client.env">
 VITE_API_URL=http://192.168.0.105:5000/api
 </file>
@@ -883,6 +612,234 @@ export const useSocket = () => {
 export default useSocket;
 </file>
 
+<file path="client/src/pages/AdminPanel.jsx">
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api/axios.js';
+import { useAuth } from '../context/AuthContext.jsx';
+
+const STATUS_COLORS = {
+  pending:  { bg:'#fef3d8', color:'#c47d0a', label:'Pending Review' },
+  approved: { bg:'#e8f5e1', color:'#3a7d1e', label:'Approved' },
+  rejected: { bg:'#fde8e8', color:'#c04040', label:'Rejected' },
+  none:     { bg:'#f0f0f0', color:'#888',    label:'Not Submitted' },
+};
+
+export default function AdminPanel() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [farmers,   setFarmers]   = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [selected,  setSelected]  = useState(null); // farmer being reviewed
+  const [reason,    setReason]    = useState('');
+  const [acting,    setActing]    = useState(false);
+  const [msg,       setMsg]       = useState('');
+  const [tab,       setTab]       = useState('pending'); // pending | approved | rejected | all
+  const [zoom,      setZoom]      = useState(null); // image URL to zoom
+
+  useEffect(() => {
+    if (!user) return;
+    if (user.role !== 'admin') { navigate('/'); return; }
+    fetchFarmers();
+  }, [user]);
+
+  const fetchFarmers = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/auth/admin/verifications');
+      setFarmers(data.farmers);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+
+  const handleAction = async (action) => {
+    if (action === 'reject' && !reason.trim()) {
+      alert('Please enter a rejection reason.'); return;
+    }
+    setActing(true);
+    try {
+      await api.patch(`/auth/admin/farmers/${selected._id}/verify`, { action, reason });
+      setMsg(`Farmer ${action === 'approve' ? 'approved ✅' : 'rejected ❌'} successfully.`);
+      setSelected(null);
+      setReason('');
+      fetchFarmers();
+      setTimeout(() => setMsg(''), 3000);
+    } catch (e) {
+      alert(e?.response?.data?.message || 'Action failed.');
+    } finally { setActing(false); }
+  };
+
+  const filtered = farmers.filter(f => tab === 'all' ? true : (f.verificationStatus || 'none') === tab);
+  const counts = {
+    pending:  farmers.filter(f => f.verificationStatus === 'pending').length,
+    approved: farmers.filter(f => f.verificationStatus === 'approved').length,
+    rejected: farmers.filter(f => f.verificationStatus === 'rejected').length,
+    all:      farmers.length,
+  };
+
+  return (
+    <div style={{ minHeight:'100vh', background:'#f5f7f2', fontFamily:'Plus Jakarta Sans,sans-serif' }}>
+
+      {/* Header */}
+      <div style={{ background:'#fff', borderBottom:'1px solid rgba(60,100,40,.12)', padding:'0 20px', display:'flex', alignItems:'center', gap:12, height:60, position:'sticky', top:0, zIndex:100 }}>
+        <button onClick={() => navigate('/')} style={{ background:'none', border:'none', cursor:'pointer', fontSize:20, color:'#4e9e2a', padding:0 }}>←</button>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:16, fontWeight:800, color:'#1a2415' }}>Admin Panel</div>
+          <div style={{ fontSize:11, color:'#7a9070' }}>Farmer NID Verification</div>
+        </div>
+        {msg && <div style={{ fontSize:12, fontWeight:600, color:'#3a7d1e', background:'rgba(78,158,42,.1)', padding:'6px 14px', borderRadius:99 }}>{msg}</div>}
+      </div>
+
+      <div style={{ padding:'20px 16px', maxWidth:800, margin:'0 auto' }}>
+
+        {/* Stats */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
+          {[
+            { key:'all',      label:'Total',    icon:'👥', color:'#5060c0' },
+            { key:'pending',  label:'Pending',  icon:'⏳', color:'#c47d0a' },
+            { key:'approved', label:'Approved', icon:'✅', color:'#3a7d1e' },
+            { key:'rejected', label:'Rejected', icon:'❌', color:'#c04040' },
+          ].map(s => (
+            <div key={s.key} onClick={() => setTab(s.key)}
+              style={{ background: tab===s.key ? s.color : '#fff', borderRadius:14, padding:'14px 10px', textAlign:'center', cursor:'pointer', border:`1px solid ${tab===s.key ? s.color : 'rgba(60,100,40,.1)'}`, transition:'all .2s' }}>
+              <div style={{ fontSize:22 }}>{s.icon}</div>
+              <div style={{ fontSize:20, fontWeight:800, color: tab===s.key ? '#fff' : s.color }}>{counts[s.key]}</div>
+              <div style={{ fontSize:10, fontWeight:600, color: tab===s.key ? 'rgba(255,255,255,.8)' : '#7a9070', textTransform:'uppercase', letterSpacing:'.05em' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Farmer list */}
+        {loading ? (
+          <div style={{ textAlign:'center', padding:60, color:'#7a9070' }}>Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign:'center', padding:60, color:'#7a9070' }}>
+            <div style={{ fontSize:40, marginBottom:12 }}>🌾</div>
+            <div style={{ fontSize:15, fontWeight:600 }}>No farmers in this category</div>
+          </div>
+        ) : filtered.map(farmer => {
+          const st = STATUS_COLORS[farmer.verificationStatus || 'none'];
+          return (
+            <div key={farmer._id} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:18, marginBottom:12, overflow:'hidden' }}>
+              {/* Farmer row */}
+              <div style={{ padding:'16px 18px', display:'flex', alignItems:'center', gap:12 }}>
+                {/* Avatar */}
+                <div style={{ width:48, height:48, borderRadius:'50%', background:'rgba(78,158,42,.1)', overflow:'hidden', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontWeight:700, color:'#4e9e2a' }}>
+                  {farmer.avatar ? <img src={farmer.avatar} alt={farmer.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} /> : farmer.name?.[0]?.toUpperCase()}
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:'#1a2415', marginBottom:2 }}>{farmer.name}</div>
+                  <div style={{ fontSize:12, color:'#7a9070', marginBottom:4 }}>{farmer.email} · {farmer.location?.district || '—'}</div>
+                  <span style={{ fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:99, background:st.bg, color:st.color }}>
+                    {st.label}
+                  </span>
+                </div>
+                {/* Review button — only for pending */}
+                {farmer.verificationStatus === 'pending' && (
+                  <button onClick={() => { setSelected(farmer); setReason(''); }}
+                    style={{ background:'#4e9e2a', color:'#fff', border:'none', borderRadius:10, padding:'8px 16px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
+                    Review →
+                  </button>
+                )}
+                {farmer.verificationStatus === 'rejected' && (
+                  <button onClick={() => { setSelected(farmer); setReason(''); }}
+                    style={{ background:'rgba(200,60,60,.1)', color:'#c04040', border:'1px solid rgba(200,60,60,.2)', borderRadius:10, padding:'8px 16px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
+                    Re-review
+                  </button>
+                )}
+              </div>
+
+              {/* Rejection reason if rejected */}
+              {farmer.verificationStatus === 'rejected' && farmer.rejectionReason && (
+                <div style={{ padding:'10px 18px', background:'rgba(200,60,60,.05)', borderTop:'1px solid rgba(200,60,60,.1)', fontSize:12, color:'#c04040' }}>
+                  Rejection reason: {farmer.rejectionReason}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Review Modal ── */}
+      {selected && (
+        <div onClick={() => setSelected(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', zIndex:200, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background:'#fff', borderRadius:'24px 24px 0 0', width:'100%', maxWidth:600, maxHeight:'90vh', overflowY:'auto', padding:'24px 20px 32px' }}>
+
+            {/* Handle */}
+            <div style={{ width:40, height:4, background:'#ddd', borderRadius:99, margin:'0 auto 20px' }} />
+
+            <div style={{ fontSize:17, fontWeight:800, color:'#1a2415', marginBottom:4 }}>Review: {selected.name}</div>
+            <div style={{ fontSize:12, color:'#7a9070', marginBottom:20 }}>{selected.email} · {selected.location?.district}</div>
+
+            {/* Check: name match */}
+            <div style={{ background:'rgba(78,158,42,.06)', border:'1px solid rgba(78,158,42,.15)', borderRadius:12, padding:'12px 14px', marginBottom:16, fontSize:13, color:'#3a7d1e' }}>
+              <strong>Account name:</strong> {selected.name}<br/>
+              <span style={{ fontSize:11, color:'#7a9070' }}>Verify this matches the name on the NID card below</span>
+            </div>
+
+            {/* NID photos */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20 }}>
+              <div>
+                <div style={{ fontSize:12, fontWeight:700, color:'#3a7d1e', marginBottom:6 }}>📄 NID Card</div>
+                {selected.nidImage ? (
+                  <img onClick={() => setZoom(selected.nidImage)} src={selected.nidImage} alt="NID"
+                    style={{ width:'100%', borderRadius:12, border:'1px solid rgba(60,100,40,.15)', cursor:'zoom-in', objectFit:'cover', height:160 }} />
+                ) : <div style={{ height:160, background:'#f5f5f5', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', color:'#bbb', fontSize:12 }}>Not submitted</div>}
+              </div>
+              <div>
+                <div style={{ fontSize:12, fontWeight:700, color:'#3a7d1e', marginBottom:6 }}>🤳 Selfie with NID</div>
+                {selected.selfieImage ? (
+                  <img onClick={() => setZoom(selected.selfieImage)} src={selected.selfieImage} alt="Selfie"
+                    style={{ width:'100%', borderRadius:12, border:'1px solid rgba(60,100,40,.15)', cursor:'zoom-in', objectFit:'cover', height:160 }} />
+                ) : <div style={{ height:160, background:'#f5f5f5', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', color:'#bbb', fontSize:12 }}>Not submitted</div>}
+              </div>
+            </div>
+
+            <div style={{ fontSize:11, color:'#7a9070', marginBottom:20, background:'#f9faf7', borderRadius:10, padding:'10px 14px', lineHeight:1.7 }}>
+              <strong style={{ color:'#1a2415' }}>Checklist:</strong><br/>
+              ☐ Name on NID matches account name<br/>
+              ☐ NID card looks like a real Bangladesh NID<br/>
+              ☐ Face in selfie matches face on NID card<br/>
+              ☐ Photos are clear and readable
+            </div>
+
+            {/* Rejection reason input */}
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'#c04040', marginBottom:6 }}>Rejection reason (required only if rejecting):</div>
+              <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}
+                placeholder="e.g. NID card photo is blurry, face in selfie doesn't match NID..."
+                style={{ width:'100%', border:'1.5px solid rgba(60,100,40,.15)', borderRadius:10, padding:'10px 12px', fontFamily:'inherit', fontSize:13, color:'#1a2415', outline:'none', resize:'none', background:'#f9faf7', boxSizing:'border-box' }} />
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+              <button onClick={() => handleAction('reject')} disabled={acting}
+                style={{ padding:'14px', background:'rgba(200,60,60,.08)', color:'#c04040', border:'1px solid rgba(200,60,60,.2)', borderRadius:14, fontWeight:700, fontSize:15, cursor:'pointer', fontFamily:'inherit' }}>
+                ❌ Reject
+              </button>
+              <button onClick={() => handleAction('approve')} disabled={acting}
+                style={{ padding:'14px', background:'#4e9e2a', color:'#fff', border:'none', borderRadius:14, fontWeight:700, fontSize:15, cursor:'pointer', fontFamily:'inherit' }}>
+                ✅ Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Image zoom modal ── */}
+      {zoom && (
+        <div onClick={() => setZoom(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.9)', zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+          <img src={zoom} alt="Zoomed" style={{ maxWidth:'100%', maxHeight:'100%', borderRadius:12, objectFit:'contain' }} />
+          <button onClick={() => setZoom(null)} style={{ position:'absolute', top:20, right:20, background:'rgba(255,255,255,.2)', border:'none', borderRadius:'50%', width:40, height:40, color:'#fff', fontSize:20, cursor:'pointer' }}>✕</button>
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
 <file path="client/src/pages/PaymentResult.jsx">
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
@@ -1273,24 +1230,6 @@ Each status change:
     "dotenv": "^17.4.2"
   }
 }
-</file>
-
-<file path="server/config/db.js">
-const mongoose = require('mongoose');
-const seedAdmin = require('../utils/seeder');
-
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
-    await seedAdmin(); // Create admin account if it doesn't exist
-  } catch (error) {
-    console.error(`❌ MongoDB connection error: ${error.message}`);
-    process.exit(1);
-  }
-};
-
-module.exports = connectDB;
 </file>
 
 <file path="server/controllers/analyticsController.js">
@@ -2011,61 +1950,6 @@ reviewSchema.post('save', async function () {
 module.exports = mongoose.model('Review', reviewSchema);
 </file>
 
-<file path="server/models/User.js">
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-
-const userSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: [true, 'Name is required'], trim: true },
-    email: { type: String, required: [true, 'Email is required'], unique: true, lowercase: true, trim: true },
-    password: { type: String, required: [true, 'Password is required'], minlength: 6, select: false },
-    role: { type: String, enum: ['farmer', 'customer', 'admin'], default: 'customer' },
-    phone: { type: String, trim: true },
-    avatar: { type: String, default: '' },
-
-    location: {
-      district: { type: String, default: '' },
-      address:  { type: String, default: '' },
-      lat:      { type: Number, default: 23.8103 },
-      lng:      { type: Number, default: 90.4125 },
-    },
-
-    farmName: { type: String, default: '' },
-    farmSize: { type: String, default: '' },
-
-    // ── Verification ─────────────────────────────────────────
-    isVerified:       { type: Boolean, default: false },
-    verificationStatus: {
-      type: String,
-      enum: ['none', 'pending', 'approved', 'rejected'],
-      default: 'none',
-    },
-    nidImage:   { type: String, default: '' }, // Cloudinary URL — NID card front photo
-    selfieImage:{ type: String, default: '' }, // Cloudinary URL — selfie holding NID
-    rejectionReason: { type: String, default: '' }, // Admin's reason if rejected
-
-    // Rating
-    avgRating:    { type: Number, default: 0 },
-    totalReviews: { type: Number, default: 0 },
-  },
-  { timestamps: true }
-);
-
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
-});
-
-userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
-
-module.exports = mongoose.model('User', userSchema);
-</file>
-
 <file path="server/render.yaml">
 services:
   - type: web
@@ -2184,6 +2068,49 @@ module.exports = router;
 node_modules/
 .env
 *.log
+</file>
+
+<file path="server/utils/seeder.js">
+const User = require('../models/User');
+
+const seedAdmin = async () => {
+  try {
+    const email    = process.env.ADMIN_EMAIL;
+    const password = process.env.ADMIN_PASSWORD;
+
+    if (!email || !password) {
+      console.log('[Seeder] ADMIN_EMAIL or ADMIN_PASSWORD not set in .env — skipping admin seed.');
+      return;
+    }
+
+    const exists = await User.findOne({ email });
+    if (exists) {
+      // Make sure the existing account is actually admin role
+      if (exists.role !== 'admin') {
+        exists.role = 'admin';
+        await exists.save();
+        console.log(`[Seeder] Updated ${email} to admin role.`);
+      } else {
+        console.log(`[Seeder] Admin account already exists: ${email}`);
+      }
+      return;
+    }
+
+    await User.create({
+      name:     'Admin',
+      email,
+      password,
+      role:     'admin',
+      isVerified: true,
+    });
+
+    console.log(`[Seeder] ✅ Admin account created: ${email}`);
+  } catch (err) {
+    console.error('[Seeder] Failed to seed admin:', err.message);
+  }
+};
+
+module.exports = seedAdmin;
 </file>
 
 <file path=".gitignore">
@@ -2868,112 +2795,6 @@ export default function AnalyticsDashboard() {
 }
 </file>
 
-<file path="client/src/pages/Login.jsx">
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
-
-export default function Login() {
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [focusField, setFocusField] = useState('');
-  const navigate = useNavigate();
-  const { login } = useAuth();
-
-  const handleSubmit = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      const user = await login(email, password);
-      navigate(user.role === 'farmer' ? '/dashboard' : '/marketplace');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Invalid email or password.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const inputStyle = (field) => ({
-    width:'100%', background: focusField===field ? '#f9faf7' : '#f5f7f2',
-    border: `1.5px solid ${focusField===field ? '#4e9e2a' : 'rgba(60,100,40,.15)'}`,
-    borderRadius:14, padding:'14px 18px', color:'#1a2415', fontSize:15,
-    outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif',
-    boxShadow: focusField===field ? '0 0 0 3px rgba(78,158,42,.1)' : 'none',
-    transition:'all .2s ease', boxSizing:'border-box', marginBottom:20,
-  });
-
-  return (
-    <div style={{ minHeight:'100vh', background:'#f5f7f2', display:'flex' }}>
-      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
-
-      {/* Left image panel (desktop) */}
-      <div id="login-left" style={{ flex:1, position:'relative', overflow:'hidden', display:'none' }}>
-        <div style={{ position:'absolute', inset:0, backgroundImage:"url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=900&q=70')", backgroundSize:'cover', backgroundPosition:'center' }} />
-        <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(10,40,5,.5),rgba(10,40,5,.8))' }} />
-        <div style={{ position:'relative', zIndex:2, padding:56, display:'flex', flexDirection:'column', justifyContent:'flex-end', height:'100%' }}>
-          <div style={{ fontSize:36, fontWeight:800, color:'#fff', letterSpacing:'-0.03em', lineHeight:1.1, marginBottom:16 }}>
-            Fresh from the<br /><span style={{ color:'#a8e07a', fontFamily:'Fraunces,serif', fontStyle:'italic' }}>farm to your door</span>
-          </div>
-          <div style={{ fontSize:14, color:'rgba(255,255,255,.6)', lineHeight:1.7 }}>Join 2,400+ verified farmers and thousands of happy customers.</div>
-        </div>
-      </div>
-
-      {/* Right form */}
-      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
-        <div style={{ width:'100%', maxWidth:420, animation:'fadeUp .5s cubic-bezier(.22,1,.36,1) both' }}>
-          
-          {/* Logo */}
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:40 }}>
-            <img src="/icons/icon-192.png" alt="KrishiConnect" style={{ width:40, height:40, borderRadius:12, objectFit:"cover" }} />
-            <span style={{ fontSize:18, fontWeight:800, color:'#1a2415', letterSpacing:'-0.03em' }}>KrishiConnect</span>
-          </div>
-
-          <div style={{ fontSize:28, fontWeight:800, letterSpacing:'-0.03em', color:'#1a2415', marginBottom:6 }}>Welcome back 👋</div>
-          <div style={{ fontSize:14, color:'#7a9070', marginBottom:36, lineHeight:1.5 }}>Sign in to your KrishiConnect account</div>
-
-          {error && (
-            <div style={{ background:'rgba(192,64,64,.08)', border:'1.5px solid rgba(192,64,64,.2)', color:'#c04040', borderRadius:12, padding:'13px 16px', fontSize:13, marginBottom:24, display:'flex', alignItems:'center', gap:8 }}>
-              ⚠️ {error}
-            </div>
-          )}
-
-          <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#7a9070', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>Email Address</label>
-          <input
-            style={inputStyle('email')} type="email" placeholder="you@example.com"
-            value={email} onChange={e => setEmail(e.target.value)}
-            onFocus={() => setFocusField('email')} onBlur={() => setFocusField('')}
-          />
-
-          <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#7a9070', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>Password</label>
-          <input
-            style={inputStyle('password')} type="password" placeholder="Enter your password"
-            value={password} onChange={e => setPassword(e.target.value)}
-            onFocus={() => setFocusField('password')} onBlur={() => setFocusField('')}
-            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          />
-
-          <button
-            onClick={handleSubmit} disabled={loading}
-            style={{ width:'100%', background: loading ? '#afc09e' : 'linear-gradient(135deg,#4e9e2a,#3a7d1e)', color:'#fff', border:'none', borderRadius:99, padding:'15px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15, cursor: loading ? 'default' : 'pointer', boxShadow: loading ? 'none' : '0 4px 16px rgba(78,158,42,.4)', transition:'all .2s', marginTop:4, letterSpacing:'-.01em' }}>
-            {loading ? '⏳ Signing in...' : 'Sign In →'}
-          </button>
-
-          <div style={{ textAlign:'center', marginTop:28, fontSize:14, color:'#7a9070' }}>
-            Don't have an account? <Link to="/register" style={{ color:'#4e9e2a', textDecoration:'none', fontWeight:700 }}>Join Free →</Link>
-          </div>
-        </div>
-      </div>
-
-      <style>{`
-        @media (min-width: 768px) { #login-left { display: flex !important; } }
-      `}</style>
-    </div>
-  );
-}
-</file>
-
 <file path="client/src/pages/OrderTracking.jsx">
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -3268,6 +3089,24 @@ export default function Register() {
     </div>
   );
 }
+</file>
+
+<file path="server/config/db.js">
+const mongoose = require('mongoose');
+const seedAdmin = require('../utils/seeder');
+
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
+    await seedAdmin(); // Create admin account if it doesn't exist
+  } catch (error) {
+    console.error(`❌ MongoDB connection error: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+module.exports = connectDB;
 </file>
 
 <file path="server/controllers/orderController.js">
@@ -3918,6 +3757,61 @@ const orderSchema = new mongoose.Schema(
 module.exports = mongoose.model('Order', orderSchema);
 </file>
 
+<file path="server/models/User.js">
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: [true, 'Name is required'], trim: true },
+    email: { type: String, required: [true, 'Email is required'], unique: true, lowercase: true, trim: true },
+    password: { type: String, required: [true, 'Password is required'], minlength: 6, select: false },
+    role: { type: String, enum: ['farmer', 'customer', 'admin'], default: 'customer' },
+    phone: { type: String, trim: true },
+    avatar: { type: String, default: '' },
+
+    location: {
+      district: { type: String, default: '' },
+      address:  { type: String, default: '' },
+      lat:      { type: Number, default: 23.8103 },
+      lng:      { type: Number, default: 90.4125 },
+    },
+
+    farmName: { type: String, default: '' },
+    farmSize: { type: String, default: '' },
+
+    // ── Verification ─────────────────────────────────────────
+    isVerified:       { type: Boolean, default: false },
+    verificationStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none',
+    },
+    nidImage:   { type: String, default: '' }, // Cloudinary URL — NID card front photo
+    selfieImage:{ type: String, default: '' }, // Cloudinary URL — selfie holding NID
+    rejectionReason: { type: String, default: '' }, // Admin's reason if rejected
+
+    // Rating
+    avgRating:    { type: Number, default: 0 },
+    totalReviews: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
+
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+module.exports = mongoose.model('User', userSchema);
+</file>
+
 <file path="server/package.json">
 {
   "name": "krishiconnect-server",
@@ -4467,39 +4361,6 @@ seed().catch(err => {
 });
 </file>
 
-<file path="server/utils/cloudinary.js">
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const multer = require('multer');
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-const productStorage = new CloudinaryStorage({
-  cloudinary,
-  params: { folder: 'krishiconnect/products', allowed_formats: ['jpg','jpeg','png','webp'], transformation: [{ width:800, height:800, crop:'limit', quality:'auto' }] },
-});
-
-const avatarStorage = new CloudinaryStorage({
-  cloudinary,
-  params: { folder: 'krishiconnect/avatars', allowed_formats: ['jpg','jpeg','png','webp'], transformation: [{ width:300, height:300, crop:'fill', gravity:'face', quality:'auto' }] },
-});
-
-const nidStorage = new CloudinaryStorage({
-  cloudinary,
-  params: { folder: 'krishiconnect/nid', allowed_formats: ['jpg','jpeg','png','webp'], transformation: [{ quality:'auto' }] },
-});
-
-const upload       = multer({ storage: productStorage });
-const uploadAvatar = multer({ storage: avatarStorage });
-const uploadNid    = multer({ storage: nidStorage, limits: { fileSize: 10 * 1024 * 1024 } });
-
-module.exports = { cloudinary, upload, uploadAvatar, uploadNid };
-</file>
-
 <file path="client/src/components/ProductCard.jsx">
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -4764,6 +4625,114 @@ export default function MyProducts() {
 }
 </file>
 
+<file path="client/src/pages/Login.jsx">
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
+
+export default function Login() {
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [focusField, setFocusField] = useState('');
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const user = await login(email, password);
+      if (user.role === 'admin')        navigate('/admin');
+      else if (user.role === 'farmer')  navigate('/dashboard');
+      else                              navigate('/marketplace');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Invalid email or password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputStyle = (field) => ({
+    width:'100%', background: focusField===field ? '#f9faf7' : '#f5f7f2',
+    border: `1.5px solid ${focusField===field ? '#4e9e2a' : 'rgba(60,100,40,.15)'}`,
+    borderRadius:14, padding:'14px 18px', color:'#1a2415', fontSize:15,
+    outline:'none', fontFamily:'Plus Jakarta Sans,sans-serif',
+    boxShadow: focusField===field ? '0 0 0 3px rgba(78,158,42,.1)' : 'none',
+    transition:'all .2s ease', boxSizing:'border-box', marginBottom:20,
+  });
+
+  return (
+    <div style={{ minHeight:'100vh', background:'#f5f7f2', display:'flex' }}>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
+      {/* Left image panel (desktop) */}
+      <div id="login-left" style={{ flex:1, position:'relative', overflow:'hidden', display:'none' }}>
+        <div style={{ position:'absolute', inset:0, backgroundImage:"url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=900&q=70')", backgroundSize:'cover', backgroundPosition:'center' }} />
+        <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(10,40,5,.5),rgba(10,40,5,.8))' }} />
+        <div style={{ position:'relative', zIndex:2, padding:56, display:'flex', flexDirection:'column', justifyContent:'flex-end', height:'100%' }}>
+          <div style={{ fontSize:36, fontWeight:800, color:'#fff', letterSpacing:'-0.03em', lineHeight:1.1, marginBottom:16 }}>
+            Fresh from the<br /><span style={{ color:'#a8e07a', fontFamily:'Fraunces,serif', fontStyle:'italic' }}>farm to your door</span>
+          </div>
+          <div style={{ fontSize:14, color:'rgba(255,255,255,.6)', lineHeight:1.7 }}>Join 2,400+ verified farmers and thousands of happy customers.</div>
+        </div>
+      </div>
+
+      {/* Right form */}
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
+        <div style={{ width:'100%', maxWidth:420, animation:'fadeUp .5s cubic-bezier(.22,1,.36,1) both' }}>
+          
+          {/* Logo */}
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:40 }}>
+            <img src="/icons/icon-192.png" alt="KrishiConnect" style={{ width:40, height:40, borderRadius:12, objectFit:"cover" }} />
+            <span style={{ fontSize:18, fontWeight:800, color:'#1a2415', letterSpacing:'-0.03em' }}>KrishiConnect</span>
+          </div>
+
+          <div style={{ fontSize:28, fontWeight:800, letterSpacing:'-0.03em', color:'#1a2415', marginBottom:6 }}>Welcome back 👋</div>
+          <div style={{ fontSize:14, color:'#7a9070', marginBottom:36, lineHeight:1.5 }}>Sign in to your KrishiConnect account</div>
+
+          {error && (
+            <div style={{ background:'rgba(192,64,64,.08)', border:'1.5px solid rgba(192,64,64,.2)', color:'#c04040', borderRadius:12, padding:'13px 16px', fontSize:13, marginBottom:24, display:'flex', alignItems:'center', gap:8 }}>
+              ⚠️ {error}
+            </div>
+          )}
+
+          <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#7a9070', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>Email Address</label>
+          <input
+            style={inputStyle('email')} type="email" placeholder="you@example.com"
+            value={email} onChange={e => setEmail(e.target.value)}
+            onFocus={() => setFocusField('email')} onBlur={() => setFocusField('')}
+          />
+
+          <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#7a9070', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>Password</label>
+          <input
+            style={inputStyle('password')} type="password" placeholder="Enter your password"
+            value={password} onChange={e => setPassword(e.target.value)}
+            onFocus={() => setFocusField('password')} onBlur={() => setFocusField('')}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+          />
+
+          <button
+            onClick={handleSubmit} disabled={loading}
+            style={{ width:'100%', background: loading ? '#afc09e' : 'linear-gradient(135deg,#4e9e2a,#3a7d1e)', color:'#fff', border:'none', borderRadius:99, padding:'15px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15, cursor: loading ? 'default' : 'pointer', boxShadow: loading ? 'none' : '0 4px 16px rgba(78,158,42,.4)', transition:'all .2s', marginTop:4, letterSpacing:'-.01em' }}>
+            {loading ? '⏳ Signing in...' : 'Sign In →'}
+          </button>
+
+          <div style={{ textAlign:'center', marginTop:28, fontSize:14, color:'#7a9070' }}>
+            Don't have an account? <Link to="/register" style={{ color:'#4e9e2a', textDecoration:'none', fontWeight:700 }}>Join Free →</Link>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @media (min-width: 768px) { #login-left { display: flex !important; } }
+      `}</style>
+    </div>
+  );
+}
+</file>
+
 <file path="client/vite.config.js">
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -4791,152 +4760,6 @@ export default defineConfig({
     sourcemap: false,
   },
 });
-</file>
-
-<file path="server/controllers/authController.js">
-const jwt = require('jsonwebtoken');
-const asyncHandler = require('express-async-handler');
-const User = require('../models/User');
-
-const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
-
-const safeUser = (u) => ({
-  _id: u._id, name: u.name, email: u.email, role: u.role,
-  avatar: u.avatar, phone: u.phone, farmName: u.farmName, farmSize: u.farmSize,
-  isVerified: u.isVerified, verificationStatus: u.verificationStatus,
-  nidImage: u.nidImage, selfieImage: u.selfieImage, rejectionReason: u.rejectionReason,
-  location: u.location, createdAt: u.createdAt, updatedAt: u.updatedAt,
-});
-
-// ── Register ──────────────────────────────────────────────────
-const register = asyncHandler(async (req, res) => {
-  const { name, email, password, role, phone, farmName, district, lat, lng } = req.body;
-  const exists = await User.findOne({ email });
-  if (exists) { res.status(400); throw new Error('Email already registered'); }
-  const user = await User.create({ name, email, password, role: role || 'customer', phone, farmName, location: { district, lat, lng } });
-  res.status(201).json({ success: true, token: generateToken(user._id), user: safeUser(user) });
-});
-
-// ── Login ─────────────────────────────────────────────────────
-const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) { res.status(400); throw new Error('Please provide email and password'); }
-  const user = await User.findOne({ email }).select('+password');
-  if (!user || !(await user.matchPassword(password))) { res.status(401); throw new Error('Invalid email or password'); }
-  res.json({ success: true, token: generateToken(user._id), user: safeUser(user) });
-});
-
-// ── Get current user ──────────────────────────────────────────
-const getMe = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
-  res.json({ success: true, user: safeUser(user) });
-});
-
-// ── Update profile ────────────────────────────────────────────
-const updateProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
-  if (!user) { res.status(404); throw new Error('User not found'); }
-  const { name, phone, farmName, farmSize, district, address, lat, lng } = req.body;
-  if (name     !== undefined) user.name     = name;
-  if (phone    !== undefined) user.phone    = phone;
-  if (farmName !== undefined) user.farmName = farmName;
-  if (farmSize !== undefined) user.farmSize = farmSize;
-  if (district !== undefined) user.location.district = district;
-  if (address  !== undefined) user.location.address  = address;
-  if (lat      !== undefined) user.location.lat       = Number(lat);
-  if (lng      !== undefined) user.location.lng       = Number(lng);
-  if (req.file) user.avatar = req.file.path;
-  const updated = await user.save();
-  res.json({ success: true, user: safeUser(updated) });
-});
-
-// ── Submit NID verification ───────────────────────────────────
-// POST /api/auth/verify-nid   (farmer only, multipart: nidImage + selfieImage)
-const submitNidVerification = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
-  if (!user) { res.status(404); throw new Error('User not found'); }
-  if (user.role !== 'farmer') { res.status(403); throw new Error('Only farmers can submit NID verification'); }
-  if (user.verificationStatus === 'approved') { res.status(400); throw new Error('Already verified'); }
-
-  if (!req.files?.nidImage?.[0] || !req.files?.selfieImage?.[0]) {
-    res.status(400); throw new Error('Both NID photo and selfie are required');
-  }
-
-  user.nidImage    = req.files.nidImage[0].path;
-  user.selfieImage = req.files.selfieImage[0].path;
-  user.verificationStatus = 'pending';
-  user.rejectionReason    = '';
-  await user.save();
-
-  res.json({ success: true, message: 'Verification documents submitted. Admin will review within 24–48 hours.', user: safeUser(user) });
-});
-
-// ── Change password ───────────────────────────────────────────
-const changePassword = asyncHandler(async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword) { res.status(400); throw new Error('Provide current and new password'); }
-  const user = await User.findById(req.user._id).select('+password');
-  if (!(await user.matchPassword(currentPassword))) { res.status(401); throw new Error('Current password is incorrect'); }
-  user.password = newPassword;
-  await user.save();
-  res.json({ success: true, message: 'Password changed successfully' });
-});
-
-// ── Get all farmers (public) ──────────────────────────────────
-const getFarmers = asyncHandler(async (req, res) => {
-  const { search } = req.query;
-  const query = { role: 'farmer' };
-  if (search) {
-    query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { farmName: { $regex: search, $options: 'i' } },
-      { 'location.district': { $regex: search, $options: 'i' } },
-    ];
-  }
-  const farmers = await User.find(query).select('-password').sort({ isVerified: -1, name: 1 });
-  res.json({ success: true, farmers });
-});
-
-// ── Get single farmer (public) ────────────────────────────────
-const getFarmerById = asyncHandler(async (req, res) => {
-  const farmer = await User.findOne({ _id: req.params.id, role: 'farmer' }).select('-password');
-  if (!farmer) { res.status(404); throw new Error('Farmer not found'); }
-  res.json({ success: true, farmer });
-});
-
-// ── Admin: get all pending verifications ──────────────────────
-const getPendingVerifications = asyncHandler(async (req, res) => {
-  const farmers = await User.find({ role: 'farmer', verificationStatus: { $in: ['pending', 'approved', 'rejected'] } })
-    .select('-password')
-    .sort({ verificationStatus: 1, updatedAt: -1 });
-  res.json({ success: true, farmers });
-});
-
-// ── Admin: approve or reject farmer ──────────────────────────
-const verifyFarmer = asyncHandler(async (req, res) => {
-  const farmer = await User.findOne({ _id: req.params.id, role: 'farmer' });
-  if (!farmer) { res.status(404); throw new Error('Farmer not found'); }
-  const { action, reason } = req.body; // action: 'approve' | 'reject'
-  if (action === 'approve') {
-    farmer.isVerified = true;
-    farmer.verificationStatus = 'approved';
-    farmer.rejectionReason = '';
-  } else if (action === 'reject') {
-    farmer.isVerified = false;
-    farmer.verificationStatus = 'rejected';
-    farmer.rejectionReason = reason || 'Documents could not be verified.';
-  } else {
-    res.status(400); throw new Error('action must be approve or reject');
-  }
-  await farmer.save();
-  res.json({ success: true, farmer: safeUser(farmer) });
-});
-
-module.exports = {
-  register, login, getMe, updateProfile, submitNidVerification,
-  changePassword, getFarmers, getFarmerById,
-  getPendingVerifications, verifyFarmer,
-};
 </file>
 
 <file path="server/controllers/productController.js">
@@ -5057,39 +4880,37 @@ const getMyProducts = asyncHandler(async (req, res) => {
 module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct, getMyProducts };
 </file>
 
-<file path="server/routes/authRoutes.js">
-const express = require('express');
-const router  = express.Router();
-const {
-  register, login, getMe, updateProfile, submitNidVerification,
-  changePassword, getFarmers, getFarmerById,
-  getPendingVerifications, verifyFarmer,
-} = require('../controllers/authController');
-const protect       = require('../middleware/protect');
-const authorizeRole = require('../middleware/authorizeRole');
-const { uploadAvatar, uploadNid } = require('../utils/cloudinary');
+<file path="server/utils/cloudinary.js">
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const multer = require('multer');
 
-router.post('/register',  register);
-router.post('/login',     login);
-router.get ('/me',        protect, getMe);
-router.put ('/profile',   protect, uploadAvatar.single('avatar'), updateProfile);
-router.put ('/change-password', protect, changePassword);
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// Farmer: submit NID + selfie for verification
-router.post('/verify-nid', protect, authorizeRole('farmer'),
-  uploadNid.fields([{ name: 'nidImage', maxCount: 1 }, { name: 'selfieImage', maxCount: 1 }]),
-  submitNidVerification
-);
+const productStorage = new CloudinaryStorage({
+  cloudinary,
+  params: { folder: 'krishiconnect/products', allowed_formats: ['jpg','jpeg','png','webp'], transformation: [{ width:800, height:800, crop:'limit', quality:'auto' }] },
+});
 
-// Public
-router.get('/farmers',     getFarmers);
-router.get('/farmers/:id', getFarmerById);
+const avatarStorage = new CloudinaryStorage({
+  cloudinary,
+  params: { folder: 'krishiconnect/avatars', allowed_formats: ['jpg','jpeg','png','webp'], transformation: [{ width:300, height:300, crop:'fill', gravity:'face', quality:'auto' }] },
+});
 
-// Admin only
-router.get  ('/admin/verifications',      protect, authorizeRole('admin'), getPendingVerifications);
-router.patch('/admin/farmers/:id/verify', protect, authorizeRole('admin'), verifyFarmer);
+const nidStorage = new CloudinaryStorage({
+  cloudinary,
+  params: { folder: 'krishiconnect/nid', allowed_formats: ['jpg','jpeg','png','webp'], transformation: [{ quality:'auto' }] },
+});
 
-module.exports = router;
+const upload       = multer({ storage: productStorage });
+const uploadAvatar = multer({ storage: avatarStorage });
+const uploadNid    = multer({ storage: nidStorage, limits: { fileSize: 10 * 1024 * 1024 } });
+
+module.exports = { cloudinary, upload, uploadAvatar, uploadNid };
 </file>
 
 <file path="client/src/index.css">
@@ -5306,282 +5127,6 @@ a.card-link {
 }
 @media (max-width: 639px) {
   .page-container { padding: 0 16px; }
-}
-</file>
-
-<file path="client/src/pages/Cart.jsx">
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
-import api from '../api/axios.js';
-import PaymentModal from '../components/payment/PaymentModal.jsx';
-
-/* ── Farmer block modal (unchanged) ── */
-function FarmerBlockModal({ onClose, navigate }) {
-  return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(10,25,8,.65)', backdropFilter:'blur(6px)',
-      display:'flex', alignItems:'center', justifyContent:'center', zIndex:1100, padding:'20px' }}>
-      <div style={{ background:'#fff', borderRadius:28, padding:'32px 28px', maxWidth:380, width:'100%',
-        textAlign:'center', animation:'popIn .3s cubic-bezier(.22,1,.36,1) both',
-        boxShadow:'0 24px 64px rgba(10,25,8,.18)' }}>
-        <style>{`@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}`}</style>
-        <div style={{ width:72, height:72, borderRadius:'50%',
-          background:'linear-gradient(135deg,#fef3d8,#fde8c0)', border:'2px solid rgba(196,125,10,.15)',
-          display:'flex', alignItems:'center', justifyContent:'center', fontSize:34, margin:'0 auto 20px' }}>🌾</div>
-        <div style={{ fontSize:20, fontWeight:800, color:'#1a2415', marginBottom:10 }}>Farmers Can't Order</div>
-        <div style={{ fontSize:14, color:'#7a9070', lineHeight:1.7, marginBottom:28 }}>
-          Your account is registered as a <strong style={{ color:'#c47d0a' }}>Farmer</strong>.
-          To buy products, you need a <strong style={{ color:'#4e9e2a' }}>Customer account</strong>.
-        </div>
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          <button onClick={() => { onClose(); navigate('/register?role=customer'); }}
-            style={{ background:'linear-gradient(135deg,#4e9e2a,#3a7d1e)', color:'#fff', border:'none',
-              borderRadius:14, padding:'14px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800,
-              fontSize:15, cursor:'pointer', boxShadow:'0 4px 14px rgba(78,158,42,.35)' }}>
-            Create Customer Account →
-          </button>
-          <button onClick={() => { onClose(); navigate('/login?role=customer'); }}
-            style={{ background:'#f0f4ec', color:'#3a7d1e', border:'1.5px solid rgba(60,100,40,.15)',
-              borderRadius:14, padding:'13px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700,
-              fontSize:14, cursor:'pointer' }}>
-            Log in with Customer Account
-          </button>
-          <button onClick={onClose} style={{ background:'none', color:'#afc09e', border:'none',
-            borderRadius:14, padding:'10px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:600,
-            fontSize:13, cursor:'pointer' }}>Cancel</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function Cart() {
-  const { cart: items, updateQty, removeFromCart, clearCart } = useCart();
-  const { user }   = useAuth();
-  const navigate   = useNavigate();
-
-  const [pendingOrder,    setPendingOrder]    = useState(null); // order doc returned from POST /orders
-  const [showPayment,     setShowPayment]     = useState(false);
-  const [showFarmerBlock, setShowFarmerBlock] = useState(false);
-  const [creating,        setCreating]        = useState(false);
-  const [success,         setSuccess]         = useState(false);
-
-  const total   = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const savings = items.reduce((s, i) => s + Math.max(0, (i.marketPrice || i.price) - i.price) * i.qty, 0);
-
-  // Step 1: Guard + create order record → open payment modal
-  const handleCheckout = async () => {
-    if (!user)                  { navigate('/login'); return; }
-    if (user.role === 'farmer') { setShowFarmerBlock(true); return; }
-
-    setCreating(true);
-    try {
-      // Group by farmer
-      const byFarmer = {};
-      items.forEach(i => {
-        const fid = i.farmer?._id || i.farmer;
-        if (!byFarmer[fid]) byFarmer[fid] = [];
-        byFarmer[fid].push({ product: i._id, name: i.name, quantity: i.qty, price: i.price, image: i.images?.[0] || '' });
-      });
-
-      // Create orders (one per farmer) — returns first one for payment
-      const results = await Promise.all(
-        Object.entries(byFarmer).map(([farmerId, orderItems]) =>
-          api.post('/orders', {
-            farmerId,
-            items: orderItems,
-            deliveryAddress: '',        // will be filled in PaymentModal
-            paymentMethod:   'bkash',   // will be overridden in PaymentModal
-            totalAmount: orderItems.reduce((s, i) => s + i.quantity * i.price, 0),
-          }).then(r => r.data.order)
-        )
-      );
-
-      // For simplicity show payment for the first (and usually only) order
-      // Multi-farmer carts are split automatically above
-      setPendingOrder(results[0]);
-      setShowPayment(true);
-    } catch (e) {
-      alert(e.response?.data?.message || 'Could not create order. Please try again.');
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  // COD path — called by PaymentModal when user picks cash_on_delivery
-  const handleCodConfirmed = async ({ address, payment }) => {
-    try {
-      await api.put(`/orders/${pendingOrder._id}/payment-method`, {
-        deliveryAddress: address,
-        paymentMethod:   payment,
-      });
-      clearCart();
-      setShowPayment(false);
-      setSuccess(true);
-    } catch {
-      alert('Order confirmation failed. Please contact support.');
-    }
-  };
-
-  if (success) return (
-    <div style={{ minHeight:'100vh', background:'#f5f7f2', display:'flex', alignItems:'center',
-      justifyContent:'center', padding:24, fontFamily:'Plus Jakarta Sans,sans-serif' }}>
-      <div style={{ textAlign:'center', animation:'scaleIn .4s cubic-bezier(.22,1,.36,1) both' }}>
-        <style>{`@keyframes scaleIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}`}</style>
-        <div style={{ width:80, height:80, background:'linear-gradient(135deg,#4e9e2a,#3a7d1e)', borderRadius:'50%',
-          display:'flex', alignItems:'center', justifyContent:'center', fontSize:36, margin:'0 auto 20px',
-          boxShadow:'0 8px 24px rgba(78,158,42,.3)' }}>✓</div>
-        <div style={{ fontSize:24, fontWeight:800, color:'#1a2415', marginBottom:8 }}>Order Placed!</div>
-        <div style={{ fontSize:14, color:'#7a9070', marginBottom:28 }}>Your order has been successfully placed.</div>
-        <button onClick={() => navigate('/orders')} style={{ background:'linear-gradient(135deg,#4e9e2a,#3a7d1e)',
-          color:'#fff', border:'none', borderRadius:99, padding:'14px 32px',
-          fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15,
-          cursor:'pointer', boxShadow:'0 4px 16px rgba(78,158,42,.35)' }}>
-          Track My Orders →
-        </button>
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{ minHeight:'100vh', background:'#f5f7f2', fontFamily:'Plus Jakarta Sans,sans-serif' }}>
-      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}`}</style>
-
-      {showFarmerBlock && <FarmerBlockModal onClose={() => setShowFarmerBlock(false)} navigate={navigate} />}
-      {showPayment && pendingOrder && (
-        <PaymentModal
-          order={pendingOrder}
-          onClose={() => setShowPayment(false)}
-          onCodConfirmed={handleCodConfirmed}
-        />
-      )}
-
-      <div style={{ maxWidth:680, margin:'0 auto', padding:'24px 16px 100px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:24,
-          animation:'fadeUp .4s cubic-bezier(.22,1,.36,1) both' }}>
-          <button onClick={() => navigate(-1)} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.15)',
-            borderRadius:12, width:38, height:38, display:'flex', alignItems:'center', justifyContent:'center',
-            cursor:'pointer', fontSize:16, boxShadow:'0 1px 4px rgba(20,50,10,.06)', flexShrink:0 }}>←</button>
-          <div>
-            <div style={{ fontSize:20, fontWeight:800, color:'#1a2415', letterSpacing:'-0.02em' }}>My Cart</div>
-            <div style={{ fontSize:12, color:'#7a9070' }}>{items.length} item{items.length !== 1 ? 's' : ''}</div>
-          </div>
-        </div>
-
-        {items.length === 0 ? (
-          <div style={{ textAlign:'center', padding:'80px 0', animation:'fadeUp .4s cubic-bezier(.22,1,.36,1) both' }}>
-            <div style={{ fontSize:52, marginBottom:16 }}>🛒</div>
-            <div style={{ fontSize:18, fontWeight:800, color:'#1a2415', marginBottom:8 }}>Your cart is empty</div>
-            <div style={{ fontSize:13, color:'#7a9070', marginBottom:24 }}>Browse fresh produce from local farmers</div>
-            <button onClick={() => navigate('/marketplace')} style={{ background:'linear-gradient(135deg,#4e9e2a,#3a7d1e)',
-              color:'#fff', border:'none', borderRadius:99, padding:'13px 32px',
-              fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:14,
-              cursor:'pointer', boxShadow:'0 4px 16px rgba(78,158,42,.3)' }}>Browse Marketplace</button>
-          </div>
-        ) : (
-          <>
-            {items.map((item, idx) => (
-              <div key={item._id} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)',
-                borderRadius:18, padding:14, marginBottom:10,
-                display:'flex', gap:14, alignItems:'center', boxShadow:'0 2px 8px rgba(20,50,10,.05)',
-                animation:`fadeUp .4s ${idx*.05}s cubic-bezier(.22,1,.36,1) both` }}>
-                <img src={item.images?.[0] || 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=120'}
-                  alt={item.name}
-                  style={{ width:68, height:68, borderRadius:14, objectFit:'cover', flexShrink:0, background:'#f0f4ec' }}
-                  onError={e => { e.target.src = 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=120'; }} />
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:14, fontWeight:800, color:'#1a2415', marginBottom:2,
-                    overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.name}</div>
-                  <div style={{ fontSize:11, color:'#7a9070', marginBottom:8 }}>{item.farmer?.farmName || item.farmer?.name || 'Farm'}</div>
-                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:6, background:'#f5f7f2', borderRadius:99, padding:'4px 4px' }}>
-                      <button onClick={() => updateQty(item._id, item.qty-1)}
-                        style={{ width:26, height:26, borderRadius:'50%',
-                          background: item.qty<=1 ? '#e8ede4' : '#4e9e2a', border:'none',
-                          color: item.qty<=1 ? '#afc09e' : '#fff', fontSize:14,
-                          cursor: item.qty<=1 ? 'default' : 'pointer',
-                          display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700 }}>−</button>
-                      <span style={{ fontSize:13, fontWeight:800, color:'#1a2415', minWidth:20, textAlign:'center' }}>{item.qty}</span>
-                      <button onClick={() => updateQty(item._id, item.qty+1)}
-                        style={{ width:26, height:26, borderRadius:'50%', background:'#4e9e2a', border:'none',
-                          color:'#fff', fontSize:14, cursor:'pointer',
-                          display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700 }}>+</button>
-                    </div>
-                    <span style={{ fontSize:14, fontWeight:800, color:'#4e9e2a' }}>৳{(item.price*item.qty).toLocaleString()}</span>
-                    {item.marketPrice > item.price && (
-                      <span style={{ fontSize:11, color:'#afc09e', textDecoration:'line-through' }}>৳{(item.marketPrice*item.qty).toLocaleString()}</span>
-                    )}
-                  </div>
-                </div>
-                <button onClick={() => removeFromCart(item._id)}
-                  style={{ background:'none', border:'none', color:'#e07070', fontSize:20, cursor:'pointer', padding:'4px', flexShrink:0 }}>🗑</button>
-              </div>
-            ))}
-
-            {user?.role === 'farmer' && (
-              <div style={{ background:'linear-gradient(135deg,#fef3d8,#fde8c0)', border:'1px solid rgba(196,125,10,.2)',
-                borderRadius:16, padding:'14px 18px', marginTop:8, display:'flex', alignItems:'center', gap:12 }}>
-                <span style={{ fontSize:24, flexShrink:0 }}>🌾</span>
-                <div>
-                  <div style={{ fontSize:13, fontWeight:800, color:'#c47d0a', marginBottom:2 }}>Farmer Account Detected</div>
-                  <div style={{ fontSize:12, color:'#c47d0a', lineHeight:1.5 }}>You can't checkout with a farmer account.</div>
-                </div>
-              </div>
-            )}
-
-            <div style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:20, padding:20,
-              marginTop:16, boxShadow:'0 2px 8px rgba(20,50,10,.05)',
-              animation:'fadeUp .4s .3s cubic-bezier(.22,1,.36,1) both' }}>
-              <div style={{ fontSize:15, fontWeight:800, color:'#1a2415', marginBottom:14 }}>Order Summary</div>
-              <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'#7a9070', marginBottom:8 }}>
-                <span>Subtotal ({items.length} item{items.length!==1?'s':''})</span>
-                <span style={{ color:'#1a2415', fontWeight:600 }}>৳{total.toLocaleString()}</span>
-              </div>
-              {savings > 0 && (
-                <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'#4e9e2a', marginBottom:8 }}>
-                  <span>You save</span><span style={{ fontWeight:700 }}>-৳{savings.toLocaleString()}</span>
-                </div>
-              )}
-              <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'#7a9070',
-                marginBottom:14, paddingBottom:14, borderBottom:'1px dashed rgba(60,100,40,.12)' }}>
-                <span>Delivery</span><span style={{ color:'#4e9e2a', fontWeight:700 }}>Free</span>
-              </div>
-              <div style={{ display:'flex', justifyContent:'space-between', fontSize:18, fontWeight:800, color:'#1a2415', marginBottom:16 }}>
-                <span>Total</span><span style={{ color:'#4e9e2a' }}>৳{total.toLocaleString()}</span>
-              </div>
-
-              {/* Payment method preview icons */}
-              <div style={{ display:'flex', gap:8, marginBottom:16, alignItems:'center' }}>
-                <span style={{ fontSize:11, color:'#afc09e', fontWeight:600 }}>Pay with:</span>
-                {[['#E2136E','🟣','bKash'],['#F16522','🟠','Nagad'],['#4e9e2a','💵','COD']].map(([c,logo,lbl]) => (
-                  <div key={lbl} style={{ display:'flex', alignItems:'center', gap:4,
-                    background:'#f5f7f2', borderRadius:99, padding:'4px 10px', fontSize:11, fontWeight:600, color:c }}>
-                    {logo} {lbl}
-                  </div>
-                ))}
-              </div>
-
-              <button onClick={handleCheckout} disabled={creating}
-                style={{ width:'100%', background: creating ? 'rgba(60,100,40,.2)' : 'linear-gradient(135deg,#4e9e2a,#3a7d1e)',
-                  color:'#fff', border:'none', borderRadius:99, padding:'15px',
-                  fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15,
-                  cursor: creating ? 'not-allowed' : 'pointer', boxShadow:'0 4px 16px rgba(78,158,42,.35)',
-                  display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-                {creating ? (
-                  <><span style={{ display:'inline-block', width:18, height:18, border:'2px solid rgba(255,255,255,.4)',
-                    borderTopColor:'#fff', borderRadius:'50%', animation:'spin .7s linear infinite' }} /> Creating order…</>
-                ) : (
-                  user?.role === 'farmer' ? '🌾 Switch to Customer Account' : 'Select Payment Method →'
-                )}
-              </button>
-              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
 }
 </file>
 
@@ -6562,6 +6107,187 @@ export default function MyOrders() {
 }
 </file>
 
+<file path="server/controllers/authController.js">
+const jwt = require('jsonwebtoken');
+const asyncHandler = require('express-async-handler');
+const User = require('../models/User');
+
+const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
+
+const safeUser = (u) => ({
+  _id: u._id, name: u.name, email: u.email, role: u.role,
+  avatar: u.avatar, phone: u.phone, farmName: u.farmName, farmSize: u.farmSize,
+  isVerified: u.isVerified, verificationStatus: u.verificationStatus,
+  nidImage: u.nidImage, selfieImage: u.selfieImage, rejectionReason: u.rejectionReason,
+  location: u.location, createdAt: u.createdAt, updatedAt: u.updatedAt,
+});
+
+// ── Register ──────────────────────────────────────────────────
+const register = asyncHandler(async (req, res) => {
+  const { name, email, password, role, phone, farmName, district, lat, lng } = req.body;
+  const exists = await User.findOne({ email });
+  if (exists) { res.status(400); throw new Error('Email already registered'); }
+  const user = await User.create({ name, email, password, role: role || 'customer', phone, farmName, location: { district, lat, lng } });
+  res.status(201).json({ success: true, token: generateToken(user._id), user: safeUser(user) });
+});
+
+// ── Login ─────────────────────────────────────────────────────
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) { res.status(400); throw new Error('Please provide email and password'); }
+  const user = await User.findOne({ email }).select('+password');
+  if (!user || !(await user.matchPassword(password))) { res.status(401); throw new Error('Invalid email or password'); }
+  res.json({ success: true, token: generateToken(user._id), user: safeUser(user) });
+});
+
+// ── Get current user ──────────────────────────────────────────
+const getMe = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  res.json({ success: true, user: safeUser(user) });
+});
+
+// ── Update profile ────────────────────────────────────────────
+const updateProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) { res.status(404); throw new Error('User not found'); }
+  const { name, phone, farmName, farmSize, district, address, lat, lng } = req.body;
+  if (name     !== undefined) user.name     = name;
+  if (phone    !== undefined) user.phone    = phone;
+  if (farmName !== undefined) user.farmName = farmName;
+  if (farmSize !== undefined) user.farmSize = farmSize;
+  if (district !== undefined) user.location.district = district;
+  if (address  !== undefined) user.location.address  = address;
+  if (lat      !== undefined) user.location.lat       = Number(lat);
+  if (lng      !== undefined) user.location.lng       = Number(lng);
+  if (req.file) user.avatar = req.file.path;
+  const updated = await user.save();
+  res.json({ success: true, user: safeUser(updated) });
+});
+
+// ── Submit NID verification ───────────────────────────────────
+// POST /api/auth/verify-nid   (farmer only, multipart: nidImage + selfieImage)
+const submitNidVerification = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) { res.status(404); throw new Error('User not found'); }
+  if (user.role !== 'farmer') { res.status(403); throw new Error('Only farmers can submit NID verification'); }
+  if (user.verificationStatus === 'approved') { res.status(400); throw new Error('Already verified'); }
+
+  if (!req.files?.nidImage?.[0] || !req.files?.selfieImage?.[0]) {
+    res.status(400); throw new Error('Both NID photo and selfie are required');
+  }
+
+  user.nidImage    = req.files.nidImage[0].path;
+  user.selfieImage = req.files.selfieImage[0].path;
+  user.verificationStatus = 'pending';
+  user.rejectionReason    = '';
+  await user.save();
+
+  res.json({ success: true, message: 'Verification documents submitted. Admin will review within 24–48 hours.', user: safeUser(user) });
+});
+
+// ── Change password ───────────────────────────────────────────
+const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) { res.status(400); throw new Error('Provide current and new password'); }
+  const user = await User.findById(req.user._id).select('+password');
+  if (!(await user.matchPassword(currentPassword))) { res.status(401); throw new Error('Current password is incorrect'); }
+  user.password = newPassword;
+  await user.save();
+  res.json({ success: true, message: 'Password changed successfully' });
+});
+
+// ── Get all farmers (public) ──────────────────────────────────
+const getFarmers = asyncHandler(async (req, res) => {
+  const { search } = req.query;
+  const query = { role: 'farmer' };
+  if (search) {
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { farmName: { $regex: search, $options: 'i' } },
+      { 'location.district': { $regex: search, $options: 'i' } },
+    ];
+  }
+  const farmers = await User.find(query).select('-password').sort({ isVerified: -1, name: 1 });
+  res.json({ success: true, farmers });
+});
+
+// ── Get single farmer (public) ────────────────────────────────
+const getFarmerById = asyncHandler(async (req, res) => {
+  const farmer = await User.findOne({ _id: req.params.id, role: 'farmer' }).select('-password');
+  if (!farmer) { res.status(404); throw new Error('Farmer not found'); }
+  res.json({ success: true, farmer });
+});
+
+// ── Admin: get all pending verifications ──────────────────────
+const getPendingVerifications = asyncHandler(async (req, res) => {
+  const farmers = await User.find({ role: 'farmer', verificationStatus: { $in: ['pending', 'approved', 'rejected'] } })
+    .select('-password')
+    .sort({ verificationStatus: 1, updatedAt: -1 });
+  res.json({ success: true, farmers });
+});
+
+// ── Admin: approve or reject farmer ──────────────────────────
+const verifyFarmer = asyncHandler(async (req, res) => {
+  const farmer = await User.findOne({ _id: req.params.id, role: 'farmer' });
+  if (!farmer) { res.status(404); throw new Error('Farmer not found'); }
+  const { action, reason } = req.body; // action: 'approve' | 'reject'
+  if (action === 'approve') {
+    farmer.isVerified = true;
+    farmer.verificationStatus = 'approved';
+    farmer.rejectionReason = '';
+  } else if (action === 'reject') {
+    farmer.isVerified = false;
+    farmer.verificationStatus = 'rejected';
+    farmer.rejectionReason = reason || 'Documents could not be verified.';
+  } else {
+    res.status(400); throw new Error('action must be approve or reject');
+  }
+  await farmer.save();
+  res.json({ success: true, farmer: safeUser(farmer) });
+});
+
+module.exports = {
+  register, login, getMe, updateProfile, submitNidVerification,
+  changePassword, getFarmers, getFarmerById,
+  getPendingVerifications, verifyFarmer,
+};
+</file>
+
+<file path="server/routes/authRoutes.js">
+const express = require('express');
+const router  = express.Router();
+const {
+  register, login, getMe, updateProfile, submitNidVerification,
+  changePassword, getFarmers, getFarmerById,
+  getPendingVerifications, verifyFarmer,
+} = require('../controllers/authController');
+const protect       = require('../middleware/protect');
+const authorizeRole = require('../middleware/authorizeRole');
+const { uploadAvatar, uploadNid } = require('../utils/cloudinary');
+
+router.post('/register',  register);
+router.post('/login',     login);
+router.get ('/me',        protect, getMe);
+router.put ('/profile',   protect, uploadAvatar.single('avatar'), updateProfile);
+router.put ('/change-password', protect, changePassword);
+
+// Farmer: submit NID + selfie for verification
+router.post('/verify-nid', protect, authorizeRole('farmer'),
+  uploadNid.fields([{ name: 'nidImage', maxCount: 1 }, { name: 'selfieImage', maxCount: 1 }]),
+  submitNidVerification
+);
+
+// Public
+router.get('/farmers',     getFarmers);
+router.get('/farmers/:id', getFarmerById);
+
+// Admin only
+router.get  ('/admin/verifications',      protect, authorizeRole('admin'), getPendingVerifications);
+router.patch('/admin/farmers/:id/verify', protect, authorizeRole('admin'), verifyFarmer);
+
+module.exports = router;
+</file>
+
 <file path="server/server.js">
 const express    = require('express');
 const cors       = require('cors');
@@ -6683,6 +6409,306 @@ server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     </script>
   </body>
 </html>
+</file>
+
+<file path="client/src/pages/Cart.jsx">
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import api from '../api/axios.js';
+import PaymentModal from '../components/payment/PaymentModal.jsx';
+
+/* ── Block modal — works for both farmer and admin ── */
+function BlockedModal({ role, onClose, navigate }) {
+  const isAdmin = role === 'admin';
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(10,25,8,.65)', backdropFilter:'blur(6px)',
+      display:'flex', alignItems:'center', justifyContent:'center', zIndex:1100, padding:'20px' }}>
+      <div style={{ background:'#fff', borderRadius:28, padding:'32px 28px', maxWidth:380, width:'100%',
+        textAlign:'center', animation:'popIn .3s cubic-bezier(.22,1,.36,1) both',
+        boxShadow:'0 24px 64px rgba(10,25,8,.18)' }}>
+        <style>{`@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}`}</style>
+        <div style={{ width:72, height:72, borderRadius:'50%',
+          background: isAdmin ? 'linear-gradient(135deg,#e8eaf6,#c5cae9)' : 'linear-gradient(135deg,#fef3d8,#fde8c0)',
+          border: `2px solid ${isAdmin ? 'rgba(80,96,192,.2)' : 'rgba(196,125,10,.15)'}`,
+          display:'flex', alignItems:'center', justifyContent:'center', fontSize:34, margin:'0 auto 20px' }}>
+          {isAdmin ? '🛡️' : '🌾'}
+        </div>
+        <div style={{ fontSize:20, fontWeight:800, color:'#1a2415', marginBottom:10 }}>
+          {isAdmin ? "Admins Can't Order" : "Farmers Can't Order"}
+        </div>
+        <div style={{ fontSize:14, color:'#7a9070', lineHeight:1.7, marginBottom:28 }}>
+          Your account is registered as an{' '}
+          <strong style={{ color: isAdmin ? '#5060c0' : '#c47d0a' }}>
+            {isAdmin ? 'Admin' : 'Farmer'}
+          </strong>.
+          To buy products, please log in with a{' '}
+          <strong style={{ color:'#4e9e2a' }}>Customer account</strong>.
+        </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          <button onClick={() => { onClose(); navigate('/register?role=customer'); }}
+            style={{ background:'linear-gradient(135deg,#4e9e2a,#3a7d1e)', color:'#fff', border:'none',
+              borderRadius:14, padding:'14px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800,
+              fontSize:15, cursor:'pointer', boxShadow:'0 4px 14px rgba(78,158,42,.35)' }}>
+            Create Customer Account →
+          </button>
+          <button onClick={() => { onClose(); navigate('/login?role=customer'); }}
+            style={{ background:'#f0f4ec', color:'#3a7d1e', border:'1.5px solid rgba(60,100,40,.15)',
+              borderRadius:14, padding:'13px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700,
+              fontSize:14, cursor:'pointer' }}>
+            Log in with Customer Account
+          </button>
+          <button onClick={onClose} style={{ background:'none', color:'#afc09e', border:'none',
+            borderRadius:14, padding:'10px', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:600,
+            fontSize:13, cursor:'pointer' }}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Cart() {
+  const { cart: items, updateQty, removeFromCart, clearCart } = useCart();
+  const { user }   = useAuth();
+  const navigate   = useNavigate();
+
+  const [pendingOrder,    setPendingOrder]    = useState(null);
+  const [showPayment,     setShowPayment]     = useState(false);
+  const [showBlockModal,  setShowBlockModal]  = useState(false);
+  const [creating,        setCreating]        = useState(false);
+  const [success,         setSuccess]         = useState(false);
+
+  const total   = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const savings = items.reduce((s, i) => s + Math.max(0, (i.marketPrice || i.price) - i.price) * i.qty, 0);
+
+  const isBlocked = user?.role === 'farmer' || user?.role === 'admin';
+
+  // Step 1: Guard + create order record → open payment modal
+  const handleCheckout = async () => {
+    if (!user)      { navigate('/login'); return; }
+    if (isBlocked)  { setShowBlockModal(true); return; }
+
+    setCreating(true);
+    try {
+      const byFarmer = {};
+      items.forEach(i => {
+        const fid = i.farmer?._id || i.farmer;
+        if (!byFarmer[fid]) byFarmer[fid] = [];
+        byFarmer[fid].push({ product: i._id, name: i.name, quantity: i.qty, price: i.price, image: i.images?.[0] || '' });
+      });
+
+      const results = await Promise.all(
+        Object.entries(byFarmer).map(([farmerId, orderItems]) =>
+          api.post('/orders', {
+            farmerId,
+            items: orderItems,
+            deliveryAddress: '',
+            paymentMethod:   'bkash',
+            totalAmount: orderItems.reduce((s, i) => s + i.quantity * i.price, 0),
+          }).then(r => r.data.order)
+        )
+      );
+
+      setPendingOrder(results[0]);
+      setShowPayment(true);
+    } catch (e) {
+      alert(e.response?.data?.message || 'Could not create order. Please try again.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCodConfirmed = async ({ address, payment }) => {
+    try {
+      await api.put(`/orders/${pendingOrder._id}/payment-method`, {
+        deliveryAddress: address,
+        paymentMethod:   payment,
+      });
+      clearCart();
+      setShowPayment(false);
+      setSuccess(true);
+    } catch {
+      alert('Order confirmation failed. Please contact support.');
+    }
+  };
+
+  if (success) return (
+    <div style={{ minHeight:'100vh', background:'#f5f7f2', display:'flex', alignItems:'center',
+      justifyContent:'center', padding:24, fontFamily:'Plus Jakarta Sans,sans-serif' }}>
+      <div style={{ textAlign:'center', animation:'scaleIn .4s cubic-bezier(.22,1,.36,1) both' }}>
+        <style>{`@keyframes scaleIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}`}</style>
+        <div style={{ width:80, height:80, background:'linear-gradient(135deg,#4e9e2a,#3a7d1e)', borderRadius:'50%',
+          display:'flex', alignItems:'center', justifyContent:'center', fontSize:36, margin:'0 auto 20px',
+          boxShadow:'0 8px 24px rgba(78,158,42,.3)' }}>✓</div>
+        <div style={{ fontSize:24, fontWeight:800, color:'#1a2415', marginBottom:8 }}>Order Placed!</div>
+        <div style={{ fontSize:14, color:'#7a9070', marginBottom:28 }}>Your order has been successfully placed.</div>
+        <button onClick={() => navigate('/orders')} style={{ background:'linear-gradient(135deg,#4e9e2a,#3a7d1e)',
+          color:'#fff', border:'none', borderRadius:99, padding:'14px 32px',
+          fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15,
+          cursor:'pointer', boxShadow:'0 4px 16px rgba(78,158,42,.35)' }}>
+          Track My Orders →
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight:'100vh', background:'#f5f7f2', fontFamily:'Plus Jakarta Sans,sans-serif' }}>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
+      {showBlockModal && (
+        <BlockedModal
+          role={user?.role}
+          onClose={() => setShowBlockModal(false)}
+          navigate={navigate}
+        />
+      )}
+      {showPayment && pendingOrder && (
+        <PaymentModal
+          order={pendingOrder}
+          onClose={() => setShowPayment(false)}
+          onCodConfirmed={handleCodConfirmed}
+        />
+      )}
+
+      <div style={{ maxWidth:680, margin:'0 auto', padding:'24px 16px 100px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:24,
+          animation:'fadeUp .4s cubic-bezier(.22,1,.36,1) both' }}>
+          <button onClick={() => navigate(-1)} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.15)',
+            borderRadius:12, width:38, height:38, display:'flex', alignItems:'center', justifyContent:'center',
+            cursor:'pointer', fontSize:16, boxShadow:'0 1px 4px rgba(20,50,10,.06)', flexShrink:0 }}>←</button>
+          <div>
+            <div style={{ fontSize:20, fontWeight:800, color:'#1a2415', letterSpacing:'-0.02em' }}>My Cart</div>
+            <div style={{ fontSize:12, color:'#7a9070' }}>{items.length} item{items.length !== 1 ? 's' : ''}</div>
+          </div>
+        </div>
+
+        {items.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'80px 0', animation:'fadeUp .4s cubic-bezier(.22,1,.36,1) both' }}>
+            <div style={{ fontSize:52, marginBottom:16 }}>🛒</div>
+            <div style={{ fontSize:18, fontWeight:800, color:'#1a2415', marginBottom:8 }}>Your cart is empty</div>
+            <div style={{ fontSize:13, color:'#7a9070', marginBottom:24 }}>Browse fresh produce from local farmers</div>
+            <button onClick={() => navigate('/marketplace')} style={{ background:'linear-gradient(135deg,#4e9e2a,#3a7d1e)',
+              color:'#fff', border:'none', borderRadius:99, padding:'13px 32px',
+              fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:14,
+              cursor:'pointer', boxShadow:'0 4px 16px rgba(78,158,42,.3)' }}>Browse Marketplace</button>
+          </div>
+        ) : (
+          <>
+            {items.map((item, idx) => (
+              <div key={item._id} style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)',
+                borderRadius:18, padding:14, marginBottom:10,
+                display:'flex', gap:14, alignItems:'center', boxShadow:'0 2px 8px rgba(20,50,10,.05)',
+                animation:`fadeUp .4s ${idx*.05}s cubic-bezier(.22,1,.36,1) both` }}>
+                <img src={item.images?.[0] || 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=120'}
+                  alt={item.name}
+                  style={{ width:68, height:68, borderRadius:14, objectFit:'cover', flexShrink:0, background:'#f0f4ec' }}
+                  onError={e => { e.target.src = 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=120'; }} />
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:14, fontWeight:800, color:'#1a2415', marginBottom:2,
+                    overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.name}</div>
+                  <div style={{ fontSize:11, color:'#7a9070', marginBottom:8 }}>{item.farmer?.farmName || item.farmer?.name || 'Farm'}</div>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, background:'#f5f7f2', borderRadius:99, padding:'4px 4px' }}>
+                      <button onClick={() => updateQty(item._id, item.qty-1)}
+                        style={{ width:26, height:26, borderRadius:'50%',
+                          background: item.qty<=1 ? '#e8ede4' : '#4e9e2a', border:'none',
+                          color: item.qty<=1 ? '#afc09e' : '#fff', fontSize:14,
+                          cursor: item.qty<=1 ? 'default' : 'pointer',
+                          display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700 }}>−</button>
+                      <span style={{ fontSize:13, fontWeight:800, color:'#1a2415', minWidth:20, textAlign:'center' }}>{item.qty}</span>
+                      <button onClick={() => updateQty(item._id, item.qty+1)}
+                        style={{ width:26, height:26, borderRadius:'50%', background:'#4e9e2a', border:'none',
+                          color:'#fff', fontSize:14, cursor:'pointer',
+                          display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700 }}>+</button>
+                    </div>
+                    <span style={{ fontSize:14, fontWeight:800, color:'#4e9e2a' }}>৳{(item.price*item.qty).toLocaleString()}</span>
+                    {item.marketPrice > item.price && (
+                      <span style={{ fontSize:11, color:'#afc09e', textDecoration:'line-through' }}>৳{(item.marketPrice*item.qty).toLocaleString()}</span>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => removeFromCart(item._id)}
+                  style={{ background:'none', border:'none', color:'#e07070', fontSize:20, cursor:'pointer', padding:'4px', flexShrink:0 }}>🗑</button>
+              </div>
+            ))}
+
+            {/* Blocked account notice banner */}
+            {isBlocked && (
+              <div style={{ background: user.role === 'admin'
+                  ? 'linear-gradient(135deg,#e8eaf6,#c5cae9)'
+                  : 'linear-gradient(135deg,#fef3d8,#fde8c0)',
+                border: `1px solid ${user.role === 'admin' ? 'rgba(80,96,192,.2)' : 'rgba(196,125,10,.2)'}`,
+                borderRadius:16, padding:'14px 18px', marginTop:8, display:'flex', alignItems:'center', gap:12 }}>
+                <span style={{ fontSize:24, flexShrink:0 }}>{user.role === 'admin' ? '🛡️' : '🌾'}</span>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:800,
+                    color: user.role === 'admin' ? '#5060c0' : '#c47d0a', marginBottom:2 }}>
+                    {user.role === 'admin' ? 'Admin Account Detected' : 'Farmer Account Detected'}
+                  </div>
+                  <div style={{ fontSize:12,
+                    color: user.role === 'admin' ? '#5060c0' : '#c47d0a', lineHeight:1.5 }}>
+                    You can't checkout with {user.role === 'admin' ? 'an admin' : 'a farmer'} account. Log in as a customer to order.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:20, padding:20,
+              marginTop:16, boxShadow:'0 2px 8px rgba(20,50,10,.05)',
+              animation:'fadeUp .4s .3s cubic-bezier(.22,1,.36,1) both' }}>
+              <div style={{ fontSize:15, fontWeight:800, color:'#1a2415', marginBottom:14 }}>Order Summary</div>
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'#7a9070', marginBottom:8 }}>
+                <span>Subtotal ({items.length} item{items.length!==1?'s':''})</span>
+                <span style={{ color:'#1a2415', fontWeight:600 }}>৳{total.toLocaleString()}</span>
+              </div>
+              {savings > 0 && (
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'#4e9e2a', marginBottom:8 }}>
+                  <span>You save</span><span style={{ fontWeight:700 }}>-৳{savings.toLocaleString()}</span>
+                </div>
+              )}
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'#7a9070',
+                marginBottom:14, paddingBottom:14, borderBottom:'1px dashed rgba(60,100,40,.12)' }}>
+                <span>Delivery</span><span style={{ color:'#4e9e2a', fontWeight:700 }}>Free</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:18, fontWeight:800, color:'#1a2415', marginBottom:16 }}>
+                <span>Total</span><span style={{ color:'#4e9e2a' }}>৳{total.toLocaleString()}</span>
+              </div>
+
+              <div style={{ display:'flex', gap:8, marginBottom:16, alignItems:'center' }}>
+                <span style={{ fontSize:11, color:'#afc09e', fontWeight:600 }}>Pay with:</span>
+                {[['#E2136E','🟣','bKash'],['#F16522','🟠','Nagad'],['#4e9e2a','💵','COD']].map(([c,logo,lbl]) => (
+                  <div key={lbl} style={{ display:'flex', alignItems:'center', gap:4,
+                    background:'#f5f7f2', borderRadius:99, padding:'4px 10px', fontSize:11, fontWeight:600, color:c }}>
+                    {logo} {lbl}
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={handleCheckout} disabled={creating}
+                style={{ width:'100%', background: creating ? 'rgba(60,100,40,.2)' : 'linear-gradient(135deg,#4e9e2a,#3a7d1e)',
+                  color:'#fff', border:'none', borderRadius:99, padding:'15px',
+                  fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15,
+                  cursor: creating ? 'not-allowed' : 'pointer', boxShadow:'0 4px 16px rgba(78,158,42,.35)',
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                {creating ? (
+                  <><span style={{ display:'inline-block', width:18, height:18, border:'2px solid rgba(255,255,255,.4)',
+                    borderTopColor:'#fff', borderRadius:'50%', animation:'spin .7s linear infinite' }} /> Creating order…</>
+                ) : isBlocked ? (
+                  `${user.role === 'admin' ? '🛡️ Log In as Customer' : '🌾 Switch to Customer Account'}`
+                ) : (
+                  'Select Payment Method →'
+                )}
+              </button>
+              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 </file>
 
 <file path="client/src/pages/CustomerProfile.jsx">
@@ -7514,6 +7540,607 @@ export default function EditProduct() {
 }
 </file>
 
+<file path="client/src/pages/Home.jsx">
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../api/axios.js';
+import { useCart } from '../context/CartContext.jsx';
+import { useResponsive } from '../hooks/useResponsive.js';
+
+const CATS = [
+  { key:'vegetables', label:'Vegetables', bg:'#e8f5e1',  color:'#3a7d1e' },
+  { key:'fruits',     label:'Fruits',     bg:'#fef3d8',  color:'#c47d0a' },
+  { key:'fish',       label:'Fish',       bg:'#e0f4ef',  color:'#1d9e75' },
+  { key:'poultry',    label:'Poultry',    bg:'#fef0e0',  color:'#c47010' },
+  { key:'grains',     label:'Grains',     bg:'#f5ede0',  color:'#9a6830' },
+  { key:'dairy',      label:'Dairy',      bg:'#eef0fa',  color:'#5060c0' },
+  { key:'spices',     label:'Spices',     bg:'#fde8e8',  color:'#c04040' },
+];
+
+
+const CAT_IMGS = {
+  vegetables: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200&q=60',
+  fruits:     'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200&q=60',
+  fish:       'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=200&q=60',
+  poultry:    'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=200&q=60',
+  grains:     'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=200&q=60',
+  dairy:      'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=200&q=60',
+  spices:     'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=200&q=60',
+};
+
+const FEATURES = [
+  { icon:'📊', title:'Price Comparison',  desc:'See exactly how much you save vs local bazar on every product.' },
+  { icon:'📅', title:'Harvest Pre-Order', desc:'Book crops before harvest. Guaranteed freshness at farm price.' },
+  { icon:'✅', title:'Verified Farmers',  desc:'NID-verified badge gives you confidence every purchase.' },
+  { icon:'📈', title:'Price History',     desc:'Track price trends so you always buy at the right time.' },
+];
+
+/* ── Animated counter ── */
+function Counter({ target, suffix='' }) {
+  const [val, setVal] = useState(0);
+  const ref = useRef(null);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) {
+        let start = 0;
+        const num = parseInt(target.replace(/[^0-9]/g,''));
+        const dur = 1200;
+        const step = dur / 60;
+        const inc = num / 60;
+        const t = setInterval(() => {
+          start += inc;
+          if (start >= num) { setVal(num); clearInterval(t); }
+          else setVal(Math.floor(start));
+        }, step);
+        obs.disconnect();
+      }
+    }, { threshold: 0.5 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [target]);
+  const display = target.includes(',')
+    ? val.toLocaleString('en-US')
+    : val.toString();
+  return <span ref={ref}>{display}{suffix}</span>;
+}
+
+/* ── HomeProductCard ── */
+function HomeProductCard({ product, delay=0 }) {
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
+  const [hover, setHover] = useState(false);
+  const savings = product.marketPrice > product.price
+    ? Math.round(((product.marketPrice - product.price) / product.marketPrice) * 100) : 0;
+
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={() => navigate(`/products/${product._id}`)}
+      style={{
+        background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:18, overflow:'hidden',
+        flexShrink:0, width:152, cursor:'pointer',
+        boxShadow: hover ? '0 8px 24px rgba(20,50,10,.12)' : '0 2px 8px rgba(20,50,10,.06)',
+        transform: hover ? 'translateY(-4px)' : 'translateY(0)',
+        transition:'all .25s cubic-bezier(.22,1,.36,1)',
+        animation:`fadeUp .45s cubic-bezier(.22,1,.36,1) ${delay}ms both`,
+      }}>
+      <style>{`@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }`}</style>
+      <div style={{ height:110, background:'#f0f4ec', position:'relative', overflow:'hidden' }}>
+        {product.images?.[0]
+          ? <img src={product.images[0]} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'cover', transform: hover ? 'scale(1.06)' : 'scale(1)', transition:'transform .4s ease' }} />
+          : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:40 }}>🥦</div>
+        }
+        {savings > 0 && <span style={{ position:'absolute', top:7, left:7, background:'#4e9e2a', color:'#fff', fontSize:9, fontWeight:700, padding:'3px 8px', borderRadius:99, letterSpacing:'.04em' }}>SAVE {savings}%</span>}
+        <button
+          onClick={e => { e.stopPropagation(); addToCart(product,1); setAdded(true); setTimeout(()=>setAdded(false),1500); }}
+          style={{ position:'absolute', bottom:7, right:7, width:28, height:28, borderRadius:'50%',
+            background: added ? '#4e9e2a' : '#fff',
+            border: added ? 'none' : '1px solid rgba(60,100,40,.2)',
+            color: added ? '#fff' : '#4e9e2a',
+            fontSize:15, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700,
+            boxShadow:'0 2px 6px rgba(0,0,0,.1)',
+            transform: added ? 'scale(1.12)' : 'scale(1)',
+            transition:'all .2s cubic-bezier(.22,1,.36,1)',
+          }}>
+          {added ? '✓' : '+'}
+        </button>
+      </div>
+      <div style={{ padding:'10px 11px 13px' }}>
+        <div style={{ fontSize:12, fontWeight:700, color:'#1a2415', marginBottom:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{product.name}</div>
+        <div style={{ fontSize:10, color:'#7a9070', marginBottom:6, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{product.farmer?.location?.district || 'Bangladesh'}</div>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <span style={{ fontSize:13, fontWeight:800, color:'#4e9e2a' }}>৳{product.price}<span style={{ fontSize:9, fontWeight:400, color:'#7a9070' }}>/{product.unit}</span></span>
+          {product.marketPrice > product.price && <span style={{ fontSize:9, color:'#afc09e', textDecoration:'line-through' }}>৳{product.marketPrice}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Section row ── */
+function Section({ title, icon, products, onViewAll }) {
+  if (!products?.length) return null;
+  return (
+    <div style={{ marginBottom:28 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12, padding:'0 16px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <span style={{ fontSize:20 }}>{icon}</span>
+          <span style={{ fontSize:15, fontWeight:800, color:'#1a2415', letterSpacing:'-0.02em' }}>{title}</span>
+        </div>
+        <button onClick={onViewAll} style={{ background:'#e8f5e1', border:'none', color:'#4e9e2a', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Plus Jakarta Sans,sans-serif', padding:'5px 12px', borderRadius:99 }}>See all →</button>
+      </div>
+      <div style={{ display:'flex', gap:10, overflowX:'auto', padding:'4px 16px 8px', scrollbarWidth:'none' }}>
+        {products.map((p,i) => <HomeProductCard key={p._id} product={p} delay={i*40} />)}
+      </div>
+    </div>
+  );
+}
+
+/* ── MOBILE HOME ── */
+function MobileHome() {
+  const navigate = useNavigate();
+  const [products, setProducts] = useState({});
+  const [loading,  setLoading]  = useState(true);
+  const [search,   setSearch]   = useState('');
+  const [searchFocus, setSearchFocus] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const results = await Promise.all(
+          CATS.map(c => api.get('/products', { params: { category: c.key, limit: 8 } }).then(r => ({ key: c.key, products: r.data.products || [] })))
+        );
+        const map = {};
+        results.forEach(r => { map[r.key] = r.products; });
+        setProducts(map);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  // FIX: search navigates with the query param so marketplace shows results
+  const handleSearch = e => {
+    e.preventDefault();
+    if (search.trim()) navigate(`/marketplace?search=${encodeURIComponent(search.trim())}`);
+  };
+
+  const allProds = Object.values(products).flat().sort(() => Math.random() - 0.5).slice(0, 8);
+
+  return (
+    <div style={{ minHeight:'100vh', background:'#f5f7f2', paddingBottom:32 }}>
+      <style>{`
+        @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+      `}</style>
+
+      {/* ── Hero ── */}
+      <div style={{ position:'relative', height:240, overflow:'hidden', borderRadius:'0 0 28px 28px', margin:'0 0 0 0' }}>
+        <div style={{ position:'absolute', inset:0,
+          backgroundImage:"url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=70')",
+          backgroundSize:'cover', backgroundPosition:'center 35%' }} />
+        <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(10,30,5,.25) 0%,rgba(10,30,5,.7) 100%)' }} />
+        <div style={{ position:'relative', zIndex:2, padding:'20px 20px 24px', display:'flex', flexDirection:'column', justifyContent:'flex-end', height:'100%' }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:'rgba(255,255,255,.15)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,.25)', borderRadius:99, padding:'4px 12px', marginBottom:10, alignSelf:'flex-start',
+            animation:'fadeIn .6s ease both' }}>
+            <span style={{ fontSize:11 }}>🌱</span>
+            <span style={{ fontSize:10, fontWeight:700, color:'#fff', letterSpacing:'.08em', textTransform:'uppercase' }}>Farm Fresh · Direct to You</span>
+          </div>
+          <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.03em', color:'#fff', lineHeight:1.2, marginBottom:6,
+            animation:'fadeUp .5s .1s cubic-bezier(.22,1,.36,1) both' }}>
+            Farming Made<br /><span style={{ color:'#a8e07a' }}>Simple, Smart &</span><br /><span style={{ color:'#a8e07a' }}>Sustainable</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Search bar (floated over hero bottom) ── */}
+      <div style={{ padding:'0 16px', marginTop:-20, position:'relative', zIndex:10,
+        animation:'fadeUp .5s .25s cubic-bezier(.22,1,.36,1) both' }}>
+        <form onSubmit={handleSearch}>
+          <div style={{
+            display:'flex', alignItems:'center', gap:0,
+            background:'#fff', borderRadius:16,
+            border: searchFocus ? '1.5px solid #4e9e2a' : '1.5px solid rgba(60,100,40,.12)',
+            boxShadow: searchFocus ? '0 0 0 3px rgba(78,158,42,.12), 0 4px 16px rgba(20,50,10,.1)' : '0 4px 16px rgba(20,50,10,.1)',
+            transition:'all .2s ease', overflow:'hidden',
+          }}>
+            <span style={{ padding:'0 14px', fontSize:18, color:'#afc09e' }}>🔍</span>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onFocus={() => setSearchFocus(true)}
+              onBlur={() => setSearchFocus(false)}
+              placeholder="Search products, farmers..."
+              style={{ flex:1, border:'none', outline:'none', background:'transparent', padding:'14px 0', color:'#1a2415', fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:14 }}
+            />
+            {/* FIX: map icon stays, search submits the form */}
+            <button type="button" onClick={() => navigate('/map')} style={{ padding:'0 14px', background:'none', border:'none', cursor:'pointer', fontSize:20 }}>📍</button>
+            <button type="submit" style={{ padding:'0 16px', background:'#4e9e2a', border:'none', cursor:'pointer', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:13, height:'100%', minHeight:48 }}>Go</button>
+          </div>
+        </form>
+      </div>
+
+      {/* ── Weather-style info strip ── */}
+      <div style={{ margin:'16px 16px 0', background:'#fff', borderRadius:18, padding:'14px 16px',
+        border:'1px solid rgba(60,100,40,.1)', boxShadow:'0 2px 8px rgba(20,50,10,.05)',
+        animation:'fadeUp .5s .35s cubic-bezier(.22,1,.36,1) both' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <div>
+            <div style={{ fontSize:10, color:'#7a9070', fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em', marginBottom:2 }}>📊 Market Insight</div>
+            <div style={{ fontSize:13, fontWeight:700, color:'#1a2415' }}>Good time to buy vegetables</div>
+            <div style={{ fontSize:11, color:'#7a9070' }}>Prices 12% below avg today</div>
+          </div>
+          <div style={{ textAlign:'right' }}>
+            <div style={{ fontSize:22, fontWeight:800, color:'#4e9e2a' }}>↓12%</div>
+            <div style={{ fontSize:10, color:'#afc09e' }}>vs last week</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Stats ── */}
+      <div style={{ display:'flex', justifyContent:'space-around', margin:'14px 16px 0',
+        background:'#fff', borderRadius:18, padding:'16px',
+        border:'1px solid rgba(60,100,40,.1)', boxShadow:'0 2px 8px rgba(20,50,10,.05)',
+        animation:'fadeUp .5s .4s cubic-bezier(.22,1,.36,1) both' }}>
+        {[['2,400','Farmers'],['30+','Products'],['64','Districts']].map(([n,l],i) => (
+          <div key={l} style={{ textAlign:'center', flex:1, borderRight: i<2 ? '1px solid rgba(60,100,40,.1)' : 'none' }}>
+            <div style={{ fontSize:20, fontWeight:800, color:'#4e9e2a', lineHeight:1 }}>{n}</div>
+            <div style={{ fontSize:10, color:'#7a9070', marginTop:3, fontWeight:500 }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Category pills (horizontal scroll) ── */}
+      <div style={{ padding:'20px 0 0', animation:'fadeUp .5s .45s cubic-bezier(.22,1,.36,1) both' }}>
+        <div style={{ padding:'0 16px', fontSize:14, fontWeight:800, color:'#1a2415', marginBottom:12, letterSpacing:'-0.02em' }}>Shop by Category</div>
+        <div style={{ display:'flex', gap:10, overflowX:'auto', padding:'4px 16px 6px', scrollbarWidth:'none' }}>
+          {CATS.map((cat,i) => (
+            // FIX: navigate to marketplace with category param so it pre-filters
+            <div key={cat.key} onClick={() => navigate(`/marketplace?cat=${cat.key}`)}
+              style={{ borderRadius:14, flexShrink:0, minWidth:80, height:80, position:'relative', overflow:'hidden', cursor:'pointer',
+                border:`2px solid transparent`,
+                boxShadow:'0 2px 8px rgba(20,50,10,.08)',
+                transition:'all .25s cubic-bezier(.22,1,.36,1)',
+                animation:`fadeUp .4s ${.45 + i*.05}s cubic-bezier(.22,1,.36,1) both`,
+              }}>
+              <img src={CAT_IMGS[cat.key]} alt={cat.label} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} />
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(10,30,5,.15),rgba(10,30,5,.65))' }} />
+              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'5px 7px' }}>
+                <div style={{ fontSize:9, fontWeight:800, color:'#fff', lineHeight:1.2, textShadow:'0 1px 3px rgba(0,0,0,.5)' }}>{cat.label}</div>
+              </div>
+            </div>
+          ))}
+          <div onClick={() => navigate('/marketplace')}
+            style={{ background:'#f0f4ec', borderRadius:16, padding:'12px 14px', textAlign:'center', cursor:'pointer', border:'1.5px solid rgba(60,100,40,.12)', flexShrink:0, minWidth:72, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+            <div style={{ fontSize:10, fontWeight:700, color:'#7a9070' }}>All</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── My Fields card (premium feel) ── */}
+      <div style={{ margin:'20px 16px 0', animation:'fadeUp .5s .55s cubic-bezier(.22,1,.36,1) both' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+          <span style={{ fontSize:14, fontWeight:800, color:'#1a2415', letterSpacing:'-0.02em' }}>🌾 Featured Farms</span>
+          <button onClick={() => navigate('/map')} style={{ background:'none', border:'none', color:'#4e9e2a', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Plus Jakarta Sans,sans-serif' }}>See all →</button>
+        </div>
+        <div style={{ background:'linear-gradient(135deg,#e8f5e1,#f5f9f0)', borderRadius:20, padding:'16px', border:'1px solid rgba(78,158,42,.15)', position:'relative', overflow:'hidden' }}>
+          <div style={{ position:'absolute', top:-20, right:-20, width:100, height:100, background:'rgba(78,158,42,.06)', borderRadius:'50%' }} />
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <div style={{ width:52, height:52, borderRadius:14, overflow:'hidden', flexShrink:0, border:'2px solid rgba(78,158,42,.2)' }}>
+              <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=100&q=60" alt="farm" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:13, fontWeight:800, color:'#1a2415' }}>Emerald Valley Farm</div>
+              <div style={{ fontSize:11, color:'#7a9070', marginTop:1 }}>📍 Rajshahi · Verified ✓</div>
+              <div style={{ display:'flex', gap:6, marginTop:6 }}>
+                <span style={{ background:'#4e9e2a', color:'#fff', fontSize:9, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>🌾 Wheat</span>
+                <span style={{ background:'#e8f5e1', color:'#4e9e2a', fontSize:9, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>🌽 Corn</span>
+              </div>
+            </div>
+            <div style={{ textAlign:'right' }}>
+              <div style={{ fontSize:13, fontWeight:800, color:'#4e9e2a' }}>4.8 ⭐</div>
+              <div style={{ fontSize:10, color:'#7a9070' }}>240+ orders</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Products ── */}
+      <div style={{ marginTop:24 }}>
+        {loading ? (
+          <div style={{ display:'flex', gap:10, padding:'0 16px' }}>
+            {[...Array(4)].map((_,i) => <div key={i} style={{ width:152, height:200, background:'#e8ede4', borderRadius:18, flexShrink:0, backgroundSize:'400px 100%', backgroundImage:'linear-gradient(90deg,#e8ede4 25%,#f0f4ec 50%,#e8ede4 75%)', animation:`shimmer 1.4s ${i*.15}s infinite` }} />)}
+            <style>{`@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}`}</style>
+          </div>
+        ) : (
+          <>
+            {/* FIX: Recommended For You "See all" goes to marketplace with recommended param */}
+            {allProds.length > 0 && <Section title="Recommended For You" icon="⭐" products={allProds} onViewAll={() => navigate('/marketplace?recommended=true')} />}
+            {CATS.map(cat => (
+              // FIX: each category "See all" navigates with the correct category param
+              <Section key={cat.key} title={cat.label} icon="🌿" products={products[cat.key] || []} onViewAll={() => navigate(`/marketplace?cat=${cat.key}`)} />
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* ── Farmer CTA ── */}
+      <div style={{ margin:'28px 16px 0', borderRadius:20, overflow:'hidden', position:'relative',
+        animation:'fadeUp .5s .6s cubic-bezier(.22,1,.36,1) both' }}>
+        <div style={{ position:'absolute', inset:0, backgroundImage:"url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&q=60')", backgroundSize:'cover', backgroundPosition:'center' }} />
+        <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(20,60,10,.75),rgba(10,40,5,.9))' }} />
+        <div style={{ position:'relative', padding:'24px 20px', textAlign:'center' }}>
+          <div style={{ fontSize:28, marginBottom:8 }}>👨‍🌾</div>
+          <div style={{ fontSize:17, fontWeight:800, color:'#fff', marginBottom:6, letterSpacing:'-0.02em' }}>Are you a Farmer?</div>
+          <div style={{ fontSize:12, color:'rgba(255,255,255,.7)', marginBottom:16, lineHeight:1.6 }}>Join KrishiConnect and sell directly to thousands of customers.</div>
+          <Link to="/register" style={{ background:'#fff', color:'#3a7d1e', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:14, padding:'12px 28px', borderRadius:99, textDecoration:'none', display:'inline-block', boxShadow:'0 4px 12px rgba(0,0,0,.2)' }}>Register as Farmer →</Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── DESKTOP HOME ── */
+function DesktopHome() {
+  const navigate = useNavigate();
+  const [products, setProducts] = useState({});
+  const [loading,  setLoading]  = useState(true);
+  const [search,   setSearch]   = useState('');
+  const [searchFocus, setSearchFocus] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const results = await Promise.all(
+          CATS.map(c => api.get('/products', { params: { category: c.key, limit: 6 } }).then(r => ({ key: c.key, products: r.data.products || [] })))
+        );
+        const map = {};
+        results.forEach(r => { map[r.key] = r.products; });
+        setProducts(map);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  const allProds = Object.values(products).flat().sort(() => Math.random() - 0.5).slice(0, 6);
+
+  // FIX: desktop search handler properly navigates with the search query
+  const handleDesktopSearch = (e) => {
+    e.preventDefault();
+    if (search.trim()) navigate(`/marketplace?search=${encodeURIComponent(search.trim())}`);
+    else navigate('/marketplace');
+  };
+
+  return (
+    <div style={{ background:'#f5f7f2' }}>
+      <style>{`
+        @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes shimmer{ 0%{background-position:-600px 0}100%{background-position:600px 0} }
+        .cat-card:hover { transform:translateY(-5px) scale(1.03) !important; box-shadow:0 8px 24px rgba(20,50,10,.12) !important; }
+        .feat-card:hover { transform:translateY(-4px) !important; box-shadow:0 8px 28px rgba(20,50,10,.12) !important; }
+        .prod-card-d:hover .prod-img-d { transform:scale(1.06); }
+      `}</style>
+
+      {/* ── Hero ── */}
+      <div style={{ position:'relative', minHeight:'90vh', display:'flex', flexDirection:'column', borderRadius:'0 0 40px 40px', overflow:'hidden' }}>
+        <div style={{ position:'absolute', inset:0, backgroundImage:"url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1800&q=80')", backgroundSize:'cover', backgroundPosition:'center 30%' }} />
+        <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(5,20,2,.2) 0%,rgba(5,20,2,.65) 60%,rgba(5,20,2,.9) 100%)' }} />
+
+        {/* Floating badges */}
+        <div style={{ position:'absolute', top:'30%', right:'8%', background:'rgba(255,255,255,.12)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,.2)', borderRadius:20, padding:'16px 20px', animation:'float 3s ease-in-out infinite', color:'#fff' }}>
+          <div style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,.7)' }}>Today's Best Pick</div>
+          <div style={{ fontSize:18, fontWeight:800, marginTop:2 }}>🥦 Fresh Vegetables</div>
+          <div style={{ fontSize:13, color:'#a8e07a', marginTop:2 }}>↓15% vs yesterday</div>
+        </div>
+
+        <div style={{ position:'absolute', top:'55%', right:'12%', background:'rgba(255,255,255,.1)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,.15)', borderRadius:20, padding:'14px 18px', animation:'float 3.5s 1s ease-in-out infinite', color:'#fff' }}>
+          <div style={{ fontSize:12, color:'rgba(255,255,255,.7)' }}>✅ Verified Farmers</div>
+          <div style={{ fontSize:22, fontWeight:800, marginTop:2 }}>2,400+</div>
+        </div>
+
+        <div style={{ position:'relative', zIndex:5, flex:1, display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'60px 64px 80px', maxWidth:720 }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(255,255,255,.12)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,.2)', color:'#fff', fontSize:11, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', padding:'7px 18px', borderRadius:99, marginBottom:24, alignSelf:'flex-start',
+            animation:'fadeIn .6s ease both' }}>
+            🌱 Farm Fresh · Direct to You
+          </div>
+          <h1 style={{ fontSize:'clamp(40px,5vw,72px)', fontWeight:800, lineHeight:1.06, letterSpacing:'-0.04em', marginBottom:20, color:'#fff',
+            animation:'fadeUp .6s .1s cubic-bezier(.22,1,.36,1) both' }}>
+            Farming Made<br /><span style={{ color:'#a8e07a', fontFamily:'Fraunces,serif', fontStyle:'italic' }}>Simple, Smarter,</span><br />and Sustainable
+          </h1>
+          <p style={{ fontSize:16, fontWeight:400, lineHeight:1.7, color:'rgba(255,255,255,.6)', maxWidth:460, marginBottom:36,
+            animation:'fadeUp .6s .2s cubic-bezier(.22,1,.36,1) both' }}>
+            Fresh produce, fair prices. Cut out the middleman and connect with verified farmers across Bangladesh — right from your home.
+          </p>
+          <div style={{ display:'flex', gap:14, animation:'fadeUp .6s .3s cubic-bezier(.22,1,.36,1) both' }}>
+            <Link to="/marketplace" style={{ background:'#4e9e2a', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:15, padding:'15px 34px', borderRadius:99, textDecoration:'none', boxShadow:'0 4px 16px rgba(78,158,42,.45)', display:'flex', alignItems:'center', gap:8 }}>Browse Marketplace →</Link>
+            <Link to="/register" style={{ background:'rgba(255,255,255,.1)', backdropFilter:'blur(8px)', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:600, fontSize:15, padding:'15px 34px', borderRadius:99, border:'1px solid rgba(255,255,255,.2)', textDecoration:'none' }}>I'm a Farmer</Link>
+          </div>
+          <div style={{ display:'flex', gap:48, marginTop:56, paddingTop:32, borderTop:'1px solid rgba(255,255,255,.15)',
+            animation:'fadeUp .6s .4s cubic-bezier(.22,1,.36,1) both' }}>
+            {[['2,400+','Verified Farmers'],['৳18 Cr+','Saved by Customers'],['64','Districts Covered']].map(([n,l]) => (
+              <div key={l}>
+                <div style={{ fontSize:28, fontWeight:800, color:'#fff', lineHeight:1 }}>{n}</div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,.5)', marginTop:5, fontWeight:500 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Search bar section ── */}
+      {/* FIX: desktop search is now a proper form that navigates with the query */}
+      <div style={{ padding:'48px 64px 0' }}>
+        <form onSubmit={handleDesktopSearch} style={{ background:'#fff', borderRadius:24, padding:'28px 32px', boxShadow:'0 4px 24px rgba(20,50,10,.08)', border:'1px solid rgba(60,100,40,.1)' }}>
+          <div style={{ fontSize:13, fontWeight:600, color:'#7a9070', marginBottom:14, textTransform:'uppercase', letterSpacing:'.06em' }}>🔍 Search Products & Farms</div>
+          <div style={{ display:'flex', gap:12 }}>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onFocus={e => { setSearchFocus(true); e.target.style.borderColor='#4e9e2a'; }}
+              onBlur={e => { setSearchFocus(false); e.target.style.borderColor='rgba(60,100,40,.15)'; }}
+              placeholder="Search vegetables, fruits, fish, farmers..."
+              style={{ flex:1, border:'1.5px solid rgba(60,100,40,.15)', borderRadius:14, padding:'14px 20px', color:'#1a2415', fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:15, outline:'none', background:'#f9faf7', transition:'border .2s' }}
+            />
+            {/* FIX: Search button submits the form instead of being a plain link */}
+            <button type="submit" style={{ background:'#4e9e2a', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:14, padding:'14px 28px', borderRadius:14, border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:6, boxShadow:'0 2px 8px rgba(78,158,42,.3)' }}>Search</button>
+          </div>
+        </form>
+      </div>
+
+      {/* ── Features ── */}
+      <div style={{ padding:'64px 64px 0' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:40 }}>
+          <div>
+            <div style={{ fontSize:12, fontWeight:700, color:'#4e9e2a', textTransform:'uppercase', letterSpacing:'.1em', marginBottom:10 }}>Why KrishiConnect</div>
+            <div style={{ fontSize:36, fontWeight:800, letterSpacing:'-0.03em', color:'#1a2415', lineHeight:1.1 }}>Built for Bangladesh<br /><span style={{ fontFamily:'Fraunces,serif', fontStyle:'italic', color:'#4e9e2a', fontWeight:600 }}>farmers & families</span></div>
+          </div>
+          <Link to="/marketplace" style={{ background:'#4e9e2a', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:13, padding:'12px 24px', borderRadius:99, textDecoration:'none', boxShadow:'0 2px 8px rgba(78,158,42,.3)' }}>Browse Market →</Link>
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:20 }}>
+          {FEATURES.map((f,i) => (
+            <div key={f.title} className="feat-card" style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:24, padding:28, transition:'all .25s cubic-bezier(.22,1,.36,1)',
+              animation:`fadeUp .5s ${.1+i*.08}s cubic-bezier(.22,1,.36,1) both` }}>
+              <div style={{ width:52, height:52, background:'#e8f5e1', borderRadius:16, display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, marginBottom:18 }}>{f.icon}</div>
+              <div style={{ fontSize:16, fontWeight:800, marginBottom:10, color:'#1a2415' }}>{f.title}</div>
+              <div style={{ fontSize:13, color:'#7a9070', lineHeight:1.65 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Categories ── */}
+      <div style={{ padding:'64px 64px 0' }}>
+        <div style={{ fontSize:28, fontWeight:800, letterSpacing:'-0.03em', color:'#1a2415', marginBottom:32 }}>Shop by Category</div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(8,1fr)', gap:14 }}>
+          {CATS.map((cat,i) => (
+            // FIX: category cards are Links with the correct cat param — no icons added, photo-only style preserved
+            <Link key={cat.key} to={`/marketplace?cat=${cat.key}`} className="cat-card"
+              style={{ borderRadius:18, overflow:'hidden', position:'relative', height:110, cursor:'pointer', textDecoration:'none',
+                boxShadow:'0 2px 8px rgba(20,50,10,.08)',
+                transition:'all .28s cubic-bezier(.22,1,.36,1)',
+                animation:`fadeUp .4s ${.05+i*.05}s cubic-bezier(.22,1,.36,1) both` }}>
+              <img src={CAT_IMGS[cat.key]} alt={cat.label} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} />
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(10,30,5,.15),rgba(10,30,5,.6))' }} />
+              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 10px' }}>
+                <div style={{ fontSize:12, fontWeight:800, color:'#fff', textShadow:'0 1px 4px rgba(0,0,0,.5)', lineHeight:1.2 }}>{cat.label}</div>
+              </div>
+            </Link>
+          ))}
+          <Link to="/marketplace" className="cat-card"
+            style={{ borderRadius:18, overflow:'hidden', position:'relative', height:110, cursor:'pointer', textDecoration:'none',
+              background:'linear-gradient(135deg,#3a7d1e,#4e9e2a)',
+              boxShadow:'0 2px 8px rgba(20,50,10,.1)',
+              transition:'all .28s cubic-bezier(.22,1,.36,1)',
+              display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:4 }}>
+            <div style={{ fontSize:12, fontWeight:800, color:'#fff' }}>All</div>
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Featured Products ── */}
+      <div style={{ padding:'64px 64px 0' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:28 }}>
+          <div style={{ fontSize:28, fontWeight:800, letterSpacing:'-0.03em', color:'#1a2415' }}>⭐ Recommended For You</div>
+          {/* FIX: View All goes to marketplace with recommended param so it pre-filters */}
+          <Link to="/marketplace?recommended=true" style={{ background:'#e8f5e1', color:'#4e9e2a', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:13, padding:'10px 22px', borderRadius:99, textDecoration:'none' }}>View All →</Link>
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:16 }}>
+          {loading ? [...Array(6)].map((_,i) => (
+            <div key={i} style={{ height:260, borderRadius:20, backgroundImage:'linear-gradient(90deg,#e8ede4 25%,#f0f4ec 50%,#e8ede4 75%)', backgroundSize:'600px 100%', animation:`shimmer 1.4s ${i*.1}s infinite` }} />
+          )) : allProds.map((p,i) => (
+            <DesktopProductCard key={p._id} product={p} delay={i*60} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Farmer CTA ── */}
+      <div style={{ padding:'64px 64px 80px' }}>
+        <div style={{ borderRadius:32, overflow:'hidden', position:'relative', minHeight:280, display:'flex', alignItems:'center' }}>
+          <div style={{ position:'absolute', inset:0, backgroundImage:"url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&q=70')", backgroundSize:'cover', backgroundPosition:'center' }} />
+          <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(10,40,5,.8),rgba(5,25,3,.7))' }} />
+          <div style={{ position:'relative', zIndex:2, padding:'48px 64px', flex:1 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:'rgba(168,224,122,.8)', textTransform:'uppercase', letterSpacing:'.1em', marginBottom:14 }}>For Farmers</div>
+            <div style={{ fontSize:40, fontWeight:800, color:'#fff', letterSpacing:'-0.03em', lineHeight:1.1, marginBottom:18, maxWidth:500 }}>
+              Ready to grow your <span style={{ fontFamily:'Fraunces,serif', fontStyle:'italic', color:'#a8e07a' }}>income</span> directly?
+            </div>
+            <div style={{ fontSize:15, color:'rgba(255,255,255,.6)', marginBottom:32, maxWidth:420, lineHeight:1.7 }}>
+              Join thousands of farmers selling directly to consumers. Higher prices, zero middlemen.
+            </div>
+            <div style={{ display:'flex', gap:14 }}>
+              <Link to="/register" style={{ background:'#fff', color:'#3a7d1e', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15, padding:'15px 36px', borderRadius:99, textDecoration:'none', boxShadow:'0 4px 16px rgba(0,0,0,.2)' }}>Register as Farmer →</Link>
+              <Link to="/marketplace" style={{ background:'rgba(255,255,255,.1)', backdropFilter:'blur(8px)', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:600, fontSize:15, padding:'15px 36px', borderRadius:99, border:'1px solid rgba(255,255,255,.2)', textDecoration:'none' }}>Browse First</Link>
+            </div>
+          </div>
+          <div style={{ position:'relative', zIndex:2, padding:'48px 64px 48px 0', display:'flex', flexDirection:'column', gap:16 }}>
+            {[['2,400+','Verified Farmers'],['৳18 Cr+','Customer Savings'],['64','Districts'],['4.9★','Average Rating']].map(([n,l]) => (
+              <div key={l} style={{ background:'rgba(255,255,255,.08)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,.15)', borderRadius:16, padding:'14px 22px', minWidth:160 }}>
+                <div style={{ fontSize:22, fontWeight:800, color:'#fff' }}>{n}</div>
+                <div style={{ fontSize:11, color:'rgba(255,255,255,.55)', marginTop:2 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Desktop product card ── */
+function DesktopProductCard({ product, delay=0 }) {
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
+  const [hover, setHover] = useState(false);
+  const savings = product.marketPrice > product.price
+    ? Math.round(((product.marketPrice - product.price) / product.marketPrice) * 100) : 0;
+
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={() => navigate(`/products/${product._id}`)}
+      style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:22, overflow:'hidden', cursor:'pointer',
+        boxShadow: hover ? '0 12px 32px rgba(20,50,10,.12)' : '0 2px 8px rgba(20,50,10,.06)',
+        transform: hover ? 'translateY(-6px)' : 'translateY(0)',
+        transition:'all .3s cubic-bezier(.22,1,.36,1)',
+        animation:`fadeUp .5s ${delay}ms cubic-bezier(.22,1,.36,1) both`,
+      }}>
+      <div className="prod-img-d" style={{ height:180, background:'#f0f4ec', position:'relative', overflow:'hidden' }}>
+        {product.images?.[0]
+          ? <img src={product.images[0]} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .4s ease', transform: hover ? 'scale(1.07)' : 'scale(1)' }} />
+          : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:56 }}>🥦</div>
+        }
+        {savings > 0 && <span style={{ position:'absolute', top:10, left:10, background:'#4e9e2a', color:'#fff', fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:99 }}>SAVE {savings}%</span>}
+        {product.farmer?.isVerified && <div style={{ position:'absolute', top:10, right:10, width:24, height:24, borderRadius:'50%', background:'#fff', border:'1.5px solid #4e9e2a', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, color:'#4e9e2a', boxShadow:'0 1px 4px rgba(0,0,0,.1)' }}>✓</div>}
+      </div>
+      <div style={{ padding:'16px 18px 18px' }}>
+        <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'.08em', color:'#afc09e', marginBottom:4 }}>{product.category}</div>
+        <div style={{ fontSize:15, fontWeight:800, color:'#1a2415', marginBottom:4, lineHeight:1.3 }}>{product.name}</div>
+        <div style={{ fontSize:12, color:'#7a9070', marginBottom:12 }}>{product.farmer?.farmName || product.farmer?.name}{product.farmer?.location?.district ? ` · ${product.farmer.location.district}` : ''}</div>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+          <div style={{ fontSize:20, fontWeight:800, color:'#4e9e2a' }}>৳{product.price} <span style={{ fontSize:12, fontWeight:400, color:'#7a9070' }}>/{product.unit}</span></div>
+          {product.marketPrice > product.price && <div style={{ fontSize:12, color:'#afc09e', textDecoration:'line-through' }}>৳{product.marketPrice}</div>}
+        </div>
+        <button
+          onClick={e => { e.stopPropagation(); addToCart(product,1); setAdded(true); setTimeout(()=>setAdded(false),1500); }}
+          style={{ width:'100%', background: added ? '#4e9e2a' : '#e8f5e1', border:'none', borderRadius:12, padding:'10px', color: added ? '#fff' : '#4e9e2a', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:13, cursor:'pointer', transition:'all .2s', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+          {added ? '✓ Added!' : '+ Add to Cart'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  const { isMobile } = useResponsive();
+  return isMobile ? <MobileHome /> : <DesktopHome />;
+}
+</file>
+
 <file path="client/src/pages/farmer/FarmerAccountProfile.jsx">
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -8210,607 +8837,6 @@ export default function FarmerAccountProfile() {
 }
 </file>
 
-<file path="client/src/pages/Home.jsx">
-import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import api from '../api/axios.js';
-import { useCart } from '../context/CartContext.jsx';
-import { useResponsive } from '../hooks/useResponsive.js';
-
-const CATS = [
-  { key:'vegetables', label:'Vegetables', bg:'#e8f5e1',  color:'#3a7d1e' },
-  { key:'fruits',     label:'Fruits',     bg:'#fef3d8',  color:'#c47d0a' },
-  { key:'fish',       label:'Fish',       bg:'#e0f4ef',  color:'#1d9e75' },
-  { key:'poultry',    label:'Poultry',    bg:'#fef0e0',  color:'#c47010' },
-  { key:'grains',     label:'Grains',     bg:'#f5ede0',  color:'#9a6830' },
-  { key:'dairy',      label:'Dairy',      bg:'#eef0fa',  color:'#5060c0' },
-  { key:'spices',     label:'Spices',     bg:'#fde8e8',  color:'#c04040' },
-];
-
-
-const CAT_IMGS = {
-  vegetables: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200&q=60',
-  fruits:     'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200&q=60',
-  fish:       'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=200&q=60',
-  poultry:    'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=200&q=60',
-  grains:     'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=200&q=60',
-  dairy:      'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=200&q=60',
-  spices:     'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=200&q=60',
-};
-
-const FEATURES = [
-  { icon:'📊', title:'Price Comparison',  desc:'See exactly how much you save vs local bazar on every product.' },
-  { icon:'📅', title:'Harvest Pre-Order', desc:'Book crops before harvest. Guaranteed freshness at farm price.' },
-  { icon:'✅', title:'Verified Farmers',  desc:'NID-verified badge gives you confidence every purchase.' },
-  { icon:'📈', title:'Price History',     desc:'Track price trends so you always buy at the right time.' },
-];
-
-/* ── Animated counter ── */
-function Counter({ target, suffix='' }) {
-  const [val, setVal] = useState(0);
-  const ref = useRef(null);
-  useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) {
-        let start = 0;
-        const num = parseInt(target.replace(/[^0-9]/g,''));
-        const dur = 1200;
-        const step = dur / 60;
-        const inc = num / 60;
-        const t = setInterval(() => {
-          start += inc;
-          if (start >= num) { setVal(num); clearInterval(t); }
-          else setVal(Math.floor(start));
-        }, step);
-        obs.disconnect();
-      }
-    }, { threshold: 0.5 });
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, [target]);
-  const display = target.includes(',')
-    ? val.toLocaleString('en-US')
-    : val.toString();
-  return <span ref={ref}>{display}{suffix}</span>;
-}
-
-/* ── HomeProductCard ── */
-function HomeProductCard({ product, delay=0 }) {
-  const navigate = useNavigate();
-  const { addToCart } = useCart();
-  const [added, setAdded] = useState(false);
-  const [hover, setHover] = useState(false);
-  const savings = product.marketPrice > product.price
-    ? Math.round(((product.marketPrice - product.price) / product.marketPrice) * 100) : 0;
-
-  return (
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onClick={() => navigate(`/products/${product._id}`)}
-      style={{
-        background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:18, overflow:'hidden',
-        flexShrink:0, width:152, cursor:'pointer',
-        boxShadow: hover ? '0 8px 24px rgba(20,50,10,.12)' : '0 2px 8px rgba(20,50,10,.06)',
-        transform: hover ? 'translateY(-4px)' : 'translateY(0)',
-        transition:'all .25s cubic-bezier(.22,1,.36,1)',
-        animation:`fadeUp .45s cubic-bezier(.22,1,.36,1) ${delay}ms both`,
-      }}>
-      <style>{`@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }`}</style>
-      <div style={{ height:110, background:'#f0f4ec', position:'relative', overflow:'hidden' }}>
-        {product.images?.[0]
-          ? <img src={product.images[0]} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'cover', transform: hover ? 'scale(1.06)' : 'scale(1)', transition:'transform .4s ease' }} />
-          : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:40 }}>🥦</div>
-        }
-        {savings > 0 && <span style={{ position:'absolute', top:7, left:7, background:'#4e9e2a', color:'#fff', fontSize:9, fontWeight:700, padding:'3px 8px', borderRadius:99, letterSpacing:'.04em' }}>SAVE {savings}%</span>}
-        <button
-          onClick={e => { e.stopPropagation(); addToCart(product,1); setAdded(true); setTimeout(()=>setAdded(false),1500); }}
-          style={{ position:'absolute', bottom:7, right:7, width:28, height:28, borderRadius:'50%',
-            background: added ? '#4e9e2a' : '#fff',
-            border: added ? 'none' : '1px solid rgba(60,100,40,.2)',
-            color: added ? '#fff' : '#4e9e2a',
-            fontSize:15, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700,
-            boxShadow:'0 2px 6px rgba(0,0,0,.1)',
-            transform: added ? 'scale(1.12)' : 'scale(1)',
-            transition:'all .2s cubic-bezier(.22,1,.36,1)',
-          }}>
-          {added ? '✓' : '+'}
-        </button>
-      </div>
-      <div style={{ padding:'10px 11px 13px' }}>
-        <div style={{ fontSize:12, fontWeight:700, color:'#1a2415', marginBottom:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{product.name}</div>
-        <div style={{ fontSize:10, color:'#7a9070', marginBottom:6, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{product.farmer?.location?.district || 'Bangladesh'}</div>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <span style={{ fontSize:13, fontWeight:800, color:'#4e9e2a' }}>৳{product.price}<span style={{ fontSize:9, fontWeight:400, color:'#7a9070' }}>/{product.unit}</span></span>
-          {product.marketPrice > product.price && <span style={{ fontSize:9, color:'#afc09e', textDecoration:'line-through' }}>৳{product.marketPrice}</span>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Section row ── */
-function Section({ title, icon, products, onViewAll }) {
-  if (!products?.length) return null;
-  return (
-    <div style={{ marginBottom:28 }}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12, padding:'0 16px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span style={{ fontSize:20 }}>{icon}</span>
-          <span style={{ fontSize:15, fontWeight:800, color:'#1a2415', letterSpacing:'-0.02em' }}>{title}</span>
-        </div>
-        <button onClick={onViewAll} style={{ background:'#e8f5e1', border:'none', color:'#4e9e2a', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Plus Jakarta Sans,sans-serif', padding:'5px 12px', borderRadius:99 }}>See all →</button>
-      </div>
-      <div style={{ display:'flex', gap:10, overflowX:'auto', padding:'4px 16px 8px', scrollbarWidth:'none' }}>
-        {products.map((p,i) => <HomeProductCard key={p._id} product={p} delay={i*40} />)}
-      </div>
-    </div>
-  );
-}
-
-/* ── MOBILE HOME ── */
-function MobileHome() {
-  const navigate = useNavigate();
-  const [products, setProducts] = useState({});
-  const [loading,  setLoading]  = useState(true);
-  const [search,   setSearch]   = useState('');
-  const [searchFocus, setSearchFocus] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const results = await Promise.all(
-          CATS.map(c => api.get('/products', { params: { category: c.key, limit: 8 } }).then(r => ({ key: c.key, products: r.data.products || [] })))
-        );
-        const map = {};
-        results.forEach(r => { map[r.key] = r.products; });
-        setProducts(map);
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    })();
-  }, []);
-
-  // FIX: search navigates with the query param so marketplace shows results
-  const handleSearch = e => {
-    e.preventDefault();
-    if (search.trim()) navigate(`/marketplace?search=${encodeURIComponent(search.trim())}`);
-  };
-
-  const allProds = Object.values(products).flat().sort(() => Math.random() - 0.5).slice(0, 8);
-
-  return (
-    <div style={{ minHeight:'100vh', background:'#f5f7f2', paddingBottom:32 }}>
-      <style>{`
-        @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-      `}</style>
-
-      {/* ── Hero ── */}
-      <div style={{ position:'relative', height:240, overflow:'hidden', borderRadius:'0 0 28px 28px', margin:'0 0 0 0' }}>
-        <div style={{ position:'absolute', inset:0,
-          backgroundImage:"url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=70')",
-          backgroundSize:'cover', backgroundPosition:'center 35%' }} />
-        <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(10,30,5,.25) 0%,rgba(10,30,5,.7) 100%)' }} />
-        <div style={{ position:'relative', zIndex:2, padding:'20px 20px 24px', display:'flex', flexDirection:'column', justifyContent:'flex-end', height:'100%' }}>
-          <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:'rgba(255,255,255,.15)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,.25)', borderRadius:99, padding:'4px 12px', marginBottom:10, alignSelf:'flex-start',
-            animation:'fadeIn .6s ease both' }}>
-            <span style={{ fontSize:11 }}>🌱</span>
-            <span style={{ fontSize:10, fontWeight:700, color:'#fff', letterSpacing:'.08em', textTransform:'uppercase' }}>Farm Fresh · Direct to You</span>
-          </div>
-          <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.03em', color:'#fff', lineHeight:1.2, marginBottom:6,
-            animation:'fadeUp .5s .1s cubic-bezier(.22,1,.36,1) both' }}>
-            Farming Made<br /><span style={{ color:'#a8e07a' }}>Simple, Smart &</span><br /><span style={{ color:'#a8e07a' }}>Sustainable</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Search bar (floated over hero bottom) ── */}
-      <div style={{ padding:'0 16px', marginTop:-20, position:'relative', zIndex:10,
-        animation:'fadeUp .5s .25s cubic-bezier(.22,1,.36,1) both' }}>
-        <form onSubmit={handleSearch}>
-          <div style={{
-            display:'flex', alignItems:'center', gap:0,
-            background:'#fff', borderRadius:16,
-            border: searchFocus ? '1.5px solid #4e9e2a' : '1.5px solid rgba(60,100,40,.12)',
-            boxShadow: searchFocus ? '0 0 0 3px rgba(78,158,42,.12), 0 4px 16px rgba(20,50,10,.1)' : '0 4px 16px rgba(20,50,10,.1)',
-            transition:'all .2s ease', overflow:'hidden',
-          }}>
-            <span style={{ padding:'0 14px', fontSize:18, color:'#afc09e' }}>🔍</span>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onFocus={() => setSearchFocus(true)}
-              onBlur={() => setSearchFocus(false)}
-              placeholder="Search products, farmers..."
-              style={{ flex:1, border:'none', outline:'none', background:'transparent', padding:'14px 0', color:'#1a2415', fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:14 }}
-            />
-            {/* FIX: map icon stays, search submits the form */}
-            <button type="button" onClick={() => navigate('/map')} style={{ padding:'0 14px', background:'none', border:'none', cursor:'pointer', fontSize:20 }}>📍</button>
-            <button type="submit" style={{ padding:'0 16px', background:'#4e9e2a', border:'none', cursor:'pointer', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:13, height:'100%', minHeight:48 }}>Go</button>
-          </div>
-        </form>
-      </div>
-
-      {/* ── Weather-style info strip ── */}
-      <div style={{ margin:'16px 16px 0', background:'#fff', borderRadius:18, padding:'14px 16px',
-        border:'1px solid rgba(60,100,40,.1)', boxShadow:'0 2px 8px rgba(20,50,10,.05)',
-        animation:'fadeUp .5s .35s cubic-bezier(.22,1,.36,1) both' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <div>
-            <div style={{ fontSize:10, color:'#7a9070', fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em', marginBottom:2 }}>📊 Market Insight</div>
-            <div style={{ fontSize:13, fontWeight:700, color:'#1a2415' }}>Good time to buy vegetables</div>
-            <div style={{ fontSize:11, color:'#7a9070' }}>Prices 12% below avg today</div>
-          </div>
-          <div style={{ textAlign:'right' }}>
-            <div style={{ fontSize:22, fontWeight:800, color:'#4e9e2a' }}>↓12%</div>
-            <div style={{ fontSize:10, color:'#afc09e' }}>vs last week</div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Stats ── */}
-      <div style={{ display:'flex', justifyContent:'space-around', margin:'14px 16px 0',
-        background:'#fff', borderRadius:18, padding:'16px',
-        border:'1px solid rgba(60,100,40,.1)', boxShadow:'0 2px 8px rgba(20,50,10,.05)',
-        animation:'fadeUp .5s .4s cubic-bezier(.22,1,.36,1) both' }}>
-        {[['2,400','Farmers'],['30+','Products'],['64','Districts']].map(([n,l],i) => (
-          <div key={l} style={{ textAlign:'center', flex:1, borderRight: i<2 ? '1px solid rgba(60,100,40,.1)' : 'none' }}>
-            <div style={{ fontSize:20, fontWeight:800, color:'#4e9e2a', lineHeight:1 }}>{n}</div>
-            <div style={{ fontSize:10, color:'#7a9070', marginTop:3, fontWeight:500 }}>{l}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Category pills (horizontal scroll) ── */}
-      <div style={{ padding:'20px 0 0', animation:'fadeUp .5s .45s cubic-bezier(.22,1,.36,1) both' }}>
-        <div style={{ padding:'0 16px', fontSize:14, fontWeight:800, color:'#1a2415', marginBottom:12, letterSpacing:'-0.02em' }}>Shop by Category</div>
-        <div style={{ display:'flex', gap:10, overflowX:'auto', padding:'4px 16px 6px', scrollbarWidth:'none' }}>
-          {CATS.map((cat,i) => (
-            // FIX: navigate to marketplace with category param so it pre-filters
-            <div key={cat.key} onClick={() => navigate(`/marketplace?cat=${cat.key}`)}
-              style={{ borderRadius:14, flexShrink:0, minWidth:80, height:80, position:'relative', overflow:'hidden', cursor:'pointer',
-                border:`2px solid transparent`,
-                boxShadow:'0 2px 8px rgba(20,50,10,.08)',
-                transition:'all .25s cubic-bezier(.22,1,.36,1)',
-                animation:`fadeUp .4s ${.45 + i*.05}s cubic-bezier(.22,1,.36,1) both`,
-              }}>
-              <img src={CAT_IMGS[cat.key]} alt={cat.label} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} />
-              <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(10,30,5,.15),rgba(10,30,5,.65))' }} />
-              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'5px 7px' }}>
-                <div style={{ fontSize:9, fontWeight:800, color:'#fff', lineHeight:1.2, textShadow:'0 1px 3px rgba(0,0,0,.5)' }}>{cat.label}</div>
-              </div>
-            </div>
-          ))}
-          <div onClick={() => navigate('/marketplace')}
-            style={{ background:'#f0f4ec', borderRadius:16, padding:'12px 14px', textAlign:'center', cursor:'pointer', border:'1.5px solid rgba(60,100,40,.12)', flexShrink:0, minWidth:72, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-            <div style={{ fontSize:10, fontWeight:700, color:'#7a9070' }}>All</div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── My Fields card (premium feel) ── */}
-      <div style={{ margin:'20px 16px 0', animation:'fadeUp .5s .55s cubic-bezier(.22,1,.36,1) both' }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-          <span style={{ fontSize:14, fontWeight:800, color:'#1a2415', letterSpacing:'-0.02em' }}>🌾 Featured Farms</span>
-          <button onClick={() => navigate('/map')} style={{ background:'none', border:'none', color:'#4e9e2a', fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Plus Jakarta Sans,sans-serif' }}>See all →</button>
-        </div>
-        <div style={{ background:'linear-gradient(135deg,#e8f5e1,#f5f9f0)', borderRadius:20, padding:'16px', border:'1px solid rgba(78,158,42,.15)', position:'relative', overflow:'hidden' }}>
-          <div style={{ position:'absolute', top:-20, right:-20, width:100, height:100, background:'rgba(78,158,42,.06)', borderRadius:'50%' }} />
-          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            <div style={{ width:52, height:52, borderRadius:14, overflow:'hidden', flexShrink:0, border:'2px solid rgba(78,158,42,.2)' }}>
-              <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=100&q=60" alt="farm" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-            </div>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:13, fontWeight:800, color:'#1a2415' }}>Emerald Valley Farm</div>
-              <div style={{ fontSize:11, color:'#7a9070', marginTop:1 }}>📍 Rajshahi · Verified ✓</div>
-              <div style={{ display:'flex', gap:6, marginTop:6 }}>
-                <span style={{ background:'#4e9e2a', color:'#fff', fontSize:9, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>🌾 Wheat</span>
-                <span style={{ background:'#e8f5e1', color:'#4e9e2a', fontSize:9, fontWeight:700, padding:'2px 8px', borderRadius:99 }}>🌽 Corn</span>
-              </div>
-            </div>
-            <div style={{ textAlign:'right' }}>
-              <div style={{ fontSize:13, fontWeight:800, color:'#4e9e2a' }}>4.8 ⭐</div>
-              <div style={{ fontSize:10, color:'#7a9070' }}>240+ orders</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Products ── */}
-      <div style={{ marginTop:24 }}>
-        {loading ? (
-          <div style={{ display:'flex', gap:10, padding:'0 16px' }}>
-            {[...Array(4)].map((_,i) => <div key={i} style={{ width:152, height:200, background:'#e8ede4', borderRadius:18, flexShrink:0, backgroundSize:'400px 100%', backgroundImage:'linear-gradient(90deg,#e8ede4 25%,#f0f4ec 50%,#e8ede4 75%)', animation:`shimmer 1.4s ${i*.15}s infinite` }} />)}
-            <style>{`@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}`}</style>
-          </div>
-        ) : (
-          <>
-            {/* FIX: Recommended For You "See all" goes to marketplace with recommended param */}
-            {allProds.length > 0 && <Section title="Recommended For You" icon="⭐" products={allProds} onViewAll={() => navigate('/marketplace?recommended=true')} />}
-            {CATS.map(cat => (
-              // FIX: each category "See all" navigates with the correct category param
-              <Section key={cat.key} title={cat.label} icon="🌿" products={products[cat.key] || []} onViewAll={() => navigate(`/marketplace?cat=${cat.key}`)} />
-            ))}
-          </>
-        )}
-      </div>
-
-      {/* ── Farmer CTA ── */}
-      <div style={{ margin:'28px 16px 0', borderRadius:20, overflow:'hidden', position:'relative',
-        animation:'fadeUp .5s .6s cubic-bezier(.22,1,.36,1) both' }}>
-        <div style={{ position:'absolute', inset:0, backgroundImage:"url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&q=60')", backgroundSize:'cover', backgroundPosition:'center' }} />
-        <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(20,60,10,.75),rgba(10,40,5,.9))' }} />
-        <div style={{ position:'relative', padding:'24px 20px', textAlign:'center' }}>
-          <div style={{ fontSize:28, marginBottom:8 }}>👨‍🌾</div>
-          <div style={{ fontSize:17, fontWeight:800, color:'#fff', marginBottom:6, letterSpacing:'-0.02em' }}>Are you a Farmer?</div>
-          <div style={{ fontSize:12, color:'rgba(255,255,255,.7)', marginBottom:16, lineHeight:1.6 }}>Join KrishiConnect and sell directly to thousands of customers.</div>
-          <Link to="/register" style={{ background:'#fff', color:'#3a7d1e', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:14, padding:'12px 28px', borderRadius:99, textDecoration:'none', display:'inline-block', boxShadow:'0 4px 12px rgba(0,0,0,.2)' }}>Register as Farmer →</Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── DESKTOP HOME ── */
-function DesktopHome() {
-  const navigate = useNavigate();
-  const [products, setProducts] = useState({});
-  const [loading,  setLoading]  = useState(true);
-  const [search,   setSearch]   = useState('');
-  const [searchFocus, setSearchFocus] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const results = await Promise.all(
-          CATS.map(c => api.get('/products', { params: { category: c.key, limit: 6 } }).then(r => ({ key: c.key, products: r.data.products || [] })))
-        );
-        const map = {};
-        results.forEach(r => { map[r.key] = r.products; });
-        setProducts(map);
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    })();
-  }, []);
-
-  const allProds = Object.values(products).flat().sort(() => Math.random() - 0.5).slice(0, 6);
-
-  // FIX: desktop search handler properly navigates with the search query
-  const handleDesktopSearch = (e) => {
-    e.preventDefault();
-    if (search.trim()) navigate(`/marketplace?search=${encodeURIComponent(search.trim())}`);
-    else navigate('/marketplace');
-  };
-
-  return (
-    <div style={{ background:'#f5f7f2' }}>
-      <style>{`
-        @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        @keyframes shimmer{ 0%{background-position:-600px 0}100%{background-position:600px 0} }
-        .cat-card:hover { transform:translateY(-5px) scale(1.03) !important; box-shadow:0 8px 24px rgba(20,50,10,.12) !important; }
-        .feat-card:hover { transform:translateY(-4px) !important; box-shadow:0 8px 28px rgba(20,50,10,.12) !important; }
-        .prod-card-d:hover .prod-img-d { transform:scale(1.06); }
-      `}</style>
-
-      {/* ── Hero ── */}
-      <div style={{ position:'relative', minHeight:'90vh', display:'flex', flexDirection:'column', borderRadius:'0 0 40px 40px', overflow:'hidden' }}>
-        <div style={{ position:'absolute', inset:0, backgroundImage:"url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1800&q=80')", backgroundSize:'cover', backgroundPosition:'center 30%' }} />
-        <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(5,20,2,.2) 0%,rgba(5,20,2,.65) 60%,rgba(5,20,2,.9) 100%)' }} />
-
-        {/* Floating badges */}
-        <div style={{ position:'absolute', top:'30%', right:'8%', background:'rgba(255,255,255,.12)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,.2)', borderRadius:20, padding:'16px 20px', animation:'float 3s ease-in-out infinite', color:'#fff' }}>
-          <div style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,.7)' }}>Today's Best Pick</div>
-          <div style={{ fontSize:18, fontWeight:800, marginTop:2 }}>🥦 Fresh Vegetables</div>
-          <div style={{ fontSize:13, color:'#a8e07a', marginTop:2 }}>↓15% vs yesterday</div>
-        </div>
-
-        <div style={{ position:'absolute', top:'55%', right:'12%', background:'rgba(255,255,255,.1)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,.15)', borderRadius:20, padding:'14px 18px', animation:'float 3.5s 1s ease-in-out infinite', color:'#fff' }}>
-          <div style={{ fontSize:12, color:'rgba(255,255,255,.7)' }}>✅ Verified Farmers</div>
-          <div style={{ fontSize:22, fontWeight:800, marginTop:2 }}>2,400+</div>
-        </div>
-
-        <div style={{ position:'relative', zIndex:5, flex:1, display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'60px 64px 80px', maxWidth:720 }}>
-          <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(255,255,255,.12)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,.2)', color:'#fff', fontSize:11, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', padding:'7px 18px', borderRadius:99, marginBottom:24, alignSelf:'flex-start',
-            animation:'fadeIn .6s ease both' }}>
-            🌱 Farm Fresh · Direct to You
-          </div>
-          <h1 style={{ fontSize:'clamp(40px,5vw,72px)', fontWeight:800, lineHeight:1.06, letterSpacing:'-0.04em', marginBottom:20, color:'#fff',
-            animation:'fadeUp .6s .1s cubic-bezier(.22,1,.36,1) both' }}>
-            Farming Made<br /><span style={{ color:'#a8e07a', fontFamily:'Fraunces,serif', fontStyle:'italic' }}>Simple, Smarter,</span><br />and Sustainable
-          </h1>
-          <p style={{ fontSize:16, fontWeight:400, lineHeight:1.7, color:'rgba(255,255,255,.6)', maxWidth:460, marginBottom:36,
-            animation:'fadeUp .6s .2s cubic-bezier(.22,1,.36,1) both' }}>
-            Fresh produce, fair prices. Cut out the middleman and connect with verified farmers across Bangladesh — right from your home.
-          </p>
-          <div style={{ display:'flex', gap:14, animation:'fadeUp .6s .3s cubic-bezier(.22,1,.36,1) both' }}>
-            <Link to="/marketplace" style={{ background:'#4e9e2a', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:15, padding:'15px 34px', borderRadius:99, textDecoration:'none', boxShadow:'0 4px 16px rgba(78,158,42,.45)', display:'flex', alignItems:'center', gap:8 }}>Browse Marketplace →</Link>
-            <Link to="/register" style={{ background:'rgba(255,255,255,.1)', backdropFilter:'blur(8px)', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:600, fontSize:15, padding:'15px 34px', borderRadius:99, border:'1px solid rgba(255,255,255,.2)', textDecoration:'none' }}>I'm a Farmer</Link>
-          </div>
-          <div style={{ display:'flex', gap:48, marginTop:56, paddingTop:32, borderTop:'1px solid rgba(255,255,255,.15)',
-            animation:'fadeUp .6s .4s cubic-bezier(.22,1,.36,1) both' }}>
-            {[['2,400+','Verified Farmers'],['৳18 Cr+','Saved by Customers'],['64','Districts Covered']].map(([n,l]) => (
-              <div key={l}>
-                <div style={{ fontSize:28, fontWeight:800, color:'#fff', lineHeight:1 }}>{n}</div>
-                <div style={{ fontSize:12, color:'rgba(255,255,255,.5)', marginTop:5, fontWeight:500 }}>{l}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Search bar section ── */}
-      {/* FIX: desktop search is now a proper form that navigates with the query */}
-      <div style={{ padding:'48px 64px 0' }}>
-        <form onSubmit={handleDesktopSearch} style={{ background:'#fff', borderRadius:24, padding:'28px 32px', boxShadow:'0 4px 24px rgba(20,50,10,.08)', border:'1px solid rgba(60,100,40,.1)' }}>
-          <div style={{ fontSize:13, fontWeight:600, color:'#7a9070', marginBottom:14, textTransform:'uppercase', letterSpacing:'.06em' }}>🔍 Search Products & Farms</div>
-          <div style={{ display:'flex', gap:12 }}>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onFocus={e => { setSearchFocus(true); e.target.style.borderColor='#4e9e2a'; }}
-              onBlur={e => { setSearchFocus(false); e.target.style.borderColor='rgba(60,100,40,.15)'; }}
-              placeholder="Search vegetables, fruits, fish, farmers..."
-              style={{ flex:1, border:'1.5px solid rgba(60,100,40,.15)', borderRadius:14, padding:'14px 20px', color:'#1a2415', fontFamily:'Plus Jakarta Sans,sans-serif', fontSize:15, outline:'none', background:'#f9faf7', transition:'border .2s' }}
-            />
-            {/* FIX: Search button submits the form instead of being a plain link */}
-            <button type="submit" style={{ background:'#4e9e2a', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:14, padding:'14px 28px', borderRadius:14, border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:6, boxShadow:'0 2px 8px rgba(78,158,42,.3)' }}>Search</button>
-          </div>
-        </form>
-      </div>
-
-      {/* ── Features ── */}
-      <div style={{ padding:'64px 64px 0' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:40 }}>
-          <div>
-            <div style={{ fontSize:12, fontWeight:700, color:'#4e9e2a', textTransform:'uppercase', letterSpacing:'.1em', marginBottom:10 }}>Why KrishiConnect</div>
-            <div style={{ fontSize:36, fontWeight:800, letterSpacing:'-0.03em', color:'#1a2415', lineHeight:1.1 }}>Built for Bangladesh<br /><span style={{ fontFamily:'Fraunces,serif', fontStyle:'italic', color:'#4e9e2a', fontWeight:600 }}>farmers & families</span></div>
-          </div>
-          <Link to="/marketplace" style={{ background:'#4e9e2a', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:13, padding:'12px 24px', borderRadius:99, textDecoration:'none', boxShadow:'0 2px 8px rgba(78,158,42,.3)' }}>Browse Market →</Link>
-        </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:20 }}>
-          {FEATURES.map((f,i) => (
-            <div key={f.title} className="feat-card" style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:24, padding:28, transition:'all .25s cubic-bezier(.22,1,.36,1)',
-              animation:`fadeUp .5s ${.1+i*.08}s cubic-bezier(.22,1,.36,1) both` }}>
-              <div style={{ width:52, height:52, background:'#e8f5e1', borderRadius:16, display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, marginBottom:18 }}>{f.icon}</div>
-              <div style={{ fontSize:16, fontWeight:800, marginBottom:10, color:'#1a2415' }}>{f.title}</div>
-              <div style={{ fontSize:13, color:'#7a9070', lineHeight:1.65 }}>{f.desc}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Categories ── */}
-      <div style={{ padding:'64px 64px 0' }}>
-        <div style={{ fontSize:28, fontWeight:800, letterSpacing:'-0.03em', color:'#1a2415', marginBottom:32 }}>Shop by Category</div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(8,1fr)', gap:14 }}>
-          {CATS.map((cat,i) => (
-            // FIX: category cards are Links with the correct cat param — no icons added, photo-only style preserved
-            <Link key={cat.key} to={`/marketplace?cat=${cat.key}`} className="cat-card"
-              style={{ borderRadius:18, overflow:'hidden', position:'relative', height:110, cursor:'pointer', textDecoration:'none',
-                boxShadow:'0 2px 8px rgba(20,50,10,.08)',
-                transition:'all .28s cubic-bezier(.22,1,.36,1)',
-                animation:`fadeUp .4s ${.05+i*.05}s cubic-bezier(.22,1,.36,1) both` }}>
-              <img src={CAT_IMGS[cat.key]} alt={cat.label} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} />
-              <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg,rgba(10,30,5,.15),rgba(10,30,5,.6))' }} />
-              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 10px' }}>
-                <div style={{ fontSize:12, fontWeight:800, color:'#fff', textShadow:'0 1px 4px rgba(0,0,0,.5)', lineHeight:1.2 }}>{cat.label}</div>
-              </div>
-            </Link>
-          ))}
-          <Link to="/marketplace" className="cat-card"
-            style={{ borderRadius:18, overflow:'hidden', position:'relative', height:110, cursor:'pointer', textDecoration:'none',
-              background:'linear-gradient(135deg,#3a7d1e,#4e9e2a)',
-              boxShadow:'0 2px 8px rgba(20,50,10,.1)',
-              transition:'all .28s cubic-bezier(.22,1,.36,1)',
-              display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:4 }}>
-            <div style={{ fontSize:12, fontWeight:800, color:'#fff' }}>All</div>
-          </Link>
-        </div>
-      </div>
-
-      {/* ── Featured Products ── */}
-      <div style={{ padding:'64px 64px 0' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:28 }}>
-          <div style={{ fontSize:28, fontWeight:800, letterSpacing:'-0.03em', color:'#1a2415' }}>⭐ Recommended For You</div>
-          {/* FIX: View All goes to marketplace with recommended param so it pre-filters */}
-          <Link to="/marketplace?recommended=true" style={{ background:'#e8f5e1', color:'#4e9e2a', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:13, padding:'10px 22px', borderRadius:99, textDecoration:'none' }}>View All →</Link>
-        </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:16 }}>
-          {loading ? [...Array(6)].map((_,i) => (
-            <div key={i} style={{ height:260, borderRadius:20, backgroundImage:'linear-gradient(90deg,#e8ede4 25%,#f0f4ec 50%,#e8ede4 75%)', backgroundSize:'600px 100%', animation:`shimmer 1.4s ${i*.1}s infinite` }} />
-          )) : allProds.map((p,i) => (
-            <DesktopProductCard key={p._id} product={p} delay={i*60} />
-          ))}
-        </div>
-      </div>
-
-      {/* ── Farmer CTA ── */}
-      <div style={{ padding:'64px 64px 80px' }}>
-        <div style={{ borderRadius:32, overflow:'hidden', position:'relative', minHeight:280, display:'flex', alignItems:'center' }}>
-          <div style={{ position:'absolute', inset:0, backgroundImage:"url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&q=70')", backgroundSize:'cover', backgroundPosition:'center' }} />
-          <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(10,40,5,.8),rgba(5,25,3,.7))' }} />
-          <div style={{ position:'relative', zIndex:2, padding:'48px 64px', flex:1 }}>
-            <div style={{ fontSize:12, fontWeight:700, color:'rgba(168,224,122,.8)', textTransform:'uppercase', letterSpacing:'.1em', marginBottom:14 }}>For Farmers</div>
-            <div style={{ fontSize:40, fontWeight:800, color:'#fff', letterSpacing:'-0.03em', lineHeight:1.1, marginBottom:18, maxWidth:500 }}>
-              Ready to grow your <span style={{ fontFamily:'Fraunces,serif', fontStyle:'italic', color:'#a8e07a' }}>income</span> directly?
-            </div>
-            <div style={{ fontSize:15, color:'rgba(255,255,255,.6)', marginBottom:32, maxWidth:420, lineHeight:1.7 }}>
-              Join thousands of farmers selling directly to consumers. Higher prices, zero middlemen.
-            </div>
-            <div style={{ display:'flex', gap:14 }}>
-              <Link to="/register" style={{ background:'#fff', color:'#3a7d1e', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:800, fontSize:15, padding:'15px 36px', borderRadius:99, textDecoration:'none', boxShadow:'0 4px 16px rgba(0,0,0,.2)' }}>Register as Farmer →</Link>
-              <Link to="/marketplace" style={{ background:'rgba(255,255,255,.1)', backdropFilter:'blur(8px)', color:'#fff', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:600, fontSize:15, padding:'15px 36px', borderRadius:99, border:'1px solid rgba(255,255,255,.2)', textDecoration:'none' }}>Browse First</Link>
-            </div>
-          </div>
-          <div style={{ position:'relative', zIndex:2, padding:'48px 64px 48px 0', display:'flex', flexDirection:'column', gap:16 }}>
-            {[['2,400+','Verified Farmers'],['৳18 Cr+','Customer Savings'],['64','Districts'],['4.9★','Average Rating']].map(([n,l]) => (
-              <div key={l} style={{ background:'rgba(255,255,255,.08)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,.15)', borderRadius:16, padding:'14px 22px', minWidth:160 }}>
-                <div style={{ fontSize:22, fontWeight:800, color:'#fff' }}>{n}</div>
-                <div style={{ fontSize:11, color:'rgba(255,255,255,.55)', marginTop:2 }}>{l}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Desktop product card ── */
-function DesktopProductCard({ product, delay=0 }) {
-  const navigate = useNavigate();
-  const { addToCart } = useCart();
-  const [added, setAdded] = useState(false);
-  const [hover, setHover] = useState(false);
-  const savings = product.marketPrice > product.price
-    ? Math.round(((product.marketPrice - product.price) / product.marketPrice) * 100) : 0;
-
-  return (
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onClick={() => navigate(`/products/${product._id}`)}
-      style={{ background:'#fff', border:'1px solid rgba(60,100,40,.1)', borderRadius:22, overflow:'hidden', cursor:'pointer',
-        boxShadow: hover ? '0 12px 32px rgba(20,50,10,.12)' : '0 2px 8px rgba(20,50,10,.06)',
-        transform: hover ? 'translateY(-6px)' : 'translateY(0)',
-        transition:'all .3s cubic-bezier(.22,1,.36,1)',
-        animation:`fadeUp .5s ${delay}ms cubic-bezier(.22,1,.36,1) both`,
-      }}>
-      <div className="prod-img-d" style={{ height:180, background:'#f0f4ec', position:'relative', overflow:'hidden' }}>
-        {product.images?.[0]
-          ? <img src={product.images[0]} alt={product.name} style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .4s ease', transform: hover ? 'scale(1.07)' : 'scale(1)' }} />
-          : <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:56 }}>🥦</div>
-        }
-        {savings > 0 && <span style={{ position:'absolute', top:10, left:10, background:'#4e9e2a', color:'#fff', fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:99 }}>SAVE {savings}%</span>}
-        {product.farmer?.isVerified && <div style={{ position:'absolute', top:10, right:10, width:24, height:24, borderRadius:'50%', background:'#fff', border:'1.5px solid #4e9e2a', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, color:'#4e9e2a', boxShadow:'0 1px 4px rgba(0,0,0,.1)' }}>✓</div>}
-      </div>
-      <div style={{ padding:'16px 18px 18px' }}>
-        <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'.08em', color:'#afc09e', marginBottom:4 }}>{product.category}</div>
-        <div style={{ fontSize:15, fontWeight:800, color:'#1a2415', marginBottom:4, lineHeight:1.3 }}>{product.name}</div>
-        <div style={{ fontSize:12, color:'#7a9070', marginBottom:12 }}>{product.farmer?.farmName || product.farmer?.name}{product.farmer?.location?.district ? ` · ${product.farmer.location.district}` : ''}</div>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-          <div style={{ fontSize:20, fontWeight:800, color:'#4e9e2a' }}>৳{product.price} <span style={{ fontSize:12, fontWeight:400, color:'#7a9070' }}>/{product.unit}</span></div>
-          {product.marketPrice > product.price && <div style={{ fontSize:12, color:'#afc09e', textDecoration:'line-through' }}>৳{product.marketPrice}</div>}
-        </div>
-        <button
-          onClick={e => { e.stopPropagation(); addToCart(product,1); setAdded(true); setTimeout(()=>setAdded(false),1500); }}
-          style={{ width:'100%', background: added ? '#4e9e2a' : '#e8f5e1', border:'none', borderRadius:12, padding:'10px', color: added ? '#fff' : '#4e9e2a', fontFamily:'Plus Jakarta Sans,sans-serif', fontWeight:700, fontSize:13, cursor:'pointer', transition:'all .2s', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
-          {added ? '✓ Added!' : '+ Add to Cart'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-export default function Home() {
-  const { isMobile } = useResponsive();
-  return isMobile ? <MobileHome /> : <DesktopHome />;
-}
-</file>
-
 <file path="client/src/pages/Marketplace.jsx">
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -9320,8 +9346,9 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { useResponsive } from '../hooks/useResponsive.js';
 
-/* ── Farmer-blocked modal ── */
-function FarmerBlockModal({ onClose, navigate }) {
+/* ── Block modal — works for both farmer and admin ── */
+function BlockedModal({ role, onClose, navigate }) {
+  const isAdmin = role === 'admin';
   return (
     <div style={{
       position:'fixed', inset:0, background:'rgba(10,25,8,.65)',
@@ -9336,24 +9363,26 @@ function FarmerBlockModal({ onClose, navigate }) {
       }}>
         <style>{`@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}`}</style>
 
-        {/* Icon */}
         <div style={{
           width:72, height:72, borderRadius:'50%',
-          background:'linear-gradient(135deg,#fef3d8,#fde8c0)',
-          border:'2px solid rgba(196,125,10,.15)',
+          background: isAdmin ? 'linear-gradient(135deg,#e8eaf6,#c5cae9)' : 'linear-gradient(135deg,#fef3d8,#fde8c0)',
+          border: `2px solid ${isAdmin ? 'rgba(80,96,192,.2)' : 'rgba(196,125,10,.15)'}`,
           display:'flex', alignItems:'center', justifyContent:'center',
           fontSize:34, margin:'0 auto 20px',
-        }}>🌾</div>
+        }}>{isAdmin ? '🛡️' : '🌾'}</div>
 
         <div style={{ fontSize:20, fontWeight:800, color:'#1a2415', marginBottom:10, letterSpacing:'-0.02em' }}>
-          Farmers Can't Order
+          {isAdmin ? "Admins Can't Order" : "Farmers Can't Order"}
         </div>
         <div style={{ fontSize:14, color:'#7a9070', lineHeight:1.7, marginBottom:28 }}>
-          Your account is registered as a <strong style={{ color:'#c47d0a' }}>Farmer</strong>.
-          To buy products, you need a separate <strong style={{ color:'#4e9e2a' }}>Customer account</strong>.
+          Your account is registered as an{' '}
+          <strong style={{ color: isAdmin ? '#5060c0' : '#c47d0a' }}>
+            {isAdmin ? 'Admin' : 'Farmer'}
+          </strong>.
+          {' '}To buy products, you need a separate{' '}
+          <strong style={{ color:'#4e9e2a' }}>Customer account</strong>.
         </div>
 
-        {/* Divider */}
         <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
           <div style={{ flex:1, height:1, background:'rgba(60,100,40,.1)' }} />
           <span style={{ fontSize:11, color:'#afc09e', fontWeight:600, textTransform:'uppercase', letterSpacing:'.06em' }}>What would you like to do?</span>
@@ -9450,8 +9479,8 @@ export default function ProductDetail() {
   const [qty,      setQty]      = useState(1);
   const [loading,  setLoading]  = useState(true);
   const [ordering, setOrdering] = useState(false);
-  const [showModal,    setShowModal]    = useState(false);
-  const [showFarmerBlock, setShowFarmerBlock] = useState(false);
+  const [showModal,      setShowModal]      = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
@@ -9479,10 +9508,12 @@ export default function ProductDetail() {
   const savings = product.marketPrice > product.price
     ? Math.round(((product.marketPrice - product.price) / product.marketPrice) * 100) : 0;
 
-  // Centralised guard: farmers are blocked, guests redirect to login
-  const guardBuy = (action) => {
-    if (!user)              { navigate('/login'); return false; }
-    if (user.role === 'farmer') { setShowFarmerBlock(true); return false; }
+  const isBlocked = user?.role === 'farmer' || user?.role === 'admin';
+
+  // Centralised guard: farmers and admins are blocked, guests redirect to login
+  const guardBuy = () => {
+    if (!user)     { navigate('/login'); return false; }
+    if (isBlocked) { setShowBlockModal(true); return false; }
     return true;
   };
 
@@ -9520,13 +9551,26 @@ export default function ProductDetail() {
     farmer: p.farmerPrice, market: p.marketPrice,
   }));
 
-  // Button label for add-to-cart
   const cartBtnLabel = addedToCart ? '✓ Added!' : '🛒 Cart';
+
+  // Inline notice banner for blocked accounts
+  const BlockedBanner = () => isBlocked ? (
+    <div style={{
+      background: user.role === 'admin' ? 'linear-gradient(135deg,#e8eaf6,#c5cae9)' : 'linear-gradient(135deg,#fef3d8,#fde8c0)',
+      border: `1px solid ${user.role === 'admin' ? 'rgba(80,96,192,.2)' : 'rgba(196,125,10,.2)'}`,
+      borderRadius:12, padding:'10px 14px', marginBottom:12, display:'flex', alignItems:'center', gap:10,
+    }}>
+      <span style={{ fontSize:18 }}>{user.role === 'admin' ? '🛡️' : '🌾'}</span>
+      <div style={{ fontSize:12, color: user.role === 'admin' ? '#5060c0' : '#c47d0a', fontWeight:600, lineHeight:1.5 }}>
+        {user.role === 'admin' ? 'Admin' : 'Farmer'} accounts can't place orders. Log in as a customer to buy.
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div style={{ minHeight:'100vh', padding: pad }}>
-      {showFarmerBlock && (
-        <FarmerBlockModal onClose={() => setShowFarmerBlock(false)} navigate={navigate} />
+      {showBlockModal && (
+        <BlockedModal role={user?.role} onClose={() => setShowBlockModal(false)} navigate={navigate} />
       )}
       {showModal && (
         <OrderModal product={product} qty={qty} onConfirm={handleConfirmOrder} onClose={() => setShowModal(false)} ordering={ordering} />
@@ -9594,13 +9638,7 @@ export default function ProductDetail() {
                 <span style={{ marginLeft:'auto',fontSize:18,fontWeight:700,color:'#4e9e2a' }}>BDT {(product.price*qty).toLocaleString()}</span>
               </div>
 
-              {/* Farmer banner inside buttons area */}
-              {user?.role === 'farmer' && (
-                <div style={{ background:'linear-gradient(135deg,#fef3d8,#fde8c0)', border:'1px solid rgba(196,125,10,.2)', borderRadius:12, padding:'10px 14px', marginBottom:12, display:'flex', alignItems:'center', gap:10 }}>
-                  <span style={{ fontSize:18 }}>🌾</span>
-                  <div style={{ fontSize:12, color:'#c47d0a', fontWeight:600, lineHeight:1.5 }}>Farmer accounts can't place orders. Use a customer account to buy.</div>
-                </div>
-              )}
+              <BlockedBanner />
 
               <div style={{ display:'flex', gap:8 }}>
                 <button onClick={handleAddToCart} disabled={product.stock===0}
@@ -9693,13 +9731,7 @@ export default function ProductDetail() {
                 <div style={{ marginLeft:'auto',fontSize:20,fontWeight:700,color:'#4e9e2a' }}>BDT {(product.price*qty).toLocaleString()}</div>
               </div>
 
-              {/* Farmer notice banner */}
-              {user?.role === 'farmer' && (
-                <div style={{ background:'linear-gradient(135deg,#fef3d8,#fde8c0)', border:'1px solid rgba(196,125,10,.2)', borderRadius:12, padding:'12px 16px', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
-                  <span style={{ fontSize:20 }}>🌾</span>
-                  <div style={{ fontSize:12, color:'#c47d0a', fontWeight:600, lineHeight:1.5 }}>Farmer accounts can't place orders. Use a customer account to buy.</div>
-                </div>
-              )}
+              <BlockedBanner />
 
               <div style={{ display:'flex', gap:10 }}>
                 <button onClick={handleAddToCart} disabled={product.stock===0}
@@ -10254,12 +10286,17 @@ export default function Navbar({ minimalMode = false, hide = false }) {
     }
   };
 
+  // Resolve where the "Hi, Name" link points based on role
+  const profileLink =
+    user?.role === 'admin'    ? '/admin' :
+    user?.role === 'customer' ? '/profile' :
+                                '/dashboard/profile';
+
   return (
     <>
       {/* ── Navbar ── */}
       <nav style={{
         position: 'fixed',
-        // Push below the mobile OS status bar using safe-area-inset-top
         top: 'env(safe-area-inset-top, 0px)',
         left: 0, right: 0,
         zIndex: 1000,
@@ -10293,6 +10330,9 @@ export default function Navbar({ minimalMode = false, hide = false }) {
               { to:'/orders', label:'My Orders' },
               { to:'/chat',   label:'Messages'  },
             ] : []),
+            ...(user?.role==='admin' ? [
+              { to:'/admin', label:'🛡️ Admin Panel' },
+            ] : []),
           ].map(n => (
             <Link key={n.to} to={n.to} style={{
               color: active(n.to) ? 'var(--green-hi)' : 'var(--muted)',
@@ -10323,8 +10363,8 @@ export default function Navbar({ minimalMode = false, hide = false }) {
               {/* 🔔 Notifications */}
               {user && <NotificationBell />}
 
-              {/* 🛒 Cart */}
-              {user?.role !== 'farmer' && (
+              {/* 🛒 Cart — hidden for admin and farmer */}
+              {user?.role !== 'farmer' && user?.role !== 'admin' && (
                 <Link to="/cart" style={{ position:'relative', textDecoration:'none', display:'flex', alignItems:'center', justifyContent:'center', width:38, height:38, borderRadius:12, background: active('/cart') ? 'rgba(78,158,42,.12)' : '#fff', border:'1px solid rgba(60,100,40,.14)', boxShadow:'0 1px 4px rgba(0,0,0,.06)', flexShrink:0, transition:'all .2s' }}>
                   <span style={{ fontSize:16 }}>🛒</span>
                   {cartCount > 0 && (
@@ -10339,7 +10379,7 @@ export default function Navbar({ minimalMode = false, hide = false }) {
               <div id="desktop-auth" style={{ display:'flex', gap:8, alignItems:'center' }}>
                 {user ? (
                   <>
-                    <Link to={user.role==='customer' ? '/profile' : '/dashboard/profile'} style={{ fontSize:13, color:'var(--muted)', textDecoration:'none', whiteSpace:'nowrap', fontWeight:500 }}>
+                    <Link to={profileLink} style={{ fontSize:13, color:'var(--muted)', textDecoration:'none', whiteSpace:'nowrap', fontWeight:500 }}>
                       Hi, <strong style={{ color:'var(--ink)' }}>{user.name.split(' ')[0]}</strong>
                     </Link>
                     <button onClick={() => { logout(); navigate('/'); }} style={{ fontSize:12, padding:'8px 16px', background:'#fff', border:'1px solid rgba(60,100,40,.14)', borderRadius:99, color:'var(--muted)', cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
