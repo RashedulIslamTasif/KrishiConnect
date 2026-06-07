@@ -8,7 +8,8 @@ import useSocket from '../hooks/useSocket.js';
 const S = `
   .chat-root {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: calc(58px + env(safe-area-inset-top, 0px));
+    left: 0; right: 0; bottom: 0;
     display: flex;
     flex-direction: column;
     background: #f0f2f0;
@@ -19,8 +20,7 @@ const S = `
     align-items: center;
     gap: 12px;
     padding: 0 16px;
-    padding-top: env(safe-area-inset-top, 0px);
-    height: calc(60px + env(safe-area-inset-top, 0px));
+    height: 60px;
     background: #fff;
     border-bottom: 1px solid rgba(0,0,0,.08);
     flex-shrink: 0;
@@ -160,6 +160,7 @@ function Avatar({ user }) {
 }
 
 function formatTime(d) {
+  if (!d) return '';
   return new Date(d).toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit' });
 }
 function formatDateLabel(d) {
@@ -271,7 +272,8 @@ export default function Chat() {
     const groups = [];
     let lastDate = null;
     messages.forEach(msg => {
-      const d = formatDateLabel(msg.createdAt);
+      if (!msg) return;
+      const d = msg.createdAt ? formatDateLabel(msg.createdAt) : 'Today';
       if (d !== lastDate) { groups.push({ type: 'date', label: d }); lastDate = d; }
       groups.push({ type: 'msg', msg });
     });
@@ -387,8 +389,9 @@ export default function Chat() {
   }
 
   /* ── DESKTOP ── */
+  const navH = 'calc(58px + env(safe-area-inset-top, 0px))';
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', height: `calc(100vh - ${navH})`, overflow: 'hidden' }}>
       <div style={{ background: '#fff', borderRight: '1px solid rgba(0,0,0,.08)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(0,0,0,.07)' }}>
           <div style={{ fontSize: 17, fontWeight: 700 }}>Messages</div>
@@ -412,7 +415,7 @@ export default function Chat() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#f0f2f0' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: `calc(100vh - ${navH})`, overflow: 'hidden', background: '#f0f2f0' }}>
         {!activeConvo ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8a8a', flexDirection: 'column', gap: 12 }}>
             <div style={{ fontSize: 48 }}>💬</div>

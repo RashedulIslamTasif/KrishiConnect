@@ -25,9 +25,11 @@ import PaymentResult from './pages/PaymentResult.jsx';
 export default function App() {
   const { pathname } = useLocation();
   const isHome = pathname === '/';
+  const isChat = pathname.startsWith('/chat') || pathname === '/dashboard/chat';
+  const topPad = isChat ? '0' : 'calc(58px + env(safe-area-inset-top, 0px))';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f7f2', paddingTop: 'calc(58px + env(safe-area-inset-top, 0px))' }}>
+    <div style={{ minHeight: '100vh', background: '#f5f7f2', paddingTop: topPad }}>
       <Navbar minimalMode={!isHome} />
       <Routes>
         <Route path="/"             element={<Home />} />
