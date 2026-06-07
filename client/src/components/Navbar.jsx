@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import NotificationBell from './NotificationBell.jsx';
 
-export default function Navbar({ minimalMode = false }) {
+export default function Navbar({ minimalMode = false, hide = false }) {
+  if (hide) return null;
   const { user, logout } = useAuth();
   const { cartCount }    = useCart();
   const { pathname }     = useLocation();

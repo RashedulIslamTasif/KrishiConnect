@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../api/axios.js';
 import { useCart } from '../context/CartContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useResponsive } from '../hooks/useResponsive.js';
 
 const CATS = [
@@ -81,9 +82,10 @@ function ProductRow({ title, products, onViewAll }) {
 
 export default function Marketplace() {
   const { isMobile } = useResponsive();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  // FIX: read URL search params to pre-activate category / search / recommended
   const [searchParams] = useSearchParams();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [allProducts,    setAllProducts]    = useState({});
   const [filtered,       setFiltered]       = useState([]);
@@ -199,14 +201,66 @@ export default function Marketplace() {
   const pad = isMobile ? '12px' : '28px 48px';
 
   return (
-    <div style={{ minHeight:'100vh', background:'#f5f7f2' }}>
-      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}`}</style>
+    <div style={{ minHeight:'100vh', background:'#f5f7f2', paddingTop:'env(safe-area-inset-top, 0px)' }}>
+      <style>{`
+        @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+      `}</style>
 
-      {/* Search + Filter bar */}
-      <div style={{ padding: isMobile ? '12px 12px 12px' : '18px 48px', position:'sticky', top:60, zIndex:50,
+      {/* Hamburger slide-down menu */}
+      {menuOpen && (
+        <div onClick={() => setMenuOpen(false)} style={{ position:'fixed', inset:0, zIndex:200 }}>
+          <div onClick={e => e.stopPropagation()} style={{ position:'absolute', top:'calc(56px + env(safe-area-inset-top,0px))', left:0, right:0, background:'rgba(245,247,242,.98)', borderBottom:'1px solid rgba(60,100,40,.12)', boxShadow:'0 8px 24px rgba(0,0,0,.1)', padding:'12px 20px 20px', animation:'slideDown .2s ease', zIndex:201 }}>
+            {[
+              { to:'/', icon:'🏠', label:'Home' },
+              { to:'/marketplace', icon:'🛒', label:'Marketplace' },
+              { to:'/map', icon:'🗺', label:'Find Farmers' },
+              ...(user?.role==='farmer' ? [
+                { to:'/dashboard', icon:'📊', label:'Dashboard' },
+                { to:'/dashboard/products', icon:'🌿', label:'My Products' },
+                { to:'/dashboard/orders', icon:'📦', label:'Orders' },
+                { to:'/dashboard/chat', icon:'💬', label:'Messages' },
+                { to:'/dashboard/profile', icon:'👤', label:'My Profile' },
+              ] : []),
+              ...(user?.role==='customer' ? [
+                { to:'/orders', icon:'📦', label:'My Orders' },
+                { to:'/cart', icon:'🛒', label:'Cart' },
+                { to:'/chat', icon:'💬', label:'Messages' },
+                { to:'/profile', icon:'👤', label:'My Profile' },
+              ] : []),
+            ].map(n => (
+              <Link key={n.to} to={n.to} onClick={() => setMenuOpen(false)}
+                style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 16px', borderRadius:14, marginBottom:4, color:'#1a2415', textDecoration:'none', fontSize:15, fontWeight:500 }}>
+                <span style={{fontSize:18}}>{n.icon}</span>{n.label}
+              </Link>
+            ))}
+            <div style={{ marginTop:8, paddingTop:12, borderTop:'1px solid rgba(60,100,40,.1)' }}>
+              {user ? (
+                <button onClick={() => { logout(); navigate('/'); setMenuOpen(false); }}
+                  style={{ width:'100%', background:'rgba(224,85,85,.08)', color:'#d04040', border:'1px solid rgba(224,85,85,.2)', borderRadius:14, padding:'13px', fontFamily:'inherit', fontWeight:600, fontSize:15, cursor:'pointer' }}>
+                  Logout
+                </button>
+              ) : (
+                <div style={{ display:'flex', gap:10 }}>
+                  <Link to="/login" onClick={() => setMenuOpen(false)} style={{ flex:1, textAlign:'center', padding:'12px', border:'1px solid rgba(60,100,40,.14)', borderRadius:14, color:'#1a2415', textDecoration:'none', fontWeight:600, fontSize:15, background:'#fff' }}>Login</Link>
+                  <Link to="/register" onClick={() => setMenuOpen(false)} style={{ flex:1, textAlign:'center', padding:'12px', background:'#4e9e2a', borderRadius:14, color:'#fff', textDecoration:'none', fontWeight:700, fontSize:15 }}>Join Free</Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search + Filter bar — acts as this page's navbar */}
+      <div style={{ padding: isMobile ? '12px 12px 12px' : '18px 48px', position:'sticky', top:0, zIndex:50,
         background:'rgba(245,247,242,.96)', backdropFilter:'blur(16px)',
         borderBottom:'1px solid rgba(60,100,40,.1)', boxShadow:'0 2px 8px rgba(20,50,10,.04)' }}>
-        <form onSubmit={handleSearch} style={{ display:'flex', gap:8 }}>
+        <form onSubmit={handleSearch} style={{ display:'flex', gap:8, alignItems:'center' }}>
+          {/* Hamburger */}
+          <button type="button" onClick={() => setMenuOpen(o => !o)}
+            style={{ width:44, height:44, borderRadius:12, background:'#fff', border:'1px solid rgba(60,100,40,.14)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, fontSize:18 }}>
+            {menuOpen ? '✕' : '☰'}
+          </button>
           <div style={{ flex:1, display:'flex', alignItems:'center',
             background:'#fff', borderRadius:14,
             border: `1.5px solid ${searchFocus ? '#4e9e2a' : 'rgba(60,100,40,.12)'}`,

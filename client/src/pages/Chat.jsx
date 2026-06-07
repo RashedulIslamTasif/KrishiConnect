@@ -11,7 +11,6 @@ const S = `
     top: calc(58px + env(safe-area-inset-top, 0px));
     left: 0; right: 0;
     bottom: 0;
-    height: calc(100dvh - 58px - env(safe-area-inset-top, 0px));
     display: flex;
     flex-direction: column;
     background: #f0f2f0;
@@ -192,7 +191,28 @@ export default function Chat() {
   const [typing,        setTyping]        = useState(false);
   const [isTyping,      setIsTyping]      = useState(false);
   const [mobileView,    setMobileView]    = useState('list');
-  const typingTimeout = useRef(null);
+  const chatRootRef = useRef(null);
+
+  // iOS keyboard fix — visualViewport shrinks when keyboard opens
+  // We manually set bottom offset so the input bar stays above keyboard
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
+      if (chatRootRef.current) {
+        chatRootRef.current.style.bottom = `${Math.max(0, keyboardHeight)}px`;
+      }
+      // scroll latest message into view when keyboard opens
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, []);
 
   useEffect(() => { inject(); fetchConversations(); }, []);
 
@@ -289,7 +309,7 @@ export default function Chat() {
   /* ── MOBILE: conversation list ── */
   if (isMobile && mobileView === 'list') {
     return (
-      <div className="chat-root" style={{ background: '#fff' }}>
+      <div ref={chatRootRef} className="chat-root" style={{ background: '#fff' }}>
         <div className="chat-header">
           <button className="back-btn" onClick={() => navigate(-1)}>
             <svg width="10" height="18" viewBox="0 0 10 18" fill="none"><path d="M9 1L1 9L9 17" stroke="#4e9e2a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -329,7 +349,7 @@ export default function Chat() {
   /* ── MOBILE: active chat (Messenger style) ── */
   if (isMobile) {
     return (
-      <div className="chat-root">
+      <div ref={chatRootRef} className="chat-root">
         {/* Header */}
         <div className="chat-header">
           <button className="back-btn" onClick={() => setMobileView('list')}>
