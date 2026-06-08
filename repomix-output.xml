@@ -8846,9 +8846,27 @@ function MapView({ farmers, filtered, search, setSearch, district, setDistrict, 
     const L = LRef.current;
     Object.values(markersRef.current).forEach(m => m.remove());
     markersRef.current = {};
+    // Build a count map to spread overlapping markers at the same coords
+    const coordCount = {};
+    const coordIndex = {};
     filtered.forEach(farmer => {
       const lat = farmer.location?.lat || DISTRICT_COORDS[farmer.location?.district]?.[0] || 23.8103;
       const lng = farmer.location?.lng || DISTRICT_COORDS[farmer.location?.district]?.[1] || 90.4125;
+      const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+      coordCount[key] = (coordCount[key] || 0) + 1;
+      coordIndex[key] = 0;
+    });
+    filtered.forEach(farmer => {
+      const baseLat = farmer.location?.lat || DISTRICT_COORDS[farmer.location?.district]?.[0] || 23.8103;
+      const baseLng = farmer.location?.lng || DISTRICT_COORDS[farmer.location?.district]?.[1] || 90.4125;
+      const key = `${baseLat.toFixed(4)},${baseLng.toFixed(4)}`;
+      const total = coordCount[key];
+      const idx = coordIndex[key]++;
+      // Spread markers in a circle when multiple occupy same spot
+      const angle = (2 * Math.PI * idx) / total;
+      const radius = total > 1 ? 0.018 : 0; // ~2km spread
+      const lat = baseLat + (total > 1 ? radius * Math.cos(angle) : 0);
+      const lng = baseLng + (total > 1 ? radius * Math.sin(angle) : 0);
       const icon = L.divIcon({ html: markerHTML(farmer, false), className: '', iconSize: [40,40], iconAnchor: [20,20] });
       const marker = L.marker([lat, lng], { icon }).addTo(leafletMap.current)
         .on('click', () => { setSelected(farmer); if (isMobile) setListOpen(false); });
@@ -8896,7 +8914,7 @@ function MapView({ farmers, filtered, search, setSearch, district, setDistrict, 
     <>
       {/* Mobile search bar — fixed strip below navbar */}
       {isMobile && !listOpen && (
-        <div style={{ position:'fixed', top:60, left:0, right:0, zIndex:200, background:'rgba(245,247,242,.97)', borderBottom:'1px solid rgba(60,100,40,.1)', padding:'8px 12px', display:'flex', gap:8, backdropFilter:'blur(8px)', boxShadow:'0 2px 8px rgba(0,0,0,.08)' }}>
+        <div style={{ position:'fixed', top:110, left:0, right:0, zIndex:200, background:'rgba(245,247,242,.97)', borderBottom:'1px solid rgba(60,100,40,.1)', padding:'8px 12px', display:'flex', gap:8, backdropFilter:'blur(8px)', boxShadow:'0 2px 8px rgba(0,0,0,.08)' }}>
           <div style={{ flex:1, position:'relative' }}>
             <span style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', fontSize:14, pointerEvents:'none' }}>🔍</span>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search farmers, districts…"
