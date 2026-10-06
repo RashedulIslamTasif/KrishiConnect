@@ -343,5 +343,5 @@ Every status change is recorded in the order's `statusHistory`, and the customer
 
 ## 👤 Author
 
-**Tasif**, BICE, Bangladesh University of Professionals
+**Md Rashedul Islam**, Bangladesh University of Professionals
 GitHub: [@RashedulIslamTasif](https://github.com/RashedulIslamTasif)
