@@ -97,13 +97,16 @@ const getFarmers = asyncHandler(async (req, res) => {
       { 'location.district': { $regex: search, $options: 'i' } },
     ];
   }
-  const farmers = await User.find(query).select('-password').sort({ isVerified: -1, name: 1 });
+  const farmers = await User.find(query)
+    .select('-password -nidImage -selfieImage -rejectionReason -email')
+    .sort({ isVerified: -1, name: 1 });
   res.json({ success: true, farmers });
 });
 
 // ── Get single farmer (public) ────────────────────────────────
 const getFarmerById = asyncHandler(async (req, res) => {
-  const farmer = await User.findOne({ _id: req.params.id, role: 'farmer' }).select('-password');
+  const farmer = await User.findOne({ _id: req.params.id, role: 'farmer' })
+    .select('-password -nidImage -selfieImage -rejectionReason -email');
   if (!farmer) { res.status(404); throw new Error('Farmer not found'); }
   res.json({ success: true, farmer });
 });
